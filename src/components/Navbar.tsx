@@ -134,7 +134,7 @@ export default function Navbar() {
       className={`fixed top-0 z-50 w-full transition-all duration-500 ${isVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-full opacity-0'}`}
     >
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        <div className="rounded-full border border-white/20 bg-white/10 px-6 py-3 shadow-2xl backdrop-blur-xl">
+        <div className="rounded-full border border-white/20 bg-black/30 px-6 py-3 shadow-2xl backdrop-blur-xl text-white" style={{background: 'linear-gradient(90deg, rgba(34,34,34,0.85) 0%, rgba(34,34,34,0.7) 50%, rgba(34,34,34,0.85) 100%)'}}>
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link
@@ -144,15 +144,7 @@ export default function Navbar() {
               <div className="rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 p-2 shadow-lg">
                 <Plane className="size-6 text-white" />
               </div>
-              <span
-                className={
-                  isDarkTextPage
-                    ? 'text-black drop-shadow-lg'
-                    : 'text-white drop-shadow-lg'
-                }
-              >
-                Weave
-              </span>
+              <span className="text-white drop-shadow-lg">Weave</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -161,11 +153,7 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={
-                    isDarkTextPage
-                      ? 'text-sm text-black transition-all duration-300 hover:scale-105 hover:text-gray-700'
-                      : 'text-sm text-white transition-all duration-300 hover:scale-105 hover:text-gray-200'
-                  }
+                  className="text-sm text-white transition-all duration-300 hover:scale-105 hover:text-gray-200"
                 >
                   {link.label}
                 </Link>
@@ -180,11 +168,7 @@ export default function Navbar() {
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     variant="ghost"
                     size="sm"
-                    className={
-                      isDarkTextPage
-                        ? 'gap-2 border border-gray-300 bg-gray-100 text-black transition-all duration-300 hover:bg-gray-200'
-                        : 'gap-2 border border-white/30 bg-white/20 text-white transition-all duration-300 hover:bg-white/30'
-                    }
+                    className="gap-2 border border-white/30 bg-white/10 text-white transition-all duration-300 hover:bg-white/20"
                   >
                     <User className="size-4" />
                     <span className="hidden sm:inline">Profile</span>
@@ -195,20 +179,20 @@ export default function Navbar() {
 
                   {/* Custom Dropdown Menu */}
                   {dropdownOpen && (
-                    <div className="absolute right-0 z-[100] mt-2 w-56 rounded-lg border border-gray-200 bg-white py-2 shadow-xl">
+                    <div className="absolute right-0 z-[100] mt-2 w-56 rounded-lg border border-white/20 bg-black/30 py-2 shadow-xl">
                       <button
                         onClick={() => {
                           setDropdownOpen(false);
                           router.push('/profile');
                         }}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white transition-colors hover:bg-black/20"
                       >
                         <Settings className="size-4" />
                         Profile & Settings
                       </button>
                       <button
                         onClick={handleDashboardClick}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white transition-colors hover:bg-black/20"
                       >
                         <LayoutDashboard className="size-4" />
                         Dashboard
@@ -218,15 +202,15 @@ export default function Navbar() {
                           setDropdownOpen(false);
                           router.push('/wishlist');
                         }}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white transition-colors hover:bg-black/20"
                       >
                         <Heart className="size-4" />
                         My Wishlist
                       </button>
-                      <div className="my-1 h-px bg-gray-200" />
+                      <div className="my-1 h-px bg-white/20" />
                       <button
                         onClick={handleLogout}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-400 transition-colors hover:bg-black/20"
                       >
                         <LogOut className="size-4" />
                         Logout
@@ -238,7 +222,7 @@ export default function Navbar() {
                 <Button
                   onClick={() => router.push('/auth')}
                   size="sm"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-purple-700 text-white"
                 >
                   Sign In
                 </Button>
@@ -250,22 +234,18 @@ export default function Navbar() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={
-                      isDarkTextPage
-                        ? 'text-black hover:bg-gray-100 lg:hidden'
-                        : 'text-white hover:bg-white/20 lg:hidden'
-                    }
+                    className="text-white hover:bg-white/20 lg:hidden"
                   >
                     <Menu className="size-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent>
+                <SheetContent className="bg-black/20 text-white">
                   <div className="mt-8 flex flex-col gap-4">
                     {navLinks.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}
-                        className="p-2 text-gray-600 transition-colors hover:text-gray-900"
+                        className="p-2 text-white transition-colors hover:text-gray-200"
                       >
                         {link.label}
                       </Link>
@@ -274,31 +254,31 @@ export default function Navbar() {
                     {/* Mobile Auth Section */}
                     {isAuthenticated && (
                       <>
-                        <div className="my-2 h-px bg-gray-200" />
+                        <div className="my-2 h-px bg-white/20" />
                         <Link
                           href="/profile"
-                          className="flex items-center gap-2 p-2 text-gray-600 transition-colors hover:text-gray-900"
+                          className="flex items-center gap-2 p-2 text-white transition-colors hover:text-gray-200"
                         >
                           <Settings className="size-4" />
                           Profile & Settings
                         </Link>
                         <button
                           onClick={handleDashboardClick}
-                          className="flex items-center gap-2 p-2 text-left text-gray-600 transition-colors hover:text-gray-900"
+                          className="flex items-center gap-2 p-2 text-left text-white transition-colors hover:text-gray-200"
                         >
                           <LayoutDashboard className="size-4" />
                           Dashboard
                         </button>
                         <Link
                           href="/wishlist"
-                          className="flex items-center gap-2 p-2 text-gray-600 transition-colors hover:text-gray-900"
+                          className="flex items-center gap-2 p-2 text-white transition-colors hover:text-gray-200"
                         >
                           <Heart className="size-4" />
                           My Wishlist
                         </Link>
                         <button
                           onClick={handleLogout}
-                          className="flex items-center gap-2 p-2 text-left text-red-600 transition-colors hover:text-red-700"
+                          className="flex items-center gap-2 p-2 text-left text-red-400 transition-colors hover:text-red-600"
                         >
                           <LogOut className="size-4" />
                           Logout

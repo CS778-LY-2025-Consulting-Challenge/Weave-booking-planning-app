@@ -1659,13 +1659,35 @@ export default function PackageDetails() {
 
   if (!packageData) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h2 className="mb-4">Package not found</h2>
-          <Button onClick={() => router.push('/packages')}>
-            <ArrowLeft className="mr-2 size-4" />
-            Back to Packages
-          </Button>
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="container mx-auto px-4 py-10">
+          <div className="mx-auto max-w-3xl text-center">
+            <h1 className="mb-4 text-[80px] font-bold text-gray-800">404</h1>
+            <div 
+              className="mx-auto mb-8 h-[400px] bg-center bg-no-repeat"
+              style={{
+                backgroundImage: 'url(https://cdn.dribbble.com/users/285475/screenshots/2083086/dribbble_1.gif)',
+                backgroundSize: 'cover'
+              }}
+            />
+            
+            <div className="-mt-12">
+              <h3 className="mb-4 text-5xl font-semibold text-gray-800">
+                Look like you&apos;re lost
+              </h3>
+              
+              <p className="mb-6 text-lg text-gray-600">
+                The package you are looking for is not available!
+              </p>
+              
+              <Button 
+                onClick={() => router.push('/packages')}
+                className="bg-[#39ac31] px-6 py-3 text-white hover:bg-[#2d8c26]"
+              >
+                Go to Packages
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     );

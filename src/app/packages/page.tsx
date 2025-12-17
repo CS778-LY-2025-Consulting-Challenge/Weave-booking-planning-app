@@ -13,7 +13,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Check, MapPin, Sparkles, Stars, Wand2 } from 'lucide-react';
+import {
+  Calendar,
+  Check,
+  MapPin,
+  Sparkles,
+  Stars,
+  Wand2,
+  X,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -488,6 +496,63 @@ export default function Packages() {
           ))}
         </div>
       </div>
+
+      {/* What's Included Section (added before footer) */}
+      <section className="bg-white py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <h2 className="mb-10 text-center text-4xl text-gray-900">
+            What's Included
+          </h2>
+
+          {/* Included */}
+          <div className="mb-12 rounded-2xl border border-green-200 bg-green-50 p-8">
+            <h3 className="mb-6 text-lg tracking-wide text-green-900">
+              INCLUDED IN THE FINAL PRICE
+            </h3>
+
+            <ul className="space-y-4">
+              {[
+                'Roadbook with local tips and expert recommendations',
+                '24/7 on-the-ground support',
+                'On-trip concierge service',
+                'Personalized trip crafting',
+                'Entry and exit information and assistance',
+                '13 nights of accommodations, with daily breakfast included',
+                'All ground transfers, trains, and transport mentioned in the itinerary',
+                'All activities mentioned in the itinerary',
+                'All guided tours, experiences, and entrance fees mentioned in the itinerary',
+                'All classes and workshops mentioned in the itinerary',
+              ].map((item, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <Check className="mt-1 size-5 text-green-600" />
+                  <span className="text-gray-700">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Not Included */}
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-8">
+            <h3 className="mb-6 text-lg tracking-wide text-red-900">
+              NOT INCLUDED IN THE FINAL PRICE
+            </h3>
+
+            <ul className="space-y-4">
+              {[
+                'International arrival and departure flights',
+                'Travel insurance',
+                'Personal expenses and gratuities',
+                'Anything else not included or listed as optional in the itinerary',
+              ].map((item, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <X className="mt-1 size-5 text-red-600" />
+                  <span className="text-gray-700">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
 
       {/* Booking Dialog */}
       <Dialog open={bookingDialogOpen} onOpenChange={handleCloseDialog}>
