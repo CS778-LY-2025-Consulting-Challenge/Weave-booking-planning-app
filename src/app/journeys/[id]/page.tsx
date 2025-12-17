@@ -1,6 +1,10 @@
 'use client';
 
 import { Image360Viewer } from '@/components/Image360Viewer';
+import {
+  BookFlip,
+  BookFlipRef,
+} from '@/components/BookFlip';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,9 +27,9 @@ import {
   Star,
   X,
 } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 export default function JourneyDetails() {
   const { id } = useParams();
@@ -41,6 +45,7 @@ export default function JourneyDetails() {
     url: string;
     title: string;
   } | null>(null);
+  const pageFlipRef = useRef<BookFlipRef>(null);
 
   // Mock journey data with multiple images per day
   const journey = {
@@ -253,25 +258,21 @@ export default function JourneyDetails() {
   };
 
   const handleNextDay = () => {
-    if (currentDay < journey.days.length - 1 && !isFlipping) {
-      setFlipDirection('forward');
-      setIsFlipping(true);
-      setTimeout(() => {
-        setCurrentDay(currentDay + 1);
-        setTimeout(() => setIsFlipping(false), 800);
-      }, 400);
+    const totalPages = journey.days.length * 2;
+    if (currentDay < totalPages - 2 && !isFlipping) {
+      pageFlipRef.current?.flipNext();
     }
   };
 
   const handlePrevDay = () => {
     if (currentDay > 0 && !isFlipping) {
-      setFlipDirection('backward');
-      setIsFlipping(true);
-      setTimeout(() => {
-        setCurrentDay(currentDay - 1);
-        setTimeout(() => setIsFlipping(false), 800);
-      }, 400);
+      pageFlipRef.current?.flipPrev();
     }
+  };
+
+  const handleFlip = (e: unknown) => {
+    const event = e as { data: number };
+    setCurrentDay(event.data);
   };
 
   const handleOpenMedia = (
@@ -501,321 +502,279 @@ export default function JourneyDetails() {
               className="relative h-full w-full"
               style={{ perspective: '3000px' }}
             >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={currentDay}
-                  initial={
-                    isFlipping
-                      ? flipDirection === 'forward'
-                        ? {
-                            rotateY: -90,
-                            opacity: 0,
-                            scale: 0.9,
-                          }
-                        : {
-                            rotateY: 90,
-                            opacity: 0,
-                            scale: 0.9,
-                          }
-                      : false
-                  }
-                  animate={{
-                    rotateY: 0,
-                    opacity: 1,
-                    scale: 1,
-                  }}
-                  exit={
-                    flipDirection === 'forward'
-                      ? {
-                          rotateY: 90,
-                          opacity: 0,
-                          scale: 0.9,
-                        }
-                      : {
-                          rotateY: -90,
-                          opacity: 0,
-                          scale: 0.9,
-                        }
-                  }
-                  transition={{
-                    duration: 0.8,
-                    ease: [0.45, 0.05, 0.15, 1], // Custom easing for smooth page turn
-                    opacity: { duration: 0.4 },
-                    scale: { duration: 0.6 },
-                  }}
-                  style={{
-                    transformStyle: 'preserve-3d',
-                    transformOrigin:
-                      flipDirection === 'forward'
-                        ? 'right center'
-                        : 'left center',
-                  }}
-                  className="absolute inset-0"
-                >
-                  {/* Split Page Layout - DIARY STYLE */}
-                  <div className="grid h-full grid-cols-2">
-                    {/* LEFT PAGE - Diary Entry */}
+              <BookFlip
+                ref={pageFlipRef}
+                width={700}
+                height={800}
+                size="stretch"
+                minWidth={300}
+                maxWidth={700}
+                minHeight={400}
+                maxHeight={900}
+                showCover={false}
+                usePortrait={false}
+                mobileScrollSupport={true}
+                drawShadow={true}
+                flippingTime={800}
+                maxShadowOpacity={0.5}
+                onFlip={handleFlip}
+                className="h-full w-full"
+                style={{ background: '#FFFEF9' }}
+              >
+                {journey.days.flatMap((dayData) => [
+                  /* LEFT PAGE - Diary Entry */
+                  <div
+                    key={`diary-${dayData.day}`}
+                    data-density="soft"
+                    className="relative h-full overflow-y-auto overscroll-contain bg-[#FFFEF9]"
+                    style={{
+                      backgroundColor: '#FFFEF9',
+                    }}
+                  >
+                    {/* Notebook lines texture */}
                     <div
-                      className="relative overflow-y-auto"
+                      className="pointer-events-none absolute inset-0 opacity-[0.08]"
                       style={{
-                        background:
-                          'linear-gradient(135deg, #FFFEF9 0%, #FBF8F1 100%)',
+                        backgroundImage:
+                          'repeating-linear-gradient(0deg, transparent, transparent 31px, #94a3b8 31px, #94a3b8 32px)',
                       }}
-                    >
-                      {/* Notebook lines texture */}
-                      <div
-                        className="pointer-events-none absolute inset-0 opacity-[0.08]"
-                        style={{
-                          backgroundImage:
-                            'repeating-linear-gradient(0deg, transparent, transparent 31px, #94a3b8 31px, #94a3b8 32px)',
-                        }}
-                      />
+                    />
 
-                      {/* Red margin line */}
-                      <div className="absolute top-0 bottom-0 left-16 w-[2px] bg-red-300/40" />
+                    {/* Red margin line */}
+                    <div className="absolute top-0 bottom-0 left-16 w-[2px] bg-red-300/40" />
 
-                      {/* Scrollable content */}
-                      <div className="relative p-12 pr-8 pl-20">
-                        {/* Date header - handwritten style */}
-                        <motion.div
-                          initial={{ opacity: 0, y: -20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 }}
-                          className="mb-8"
-                        >
-                          <div className="mb-4 flex items-center justify-between">
-                            <div>
-                              <p
-                                className="mb-1 text-3xl text-slate-800"
-                                style={{ fontFamily: 'Caveat, cursive' }}
-                              >
-                                {currentDayData.date}, {currentDayData.year}
-                              </p>
-                              <p className="text-sm text-slate-500">
-                                Day {currentDayData.day} of{' '}
-                                {journey.days.length}
-                              </p>
+                    {/* Scrollable content */}
+                    <div className="relative p-12 pr-8 pl-20">
+                      {/* Date header - handwritten style */}
+                      <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="mb-8"
+                      >
+                        <div className="mb-4 flex items-center justify-between">
+                          <div>
+                            <p
+                              className="mb-1 text-3xl text-slate-800"
+                              style={{ fontFamily: 'Caveat, cursive' }}
+                            >
+                              {dayData.date}, {dayData.year}
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              Day {dayData.day} of {journey.days.length}
+                            </p>
+                          </div>
+
+                          {/* Mood & Weather stamps */}
+                          <div className="flex gap-2">
+                            <div className="rotate-2 rounded-lg border-2 border-yellow-300 bg-yellow-100 px-3 py-1 shadow-sm">
+                              <p className="text-sm">{dayData.mood}</p>
                             </div>
-
-                            {/* Mood & Weather stamps */}
-                            <div className="flex gap-2">
-                              <div className="rotate-2 rounded-lg border-2 border-yellow-300 bg-yellow-100 px-3 py-1 shadow-sm">
-                                <p className="text-sm">{currentDayData.mood}</p>
-                              </div>
-                              <div className="-rotate-2 rounded-lg border-2 border-blue-300 bg-blue-100 px-3 py-1 shadow-sm">
-                                <p className="text-sm">
-                                  {currentDayData.weather}
-                                </p>
-                              </div>
+                            <div className="-rotate-2 rounded-lg border-2 border-blue-300 bg-blue-100 px-3 py-1 shadow-sm">
+                              <p className="text-sm">{dayData.weather}</p>
                             </div>
                           </div>
+                        </div>
 
-                          {/* Title - handwritten */}
-                          <h1
-                            className="mb-4 text-5xl text-slate-900"
-                            style={{ fontFamily: 'Caveat, cursive' }}
-                          >
-                            {currentDayData.title}
-                          </h1>
-
-                          {/* Decorative doodle line */}
-                          <div className="mb-6 flex items-center gap-2">
-                            <Heart className="size-4 fill-red-400 text-red-400" />
-                            <div className="h-px flex-1 bg-gradient-to-r from-slate-300 via-slate-200 to-transparent" />
-                            <Star className="size-4 fill-amber-400 text-amber-400" />
-                          </div>
-                        </motion.div>
-
-                        {/* Diary Entry - handwritten style */}
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.5 }}
-                          className="mb-8"
+                        {/* Title - handwritten */}
+                        <h1
+                          className="mb-4 text-5xl text-slate-900"
+                          style={{ fontFamily: 'Caveat, cursive' }}
                         >
-                          <p
-                            className="text-xl leading-relaxed whitespace-pre-line text-slate-700"
-                            style={{ fontFamily: 'Caveat, cursive' }}
-                          >
-                            {currentDayData.entry}
-                          </p>
-                        </motion.div>
+                          {dayData.title}
+                        </h1>
 
-                        {/* Highlights List - Bullet Journal Style */}
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.6 }}
-                          className="mb-8"
+                        {/* Decorative doodle line */}
+                        <div className="mb-6 flex items-center gap-2">
+                          <Heart className="size-4 fill-red-400 text-red-400" />
+                          <div className="h-px flex-1 bg-gradient-to-r from-slate-300 via-slate-200 to-transparent" />
+                          <Star className="size-4 fill-amber-400 text-amber-400" />
+                        </div>
+                      </motion.div>
+
+                      {/* Diary Entry - handwritten style */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="mb-8"
+                      >
+                        <p
+                          className="text-xl leading-relaxed whitespace-pre-line text-slate-700"
+                          style={{ fontFamily: 'Caveat, cursive' }}
                         >
-                          <h3
-                            className="mb-4 flex items-center gap-2 text-2xl text-slate-800"
-                            style={{ fontFamily: 'Caveat, cursive' }}
-                          >
-                            <Star className="size-5 fill-amber-500 text-amber-500" />
-                            Today's Highlights
-                          </h3>
-                          <div className="space-y-2">
-                            {currentDayData.highlights.map(
-                              (highlight, index) => (
-                                <motion.div
-                                  key={index}
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: 0.7 + index * 0.1 }}
-                                  className="flex items-start gap-3"
-                                >
-                                  <div className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-amber-500" />
-                                  <p
-                                    className="text-lg text-slate-600"
-                                    style={{ fontFamily: 'Caveat, cursive' }}
-                                  >
-                                    {highlight}
-                                  </p>
-                                </motion.div>
-                              )
-                            )}
-                          </div>
-                        </motion.div>
+                          {dayData.entry}
+                        </p>
+                      </motion.div>
 
-                        {/* 360 View Button */}
-                        {currentDayData.has360 && (
-                          <motion.button
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 1 }}
-                            onClick={() =>
-                              handleOpenMedia(
-                                '360',
-                                currentDayData.video360Url,
-                                currentDayData.title
-                              )
-                            }
-                            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl"
-                          >
-                            <Eye className="size-5" />
-                            <span className="text-sm tracking-wide">
-                              View 360° Experience
-                            </span>
-                          </motion.button>
-                        )}
-
-                        {/* Decorative coffee stain */}
-                        <div className="absolute right-12 bottom-20 h-16 w-16 rounded-full bg-amber-900/10 blur-sm" />
-                      </div>
-                    </div>
-
-                    {/* CENTER SPINE */}
-                    <div className="pointer-events-none absolute top-0 bottom-0 left-1/2 z-30 -ml-6 w-12">
-                      <div className="h-full w-full bg-gradient-to-r from-slate-900/15 via-slate-900/5 to-transparent" />
-                    </div>
-
-                    {/* RIGHT PAGE - Photo Gallery */}
-                    <div
-                      className="relative overflow-y-auto"
-                      style={{
-                        background:
-                          'linear-gradient(135deg, #FBF8F1 0%, #F5F1E8 100%)',
-                      }}
-                    >
-                      {/* Notebook lines texture */}
-                      <div
-                        className="pointer-events-none absolute inset-0 opacity-[0.08]"
-                        style={{
-                          backgroundImage:
-                            'repeating-linear-gradient(0deg, transparent, transparent 31px, #94a3b8 31px, #94a3b8 32px)',
-                        }}
-                      />
-
-                      {/* Scrollable photo content */}
-                      <div className="relative p-12">
-                        {/* Polaroid-style photo grid */}
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.4 }}
-                          className="space-y-6"
+                      {/* Highlights List - Bullet Journal Style */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.6 }}
+                        className="mb-8"
+                      >
+                        <h3
+                          className="mb-4 flex items-center gap-2 text-2xl text-slate-800"
+                          style={{ fontFamily: 'Caveat, cursive' }}
                         >
-                          {currentDayData.images.map((image, index) => (
+                          <Star className="size-5 fill-amber-500 text-amber-500" />
+                          Today&apos;s Highlights
+                        </h3>
+                        <div className="space-y-2">
+                          {dayData.highlights.map((highlight, index) => (
                             <motion.div
                               key={index}
-                              initial={{ opacity: 0, rotate: 0, y: 20 }}
-                              animate={{
-                                opacity: 1,
-                                rotate: index % 2 === 0 ? 2 : -2,
-                                y: 0,
-                              }}
-                              transition={{ delay: 0.5 + index * 0.2 }}
-                              whileHover={{
-                                rotate: 0,
-                                scale: 1.02,
-                                zIndex: 10,
-                              }}
-                              className={`relative cursor-pointer bg-white p-3 shadow-xl ${
-                                index % 2 === 0 ? 'mr-12' : 'ml-12'
-                              }`}
-                              style={{
-                                boxShadow:
-                                  '0 10px 30px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1)',
-                              }}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.7 + index * 0.1 }}
+                              className="flex items-start gap-3"
                             >
-                              {/* Polaroid photo */}
-                              <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                                <img
-                                  src={image.url}
-                                  alt={image.caption}
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-
-                              {/* Polaroid caption - handwritten */}
+                              <div className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-amber-500" />
                               <p
-                                className="mt-3 text-center text-lg text-slate-600"
+                                className="text-lg text-slate-600"
                                 style={{ fontFamily: 'Caveat, cursive' }}
                               >
-                                {image.caption}
+                                {highlight}
                               </p>
-
-                              {/* Tape effect */}
-                              <div
-                                className="absolute -top-2 left-1/2 h-6 w-16 -translate-x-1/2 rotate-0 border border-amber-200/50 bg-amber-100/60"
-                                style={{
-                                  boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)',
-                                }}
-                              />
-
-                              {/* Random decorative elements */}
-                              {index === 0 && (
-                                <Heart className="absolute -top-3 -right-3 size-6 rotate-12 fill-red-400 text-red-400" />
-                              )}
-                              {index === 2 && (
-                                <Star className="absolute -bottom-2 -left-2 size-5 -rotate-12 fill-amber-400 text-amber-400" />
-                              )}
                             </motion.div>
                           ))}
-                        </motion.div>
+                        </div>
+                      </motion.div>
 
-                        {/* Doodles and decorations */}
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 1.5 }}
-                          className="mt-8 flex items-center justify-center gap-4"
+                      {/* 360 View Button */}
+                      {dayData.has360 && (
+                        <motion.button
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 1 }}
+                          onClick={() =>
+                            handleOpenMedia(
+                              '360',
+                              dayData.video360Url,
+                              dayData.title
+                            )
+                          }
+                          className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl"
                         >
-                          <Compass className="size-6 rotate-12 text-slate-400" />
-                          <p
-                            className="text-2xl text-slate-400"
-                            style={{ fontFamily: 'Caveat, cursive' }}
-                          >
-                            Memories captured...
-                          </p>
-                          <Coffee className="size-6 -rotate-12 text-slate-400" />
-                        </motion.div>
-                      </div>
+                          <Eye className="size-5" />
+                          <span className="text-sm tracking-wide">
+                            View 360° Experience
+                          </span>
+                        </motion.button>
+                      )}
+
+                      {/* Decorative coffee stain */}
+                      <div className="absolute right-12 bottom-20 h-16 w-16 rounded-full bg-amber-900/10 blur-sm" />
                     </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
+                  </div>,
+
+                  /* RIGHT PAGE - Photo Gallery */
+                  <div
+                    key={`photo-${dayData.day}`}
+                    data-density="soft"
+                    className="relative h-full overflow-y-auto overscroll-contain bg-[#FBF8F1]"
+                    style={{
+                      backgroundColor: '#FBF8F1',
+                    }}
+                  >
+                    {/* Notebook lines texture */}
+                    <div
+                      className="pointer-events-none absolute inset-0 opacity-[0.08]"
+                      style={{
+                        backgroundImage:
+                          'repeating-linear-gradient(0deg, transparent, transparent 31px, #94a3b8 31px, #94a3b8 32px)',
+                      }}
+                    />
+
+                    {/* Scrollable photo content */}
+                    <div className="relative p-12">
+                      {/* Polaroid-style photo grid */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                        className="space-y-6"
+                      >
+                        {dayData.images.map((image, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, rotate: 0, y: 20 }}
+                            animate={{
+                              opacity: 1,
+                              rotate: index % 2 === 0 ? 2 : -2,
+                              y: 0,
+                            }}
+                            transition={{ delay: 0.5 + index * 0.2 }}
+                            whileHover={{
+                              rotate: 0,
+                              scale: 1.02,
+                              zIndex: 10,
+                            }}
+                            className={`relative cursor-pointer bg-white p-3 shadow-xl ${
+                              index % 2 === 0 ? 'mr-12' : 'ml-12'
+                            }`}
+                            style={{
+                              boxShadow:
+                                '0 10px 30px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1)',
+                            }}
+                          >
+                            {/* Polaroid photo */}
+                            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                              <img
+                                src={image.url}
+                                alt={image.caption}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+
+                            {/* Polaroid caption - handwritten */}
+                            <p
+                              className="mt-3 text-center text-lg text-slate-600"
+                              style={{ fontFamily: 'Caveat, cursive' }}
+                            >
+                              {image.caption}
+                            </p>
+
+                            {/* Tape effect */}
+                            <div
+                              className="absolute -top-2 left-1/2 h-6 w-16 -translate-x-1/2 rotate-0 border border-amber-200/50 bg-amber-100/60"
+                              style={{
+                                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)',
+                              }}
+                            />
+
+                            {/* Random decorative elements */}
+                            {index === 0 && (
+                              <Heart className="absolute -top-3 -right-3 size-6 rotate-12 fill-red-400 text-red-400" />
+                            )}
+                            {index === 2 && (
+                              <Star className="absolute -bottom-2 -left-2 size-5 -rotate-12 fill-amber-400 text-amber-400" />
+                            )}
+                          </motion.div>
+                        ))}
+                      </motion.div>
+
+                      {/* Doodles and decorations */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1.5 }}
+                        className="mt-8 flex items-center justify-center gap-4"
+                      >
+                        <Compass className="size-6 rotate-12 text-slate-400" />
+                        <p
+                          className="text-2xl text-slate-400"
+                          style={{ fontFamily: 'Caveat, cursive' }}
+                        >
+                          Memories captured...
+                        </p>
+                        <Coffee className="size-6 -rotate-12 text-slate-400" />
+                      </motion.div>
+                    </div>
+                  </div>,
+                ])}
+              </BookFlip>
             </div>
           </div>
 
@@ -844,13 +803,17 @@ export default function JourneyDetails() {
             {journey.days.map((_, index) => (
               <button
                 key={index}
-                onClick={() => !isFlipping && setCurrentDay(index)}
+                onClick={() => {
+                  if (!isFlipping) {
+                    pageFlipRef.current?.turnToPage(index * 2);
+                  }
+                }}
                 disabled={isFlipping}
                 className="group relative"
               >
                 <div
                   className={`transition-all duration-300 ${
-                    index === currentDay
+                    Math.floor(currentDay / 2) === index
                       ? 'h-3 w-12 rounded-full bg-gradient-to-r from-amber-600 to-orange-600'
                       : 'h-3 w-3 rounded-full bg-slate-400/50 group-hover:scale-125 group-hover:bg-slate-500'
                   }`}
