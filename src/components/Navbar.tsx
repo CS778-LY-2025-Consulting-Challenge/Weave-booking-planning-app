@@ -28,29 +28,49 @@ export default function Navbar() {
 
   // Default hidden on home page, visible on other pages
   const [isVisible, setIsVisible] = useState(!isHomePage);
+  const [hasScrolled, setHasScrolled] = useState(false);
 
   // Check if we're on the Guides page, Auth page, or Dashboard page
   const isGuidesPage = pathname === '/guides';
+  const isFlightsPage = pathname === '/flights';
+  const isHotelsPage = pathname === '/hotels';
+  const isDestinationsPage = pathname === '/destinations';
+  const isJourneysPage = pathname === '/journeys';
+  const isPackagesPage = pathname === '/packages';
   const isDarkTextPage =
+    pathname === '/' ||
     pathname === '/guides' ||
     pathname === '/auth' ||
     pathname === '/dashboard' ||
     pathname === '/profile' ||
-    pathname === '/wishlist';
+    pathname === '/wishlist' ||
+    (pathname === '/flights' && hasScrolled) ||
+    (pathname === '/hotels' && hasScrolled) ||
+    (pathname === '/destinations' && hasScrolled) ||
+    (pathname === '/journeys' && hasScrolled) ||
+    (pathname === '/packages' && hasScrolled);
 
-  // Handle scroll visibility on home page
+  // Handle scroll visibility on home page and text color on flights/hotels/destinations/journeys/packages page
   useEffect(() => {
-    if (!isHomePage) {
-      setIsVisible(true);
-      return;
-    }
-
     const handleScroll = () => {
       const scrollY = window.scrollY;
       const viewportHeight = window.innerHeight;
-      // Reveal navbar shortly after the hero is in motion
-      const revealPoint = viewportHeight * NAVBAR_REVEAL_RATIO;
-      setIsVisible(scrollY > revealPoint);
+      
+      if (isHomePage) {
+        // Reveal navbar shortly after the hero is in motion
+        const revealPoint = viewportHeight * NAVBAR_REVEAL_RATIO;
+        setIsVisible(scrollY > revealPoint);
+      }
+      
+      if (isFlightsPage) {
+        // Change text color after scrolling past the scroll down button on flights page
+        setHasScrolled(scrollY > viewportHeight);
+      }
+      
+      if (isHotelsPage || isDestinationsPage || isJourneysPage || isPackagesPage) {
+        // Change text color after scrolling to second page
+        setHasScrolled(scrollY > viewportHeight);
+      }
     };
 
     // Initial check
@@ -58,7 +78,7 @@ export default function Navbar() {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isHomePage]);
+  }, [isHomePage, isFlightsPage, isHotelsPage, isDestinationsPage, isJourneysPage, isPackagesPage]);
 
   const handleLogout = () => {
     console.log('Logging out...');
