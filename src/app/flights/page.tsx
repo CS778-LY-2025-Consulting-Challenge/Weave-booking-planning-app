@@ -820,7 +820,7 @@ export default function FlightBooking() {
                 >
                   <Card className="mt-4 border-2 border-amber-200 bg-gradient-to-br from-amber-50/95 via-white/95 to-amber-50/95 shadow-2xl backdrop-blur-md">
                     <CardContent className="p-0">
-                      <div className="grid gap-0 lg:grid-cols-2">
+                      <div className="grid gap-0 lg:grid-cols-2 lg:items-stretch">
                         {/* Left: Luxury Content */}
                         <div className="p-8 lg:p-10">
                           <motion.div
@@ -1062,9 +1062,9 @@ export default function FlightBooking() {
                           initial={{ opacity: 0, x: 20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.4 }}
-                          className="relative h-[600px] overflow-hidden rounded-r-xl lg:h-auto"
+                          className="relative overflow-hidden rounded-b-xl lg:rounded-b-none lg:rounded-r-xl h-[300px] sm:h-[400px] lg:h-[800px]"
                         >
-                          <div className="grid h-full grid-rows-2 gap-1">
+                          <div className="grid h-full grid-rows-2 gap-2">
                             <div className="relative overflow-hidden">
                               <img
                                 src="https://images.unsplash.com/photo-1661954864180-e61dea14208a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBwcml2YXRlJTIwamV0JTIwaW50ZXJpb3J8ZW58MXx8fHwxNzY0NTU1NjY0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
@@ -1076,6 +1076,7 @@ export default function FlightBooking() {
                                 Luxury Interior
                               </Badge>
                             </div>
+
                             <div className="relative overflow-hidden">
                               <img
                                 src="https://images.unsplash.com/photo-1701874309317-33d5b62b9a46?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcml2YXRlJTIwamV0JTIwZXh0ZXJpb3IlMjBhaXJwb3J0fGVufDF8fHx8MTc2NDU1NTY2NHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
