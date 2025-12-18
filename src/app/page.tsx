@@ -14,13 +14,54 @@ import {
   Plane,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Home() {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [journeysScroll, setJourneysScroll] = useState(0);
   const [featuredDestScroll, setFeaturedDestScroll] = useState(0);
+  const [satisfiedTravelers, setSatisfiedTravelers] = useState(0);
+  const counterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setSatisfiedTravelers(0);
+          const duration = 2000;
+          const target = 100000;
+          const increment = target / (duration / 16);
+          let current = 0;
+
+          const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+              setSatisfiedTravelers(target);
+              clearInterval(timer);
+            } else {
+              setSatisfiedTravelers(Math.floor(current));
+            }
+          }, 16);
+
+          return () => clearInterval(timer);
+        } else {
+          setSatisfiedTravelers(0);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (counterRef.current) {
+      observer.observe(counterRef.current);
+    }
+
+    return () => {
+      if (counterRef.current) {
+        observer.unobserve(counterRef.current);
+      }
+    };
+  }, []);
 
   const featuredDestinations = [
     {
@@ -475,6 +516,21 @@ export default function Home() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Satisfied Travelers Section */}
+      <section className="bg-gradient-to-r from-blue-50 to-purple-50 py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div ref={counterRef} className="text-center">
+            <p className="text-2xl font-medium text-gray-800 md:text-3xl">
+              Delivering memorable travel experiences to{' '}
+              <span className="font-bold text-blue-600">
+                ({satisfiedTravelers.toLocaleString()}+)
+              </span>{' '}
+              satisfied travelers.
+            </p>
           </div>
         </div>
       </section>
