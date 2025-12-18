@@ -2,7 +2,7 @@
 
 # Weave Travel Booking (Charizard)
 
-![Landing Preview](https://imgur.com/a/NgAnGOM)
+![Landing Preview](public/home/landing.gif)
 
 Modern, animated travel discovery and booking prototype built with Next.js 16, React 19, TypeScript, and Tailwind CSS v4. Features an interactive AI travel co-pilot (Charizard), rich destination pages, and delightful UI powered by Radix primitives and Framer Motion.
 
