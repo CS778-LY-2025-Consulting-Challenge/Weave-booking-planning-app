@@ -11,6 +11,7 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import AnimatedLogoutButton from './AnimatedLogoutButton';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
@@ -208,13 +209,13 @@ export default function Navbar() {
                         My Wishlist
                       </button>
                       <div className="my-1 h-px bg-white/20" />
-                      <button
-                        onClick={handleLogout}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-400 transition-colors hover:bg-black/20"
-                      >
-                        <LogOut className="size-4" />
-                        Logout
-                      </button>
+                      <div className="px-4 py-2">
+                        <AnimatedLogoutButton
+                          onClick={handleLogout}
+                          className="w-full rounded-lg bg-gradient-to-r from-slate-800 to-slate-900 px-4 py-2 text-sm font-medium text-white transition-all hover:from-slate-700 hover:to-slate-800"
+                          variant="dropdown"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -276,13 +277,13 @@ export default function Navbar() {
                           <Heart className="size-4" />
                           My Wishlist
                         </Link>
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center gap-2 p-2 text-left text-red-400 transition-colors hover:text-red-600"
-                        >
-                          <LogOut className="size-4" />
-                          Logout
-                        </button>
+                        <div className="px-2">
+                          <AnimatedLogoutButton
+                            onClick={handleLogout}
+                            className="w-full rounded-lg bg-gradient-to-r from-slate-800 to-slate-900 px-4 py-2 text-sm font-medium text-white transition-all hover:from-slate-700 hover:to-slate-800"
+                            variant="mobile"
+                          />
+                        </div>
                       </>
                     )}
                   </div>
