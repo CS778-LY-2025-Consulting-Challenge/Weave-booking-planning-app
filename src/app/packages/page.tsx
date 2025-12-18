@@ -1,5 +1,6 @@
 'use client';
 
+import CursorTrail from '@/components/CursorTrail';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -818,6 +819,7 @@ export default function Packages() {
           )}
         </DialogContent>
       </Dialog>
+      <CursorTrail />
     </div>
   );
 }
