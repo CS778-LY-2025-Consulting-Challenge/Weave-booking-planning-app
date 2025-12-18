@@ -30,6 +30,7 @@ export default function Navbar() {
   // Default hidden on home page, visible on other pages
   const [isVisible, setIsVisible] = useState(!isHomePage);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   // Check if we're on the Guides page, Auth page, or Dashboard page
   const isGuidesPage = pathname === '/guides';
@@ -60,7 +61,29 @@ export default function Navbar() {
       if (isHomePage) {
         // Reveal navbar shortly after the hero is in motion
         const revealPoint = viewportHeight * NAVBAR_REVEAL_RATIO;
-        setIsVisible(scrollY > revealPoint);
+        const shouldShow = scrollY > revealPoint;
+        
+        if (shouldShow) {
+          // Show on scroll up, hide on scroll down
+          if (scrollY < lastScrollY || scrollY <= 10) {
+            setIsVisible(true);
+          } else if (scrollY > lastScrollY && scrollY > 100) {
+            setIsVisible(false);
+          }
+        } else {
+          setIsVisible(false);
+        }
+      } else {
+        // On all other pages: show at top, hide on scroll down, show on scroll up
+        if (scrollY <= 10) {
+          setIsVisible(true);
+        } else if (scrollY < lastScrollY) {
+          // Scrolling up
+          setIsVisible(true);
+        } else if (scrollY > lastScrollY && scrollY > 100) {
+          // Scrolling down
+          setIsVisible(false);
+        }
       }
       
       if (isFlightsPage) {
@@ -72,14 +95,16 @@ export default function Navbar() {
         // Change text color after scrolling to second page
         setHasScrolled(scrollY > viewportHeight);
       }
+      
+      setLastScrollY(scrollY);
     };
 
     // Initial check
     handleScroll();
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isHomePage, isFlightsPage, isHotelsPage, isDestinationsPage, isJourneysPage, isPackagesPage]);
+  }, [isHomePage, isFlightsPage, isHotelsPage, isDestinationsPage, isJourneysPage, isPackagesPage, lastScrollY]);
 
   const handleLogout = () => {
     console.log('Logging out...');
