@@ -6,6 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import RouteMapWidget, {
+  Coordinates,
+  RouteStop,
+} from '@/components/RouteMapWidget';
 import {
   Activity,
   ArrowLeft,
@@ -113,6 +117,7 @@ export default function PackageDetails() {
       type: 'Luxury',
       description:
         'Experience the ultimate tropical paradise with pristine beaches, crystal-clear waters, and world-class luxury resorts. This package includes everything you need for an unforgettable Maldivian escape.',
+
       itinerary: [
         {
           day: 1,
@@ -1655,7 +1660,140 @@ export default function PackageDetails() {
     },
   };
 
+  const routeConfigs: Record<
+    string,
+    {
+      title: string;
+      stops: RouteStop[];
+      mainPath: Coordinates[];
+      secondaryPath?: Coordinates[];
+      center?: Coordinates;
+      zoom?: number;
+    }
+  > = {
+    '1': {
+      title: 'Island Hops',
+      center: [73.5, 4.2],
+      zoom: 8,
+      stops: [
+        {
+          name: 'Malé Airport',
+          coords: [73.524, 4.191],
+          note: 'Arrival and departure point',
+        },
+        {
+          name: 'Paradise Resort',
+          coords: [73.512, 4.227],
+          note: 'Overwater villas & spa',
+        },
+        {
+          name: 'Local Islands',
+          coords: [73.42, 4.25],
+          note: 'Cultural visit and markets',
+          isSecondary: true,
+        },
+        {
+          name: 'Sandbank Escape',
+          coords: [73.45, 4.17],
+          note: 'Snorkeling & sunset dinner',
+        },
+      ],
+      mainPath: [
+        [73.524, 4.191],
+        [73.512, 4.227],
+        [73.45, 4.17],
+      ],
+      secondaryPath: [
+        [73.512, 4.227],
+        [73.42, 4.25],
+      ],
+    },
+    '2': {
+      title: 'Continental Hop',
+      center: [7, 44],
+      zoom: 4.2,
+      stops: [
+        {
+          name: 'Paris',
+          coords: [2.3522, 48.8566],
+          note: 'City tours & museums',
+        },
+        {
+          name: 'Versailles',
+          coords: [2.1204, 48.8049],
+          note: 'Palace gardens day trip',
+          isSecondary: true,
+        },
+        {
+          name: 'Rome',
+          coords: [12.4964, 41.9028],
+          note: 'Colosseum & Vatican',
+        },
+        {
+          name: 'Barcelona',
+          coords: [2.1734, 41.3851],
+          note: 'Gaudí architecture finale',
+        },
+      ],
+      mainPath: [
+        [2.3522, 48.8566],
+        [12.4964, 41.9028],
+        [2.1734, 41.3851],
+      ],
+      secondaryPath: [
+        [2.3522, 48.8566],
+        [2.1204, 48.8049],
+      ],
+    },
+    '3': {
+      title: 'Golden Route',
+      center: [136.0, 35.4],
+      zoom: 4.8,
+      stops: [
+        {
+          name: 'Tokyo',
+          coords: [139.6917, 35.6895],
+          note: 'Arrival & neon nights',
+        },
+        {
+          name: 'Hakone',
+          coords: [139.0024, 35.2324],
+          note: 'Onsen with Mt. Fuji views',
+          isSecondary: true,
+        },
+        {
+          name: 'Kyoto',
+          coords: [135.7681, 35.0116],
+          note: 'Shrines & tea houses',
+        },
+        {
+          name: 'Osaka',
+          coords: [135.5022, 34.6937],
+          note: 'Street food & nightlife',
+        },
+        {
+          name: 'Nara',
+          coords: [135.8049, 34.6851],
+          note: 'Deer park day trip',
+          isSecondary: true,
+        },
+      ],
+      mainPath: [
+        [139.6917, 35.6895],
+        [135.7681, 35.0116],
+        [135.5022, 34.6937],
+      ],
+      secondaryPath: [
+        [139.6917, 35.6895],
+        [139.0024, 35.2324],
+        [135.7681, 35.0116],
+        [135.8049, 34.6851],
+      ],
+    },
+  };
+
   const packageData = id ? packagesData[id as string] : null;
+  const routeConfig = id ? routeConfigs[id as string] : undefined;
 
   if (!packageData) {
     return (
@@ -1759,12 +1897,13 @@ export default function PackageDetails() {
               onValueChange={setSelectedTab}
               className="w-full"
             >
-              <TabsList className="mb-8 grid w-full grid-cols-5">
+              <TabsList className="mb-8 grid w-full grid-cols-6">
                 <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
                 <TabsTrigger value="accommodation">Accommodation</TabsTrigger>
                 <TabsTrigger value="transportation">Transportation</TabsTrigger>
                 <TabsTrigger value="activities">Activities</TabsTrigger>
                 <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                <TabsTrigger value="map">Map View</TabsTrigger>
               </TabsList>
 
               {/* Itinerary Tab */}
@@ -2070,12 +2209,56 @@ export default function PackageDetails() {
               <TabsContent value="reviews">
                 <Reviews itemName={packageData.name} />
               </TabsContent>
+
+              {/* Map View Tab */}
+              <TabsContent value="map">
+                {routeConfig ? (
+                  <div className="space-y-6">
+                    <Card>
+                      <CardContent className="p-6">
+                        <RouteMapWidget
+                          title={routeConfig.title}
+                          stops={routeConfig.stops}
+                          mainPath={routeConfig.mainPath}
+                          secondaryPath={routeConfig.secondaryPath}
+                          center={routeConfig.center}
+                          zoom={routeConfig.zoom}
+                          height={560}
+                        />
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-6">
+                        <h3 className="mb-4">Places on this route</h3>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {routeConfig.stops.map((s, i) => (
+                            <div key={i} className="rounded-lg border bg-white p-4">
+                              <p className="font-medium text-gray-900">{s.name}</p>
+                              {s.note && (
+                                <p className="mt-2 text-sm text-gray-600">{s.note}</p>
+                              )}
+                              <p className="mt-2 text-xs text-gray-500">Lng/Lat: {s.coords[0].toFixed(4)}, {s.coords[1].toFixed(4)}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  <Card>
+                    <CardContent className="p-6">
+                      <p className="text-sm text-gray-600">No route data available for this package.</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
             </Tabs>
           </div>
 
           {/* Right Column - Booking Summary */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24">
+            <div className="sticky top-24 space-y-6">
               <Card>
                 <CardContent className="p-6">
                   <h3 className="mb-4">Package Summary</h3>
@@ -2139,7 +2322,7 @@ export default function PackageDetails() {
               </Card>
 
               {/* Quick Info Card */}
-              <Card className="mt-6">
+              <Card>
                 <CardContent className="p-6">
                   <h3 className="mb-4">Need Help?</h3>
                   <div className="space-y-3 text-sm text-gray-600">
