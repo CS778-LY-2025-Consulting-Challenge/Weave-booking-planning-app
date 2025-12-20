@@ -31,6 +31,10 @@ import { useState } from 'react';
 export default function Journeys() {
   const router = useRouter();
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [selectedSeasons, setSelectedSeasons] = useState<Set<string>>(new Set());
+  const [selectedWeather, setSelectedWeather] = useState<Set<string>>(new Set());
+  const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
+  const [selectedDurations, setSelectedDurations] = useState<Set<string>>(new Set());
 
   const journeys = [
     {
@@ -129,6 +133,37 @@ export default function Journeys() {
     setFavorites((prev) =>
       prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
     );
+  };
+
+  const toggleInSet = (setter: (s: Set<string>) => void, setVal: Set<string>, value: string, checked: boolean) => {
+    const next = new Set(Array.from(setVal));
+    if (checked) {
+      next.add(value);
+    } else {
+      next.delete(value);
+    }
+    setter(next);
+  };
+
+  const parseDays = (durationStr: string) => {
+    const match = durationStr.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  };
+
+  const durationBucket = (days: number) => {
+    if (days < 7) return '< 1 week';
+    if (days >= 7 && days < 14) return '1-2 weeks';
+    if (days >= 14 && days < 21) return '2-3 weeks';
+    return '> 3 weeks';
+  };
+
+  const matchesFilters = (j: typeof journeys[number]) => {
+    const seasonOk = selectedSeasons.size === 0 || selectedSeasons.has(j.season);
+    const weatherOk = selectedWeather.size === 0 || selectedWeather.has(j.weather);
+    const typeOk = selectedTypes.size === 0 || selectedTypes.has(j.type);
+    const dur = durationBucket(parseDays(j.duration));
+    const durationOk = selectedDurations.size === 0 || selectedDurations.has(dur);
+    return seasonOk && weatherOk && typeOk && durationOk;
   };
 
   const weatherIcons = {
@@ -351,7 +386,13 @@ export default function Journeys() {
                               key={season}
                               className="flex items-center space-x-2"
                             >
-                              <Checkbox id={`season-${season}`} />
+                              <Checkbox
+                                id={`season-${season}`}
+                                checked={selectedSeasons.has(season)}
+                                onCheckedChange={(c) =>
+                                  toggleInSet(setSelectedSeasons, selectedSeasons, season, !!c)
+                                }
+                              />
                               <Label
                                 htmlFor={`season-${season}`}
                                 className="cursor-pointer text-sm"
@@ -372,7 +413,13 @@ export default function Journeys() {
                             key={weather}
                             className="flex items-center space-x-2"
                           >
-                            <Checkbox id={`weather-${weather}`} />
+                            <Checkbox
+                              id={`weather-${weather}`}
+                              checked={selectedWeather.has(weather)}
+                              onCheckedChange={(c) =>
+                                toggleInSet(setSelectedWeather, selectedWeather, weather, !!c)
+                              }
+                            />
                             <Label
                               htmlFor={`weather-${weather}`}
                               className="cursor-pointer text-sm"
@@ -399,7 +446,13 @@ export default function Journeys() {
                             key={type}
                             className="flex items-center space-x-2"
                           >
-                            <Checkbox id={`type-${type}`} />
+                            <Checkbox
+                              id={`type-${type}`}
+                              checked={selectedTypes.has(type)}
+                              onCheckedChange={(c) =>
+                                toggleInSet(setSelectedTypes, selectedTypes, type, !!c)
+                              }
+                            />
                             <Label
                               htmlFor={`type-${type}`}
                               className="cursor-pointer text-sm"
@@ -424,7 +477,13 @@ export default function Journeys() {
                             key={duration}
                             className="flex items-center space-x-2"
                           >
-                            <Checkbox id={`duration-${duration}`} />
+                            <Checkbox
+                              id={`duration-${duration}`}
+                              checked={selectedDurations.has(duration)}
+                              onCheckedChange={(c) =>
+                                toggleInSet(setSelectedDurations, selectedDurations, duration, !!c)
+                              }
+                            />
                             <Label
                               htmlFor={`duration-${duration}`}
                               className="cursor-pointer text-sm"
@@ -437,7 +496,16 @@ export default function Journeys() {
                     </div>
                   </div>
 
-                  <Button className="mt-6 w-full" variant="outline">
+                  <Button
+                    className="mt-6 w-full"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedSeasons(new Set());
+                      setSelectedWeather(new Set());
+                      setSelectedTypes(new Set());
+                      setSelectedDurations(new Set());
+                    }}
+                  >
                     Reset Filters
                   </Button>
                 </CardContent>
@@ -467,7 +535,13 @@ export default function Journeys() {
                               key={season}
                               className="flex items-center space-x-2"
                             >
-                              <Checkbox id={`mobile-season-${season}`} />
+                              <Checkbox
+                                id={`mobile-season-${season}`}
+                                checked={selectedSeasons.has(season)}
+                                onCheckedChange={(c) =>
+                                  toggleInSet(setSelectedSeasons, selectedSeasons, season, !!c)
+                                }
+                              />
                               <Label
                                 htmlFor={`mobile-season-${season}`}
                                 className="cursor-pointer text-sm"
@@ -494,7 +568,13 @@ export default function Journeys() {
                             key={type}
                             className="flex items-center space-x-2"
                           >
-                            <Checkbox id={`mobile-type-${type}`} />
+                              <Checkbox
+                                id={`mobile-type-${type}`}
+                                checked={selectedTypes.has(type)}
+                                onCheckedChange={(c) =>
+                                  toggleInSet(setSelectedTypes, selectedTypes, type, !!c)
+                                }
+                              />
                             <Label
                               htmlFor={`mobile-type-${type}`}
                               className="cursor-pointer text-sm"
@@ -513,7 +593,7 @@ export default function Journeys() {
             {/* Journey Grid */}
             <div className="flex-1">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                {journeys.map((journey, index) => {
+                {journeys.filter(matchesFilters).map((journey, index) => {
                   const WeatherIcon =
                     weatherIcons[
                       journey.weather as keyof typeof weatherIcons
