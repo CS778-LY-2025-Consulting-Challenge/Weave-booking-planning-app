@@ -47,206 +47,377 @@ export default function JourneyDetails() {
   } | null>(null);
   const pageFlipRef = useRef<BookFlipRef>(null);
 
-  // Mock journey data with multiple images per day
-  const journey = {
-    id: 1,
-    title: 'Bali Adventure',
-    author: 'Sarah M.',
-    destination: 'Bali, Indonesia',
-    season: 'Summer',
-    duration: '10 Days',
-    coverImage:
-      'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiYWxpJTIwaW5kb25lc2lhfGVufDF8fHx8MTc2NDUzNzMxMXww&ixlib=rb-4.1.0&q=80&w=1080',
-    days: [
-      {
-        day: 1,
-        date: 'June 15',
-        year: '2024',
-        title: 'First Day in Paradise',
-        mood: '😊 Excited',
-        weather: '☀️ 28°C',
-        entry:
-          'Finally arrived in Bali! The moment I stepped off the plane, I could feel the warm tropical air embrace me. The scent of frangipani flowers filled the air. This is going to be an incredible journey! Checked into the most beautiful beachfront hotel - the sound of waves is my new alarm clock. Watched the most stunning sunset at Seminyak Beach. The sky turned into shades of orange, pink, and purple. Absolutely magical! 🌅',
-        highlights: [
-          '🛬 Arrived at Ngurah Rai Airport',
-          '🏨 Checked into The Legian Seminyak',
-          '🌊 Sunset walk on the beach',
-          '🍽️ Dinner at La Plancha - fresh seafood!',
-          '📸 Took 100+ sunset photos',
-        ],
-        images: [
-          {
-            url: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800',
-            caption: 'Seminyak Beach Sunset',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800',
-            caption: 'Beach vibes',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800',
-            caption: 'Hotel room view',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1559628376-f3fe5f782a2e?w=800',
-            caption: 'Evening stroll',
-          },
-        ],
-        video360Url:
-          'https://cloudflare1.360gigapixels.com/pano/milanrademakers/01906841_DSC-1437-Panorama-jpg/equirect_crop_3_1/6.jpg',
-        has360: true,
-      },
-      {
-        day: 2,
-        date: 'June 16',
-        year: '2024',
-        title: 'Ubud Cultural Journey',
-        mood: '🤩 Amazed',
-        weather: '⛅ 26°C',
-        entry:
-          'Woke up early to explore Ubud! The rice terraces at Tegalalang are even more beautiful in person. The emerald green fields cascading down the hillside... I could stare at them forever. Met some local farmers who showed me how they maintain the paddies - such hard work but they do it with so much pride. The Monkey Forest was hilarious - one cheeky monkey tried to steal my sunglasses! 🐒 Ended the day with a traditional Balinese massage that melted away all the travel fatigue.',
-        highlights: [
-          '🌾 Tegalalang Rice Terraces at sunrise',
-          '🐵 Monkey Forest adventure',
-          '💆 Traditional spa treatment',
-          '🥾 Campuhan Ridge sunset walk',
-          '☕ Coffee tasting at local plantation',
-        ],
-        images: [
-          {
-            url: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800',
-            caption: 'Arc de Triomphe',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=800',
-            caption: 'Eiffel Tower at night',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800',
-            caption: 'Hotel room view',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1559628376-f3fe5f782a2e?w=800',
-            caption: 'Evening stroll',
-          },
-        ],
-        video360Url:
-          'https://upload.wikimedia.org/wikipedia/commons/d/d8/Soissons_Cathedral_Interior_360x180%2C_Picardy%2C_France_-_Diliff.jpg',
-        has360: true,
-      },
-      {
-        day: 3,
-        date: 'June 17',
-        year: '2024',
-        title: 'Temple Hopping Day',
-        mood: '🙏 Peaceful',
-        weather: '🌤️ 29°C',
-        entry:
-          'Today was all about temples and spirituality. Started before dawn to catch sunrise at Tanah Lot - the temple perched on a rock formation in the ocean is straight out of a fairytale! The waves crashing around it while the sun rose behind... pure magic. Later visited Uluwatu Temple on the cliff edge. The Kecak fire dance performance at sunset was mesmerizing - 50+ men chanting in unison while telling the Ramayana story through dance. Finished with fresh grilled seafood on Jimbaran Beach with my feet in the sand. Perfect day! ✨',
-        highlights: [
-          '⛩️ Tanah Lot sunrise ceremony',
-          '🍜 Local warung breakfast',
-          '🏛️ Uluwatu Temple exploration',
-          '🔥 Kecak fire dance performance',
-          '🦞 Beachside seafood dinner',
-        ],
-        images: [
-          {
-            url: 'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?w=800',
-            caption: 'Tanah Lot Temple',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?w=800',
-            caption: 'Temple details',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=800',
-            caption: 'Kecak dance',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1570789210967-2cac24afeb00?w=800',
-            caption: 'Sunset at Uluwatu',
-          },
-        ],
-        video360Url: 'https://www.youtube.com/embed/KudedLV0tP0',
-        has360: true,
-      },
-      {
-        day: 4,
-        date: 'June 18',
-        year: '2024',
-        title: 'Under the Sea',
-        mood: '🤿 Adventurous',
-        weather: '☀️ 30°C',
-        entry:
-          "Ocean day! Went snorkeling at Blue Lagoon and WOW - the underwater world is incredible! Saw so many colorful fish, coral reefs, and even a sea turtle! 🐢 The water was crystal clear, felt like swimming in an aquarium. Tried surfing at Kuta Beach in the afternoon. Let's just say I spent more time falling off the board than standing on it 😂 but it was so much fun! The instructor was super patient. Evening at Rock Bar watching the sunset with a cocktail in hand - living my best island life! 🍹",
-        highlights: [
-          '🤿 Snorkeling at Blue Lagoon',
-          '🐠 Saw a sea turtle!',
-          '🏄 Surfing lessons (lots of wipeouts)',
-          '🏖️ Finns Beach Club lunch',
-          '🍹 Sunset cocktails at Rock Bar',
-        ],
-        images: [
-          {
-            url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800',
-            caption: 'Blue lagoon waters',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800',
-            caption: 'Underwater adventure',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=800',
-            caption: 'Surfing attempt!',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=800',
-            caption: 'Beach club vibes',
-          },
-        ],
-        video360Url: 'https://www.youtube.com/embed/3KuY-4gaPAM',
-        has360: true,
-      },
-      {
-        day: 5,
-        date: 'June 19',
-        year: '2024',
-        title: 'Volcano Sunrise Trek',
-        mood: '🏔️ Accomplished',
-        weather: '🌡️ 18°C',
-        entry:
-          "Woke up at 3AM for the Mount Batur sunrise trek - crazy I know, but SO worth it! The hike up in the dark was challenging but our guide was amazing. Reached the summit just as the sun started to rise. Watching the sky turn from dark blue to orange and gold while standing on an active volcano... I have no words. One of the most beautiful things I've ever witnessed! 🌄 Had breakfast cooked by volcanic steam (yes, really!). Stopped at a coffee plantation on the way back and tried the famous Luwak coffee. Ended with a soak in natural hot springs. My legs are tired but my heart is full! ❤️",
-        highlights: [
-          '🌙 3:30 AM wake up call',
-          '⛰️ Summit reached at sunrise',
-          '🥚 Volcanic steam breakfast',
-          '☕ Luwak coffee plantation visit',
-          '♨️ Hot springs relaxation',
-        ],
-        images: [
-          {
-            url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
-            caption: 'Summit sunrise',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1454391304352-2bf4678b1a7a?w=800',
-            caption: 'Volcanic landscape',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1571613307761-2e5a7662c5d3?w=800',
-            caption: 'Coffee plantation',
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800',
-            caption: 'Hot springs bliss',
-          },
-        ],
-        video360Url: 'https://www.youtube.com/embed/1Ne1hqOXKKI',
-        has360: true,
-      },
-    ],
+  // Per-journey data keyed by URL id
+  const journeysData: Record<string, any> = {
+    '1': {
+      id: 1,
+      title: 'Bali Adventure',
+      author: 'Sarah M.',
+      destination: 'Bali, Indonesia',
+      season: 'Summer',
+      duration: '10 Days',
+      coverImage:
+        'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=1080',
+      days: [
+        {
+          day: 1,
+          date: 'June 15',
+          year: '2024',
+          title: 'First Day in Paradise',
+          mood: '😊 Excited',
+          weather: '☀️ 28°C',
+          entry:
+            'Arrived in Bali and checked into a beachfront hotel. Sunset at Seminyak was unreal — purple-orange skyscape and warm breeze. 🌅',
+          highlights: [
+            '🛬 Ngurah Rai Airport arrival',
+            '🏨 Beachfront hotel check-in',
+            '🌊 Sunset walk',
+            '🍽️ Fresh seafood dinner',
+          ],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800', caption: 'Seminyak Sunset' },
+            { url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800', caption: 'Beach vibes' },
+            { url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800', caption: 'Hotel view' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/dQw4w9WgXcQ', caption: 'Sunset timelapse', thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg' },
+          ],
+          video360Url: 'https://cloudflare1.360gigapixels.com/pano/milanrademakers/01906841_DSC-1437-Panorama-jpg/equirect_crop_3_1/6.jpg',
+          has360: true,
+        },
+        {
+          day: 2,
+          date: 'June 16',
+          year: '2024',
+          title: 'Ubud Cultural Journey',
+          mood: '🤩 Amazed',
+          weather: '⛅ 26°C',
+          entry:
+            'Rice terraces, Monkey Forest antics, and a soothing Balinese massage — Ubud is pure magic.',
+          highlights: [
+            '🌾 Tegalalang sunrise',
+            '🐵 Monkey Forest',
+            '💆 Spa session',
+          ],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1559628376-f3fe5f782a2e?w=800', caption: 'Evening stroll' },
+            { url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800', caption: 'Villa morning' },
+            { url: 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=800', caption: 'Night lights' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/ScMzIvxBSi4', caption: 'Ubud recap', thumbnail: 'https://img.youtube.com/vi/ScMzIvxBSi4/hqdefault.jpg' },
+          ],
+          video360Url: 'https://upload.wikimedia.org/wikipedia/commons/d/d8/Soissons_Cathedral_Interior_360x180%2C_Picardy%2C_France_-_Diliff.jpg',
+          has360: true,
+        },
+        {
+          day: 3,
+          date: 'June 17',
+          year: '2024',
+          title: 'Temple Hopping',
+          mood: '🙏 Peaceful',
+          weather: '🌤️ 29°C',
+          entry:
+            'Tanah Lot at sunrise and Uluwatu cliffside views; Kecak fire dance at dusk — unforgettable.',
+          highlights: ['⛩️ Tanah Lot sunrise', '🔥 Kecak performance'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?w=800', caption: 'Tanah Lot' },
+            { url: 'https://images.unsplash.com/photo-1570789210967-2cac24afeb00?w=800', caption: 'Uluwatu sunset' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/KudedLV0tP0', caption: 'Temple highlights', thumbnail: 'https://img.youtube.com/vi/KudedLV0tP0/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/KudedLV0tP0',
+          has360: true,
+        },
+      ],
+    },
+    '2': {
+      id: 2,
+      title: 'European Grand Tour',
+      author: 'Mike R.',
+      destination: 'Paris, Rome, Barcelona',
+      season: 'Spring',
+      duration: '21 Days',
+      coverImage: 'https://images.unsplash.com/photo-1431274172761-fca41d930114?w=1080',
+      days: [
+        {
+          day: 1,
+          date: 'Apr 10',
+          year: '2024',
+          title: 'Paris Beginnings',
+          mood: '🎨 Inspired',
+          weather: '🌤️ 16°C',
+          entry: 'Croissants, Louvre highlights, and sunset under the Eiffel Tower.',
+          highlights: ['🖼️ Louvre', '🗼 Eiffel at dusk'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800', caption: 'Eiffel Tower' },
+            { url: 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=800', caption: 'Paris by night' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/1xpNQWvA8bY', caption: 'Paris day one', thumbnail: 'https://img.youtube.com/vi/1xpNQWvA8bY/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/NMSVQWJv5v8',
+          has360: true,
+        },
+        {
+          day: 2,
+          date: 'Apr 14',
+          year: '2024',
+          title: 'Rome Classics',
+          mood: '🏛️ Awe',
+          weather: '☀️ 19°C',
+          entry: 'Colosseum tour and gelato near Trevi Fountain.',
+          highlights: ['🏟️ Colosseum', '🍨 Gelato'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1526481280698-9971f61ea6df?w=800', caption: 'Colosseum' },
+            { url: 'https://images.unsplash.com/photo-1526158830729-3e97553d61a1?w=800', caption: 'Trevi Fountain' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/aqUz5UeTz6U', caption: 'Rome tour', thumbnail: 'https://img.youtube.com/vi/aqUz5UeTz6U/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/qXlhFJXqYcQ',
+          has360: true,
+        },
+        {
+          day: 3,
+          date: 'Apr 18',
+          year: '2024',
+          title: 'Barcelona Vibes',
+          mood: '🎶 Joyful',
+          weather: '🌤️ 18°C',
+          entry: 'La Sagrada Família and tapas crawl in El Born.',
+          highlights: ['⛪ Sagrada Família', '🍤 Tapas'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1583422095309-55daabc9cc78?w=800', caption: 'Barcelona streets' },
+            { url: 'https://images.unsplash.com/photo-1495596871513-3d9d7770e26f?w=800', caption: 'Tapas plates' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/39n0W5mE9Uo', caption: 'Barcelona walk', thumbnail: 'https://img.youtube.com/vi/39n0W5mE9Uo/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/3q6rZbKQy0Q',
+          has360: true,
+        },
+      ],
+    },
+    '3': {
+      id: 3,
+      title: 'Mountain Trekking Nepal',
+      author: 'Emma K.',
+      destination: 'Himalayas, Nepal',
+      season: 'Autumn',
+      duration: '14 Days',
+      coverImage: 'https://images.unsplash.com/photo-1669986480140-2c90b8edb443?w=1080',
+      days: [
+        {
+          day: 1,
+          date: 'Oct 3',
+          year: '2024',
+          title: 'Kathmandu Prep',
+          mood: '🎒 Ready',
+          weather: '☁️ 22°C',
+          entry: 'Gear check and permits in Thamel. Dal bhat fuel!',
+          highlights: ['📝 Permits', '🍛 Dal bhat'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1543269865-0a740d43b87c?w=800', caption: 'Thamel' },
+            { url: 'https://images.unsplash.com/photo-1549880338-65ddcdfd017b?w=800', caption: 'Gear prep' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/3nQNiWdeH2Q', caption: 'Kathmandu streets', thumbnail: 'https://img.youtube.com/vi/3nQNiWdeH2Q/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/6qT4gFhyxKg',
+          has360: true,
+        },
+        {
+          day: 2,
+          date: 'Oct 6',
+          year: '2024',
+          title: 'Trail to Namche',
+          mood: '🥾 Determined',
+          weather: '☀️ 12°C',
+          entry: 'Crossed suspension bridges with epic river views.',
+          highlights: ['🌉 Bridges', '🏔️ First snow peaks'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1518684079-a6b6f8b4a1b5?w=800', caption: 'Trail' },
+            { url: 'https://images.unsplash.com/photo-1549880338-65ddcdfd017b?w=800', caption: 'Suspension bridge' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/5qap5aO4i9A', caption: 'On the trail', thumbnail: 'https://img.youtube.com/vi/5qap5aO4i9A/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/8Z1eMy1kYfQ',
+          has360: true,
+        },
+        {
+          day: 3,
+          date: 'Oct 10',
+          year: '2024',
+          title: 'Namche Acclimatization',
+          mood: '🧘 Calm',
+          weather: '☀️ 8°C',
+          entry: 'Short hike to viewpoint; tea with mountain vistas.',
+          highlights: ['🍵 Tea house', '🔭 Viewpoint'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1509644851169-2accbc0fef29?w=800', caption: 'Vistas' },
+            { url: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800', caption: 'Tea house' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/ylACwZ9h6tE', caption: 'Mountain views', thumbnail: 'https://img.youtube.com/vi/ylACwZ9h6tE/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/Q8kqQf2rFhA',
+          has360: true,
+        },
+      ],
+    },
+    '4': {
+      id: 4,
+      title: 'Tokyo Food Tour',
+      author: 'David L.',
+      destination: 'Tokyo, Japan',
+      season: 'Spring',
+      duration: '7 Days',
+      coverImage: 'https://images.unsplash.com/photo-1591194233688-dca69d406068?w=1080',
+      days: [
+        {
+          day: 1,
+          date: 'Mar 21',
+          year: '2024',
+          title: 'Tsukiji Morning',
+          mood: '🍣 Hungry',
+          weather: '⛅ 14°C',
+          entry: 'Fresh sushi breakfast and wagyu skewers.',
+          highlights: ['🍣 Sushi', '🥩 Wagyu skewers'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800', caption: 'Sushi counter' },
+            { url: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=800', caption: 'Tokyo food' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/HIcSWuKMwOw', caption: 'Market walk', thumbnail: 'https://img.youtube.com/vi/HIcSWuKMwOw/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/8k-7lFZrKf8',
+          has360: true,
+        },
+        {
+          day: 2,
+          date: 'Mar 23',
+          year: '2024',
+          title: 'Shibuya & Ramen',
+          mood: '🍜 Cozy',
+          weather: '🌧️ 12°C',
+          entry: 'Ramen tasting and a stroll through Shibuya Crossing.',
+          highlights: ['🍜 Ramen', '🚦 Shibuya'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1549692520-acc6669e2f0c?w=800', caption: 'Ramen bowl' },
+            { url: 'https://images.unsplash.com/photo-1533055640609-24b498cdf77a?w=800', caption: 'Shibuya lights' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/2Vv-BfVoq4g', caption: 'Shibuya time-lapse', thumbnail: 'https://img.youtube.com/vi/2Vv-BfVoq4g/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/6IYwWoWZ3xI',
+          has360: true,
+        },
+      ],
+    },
+    '5': {
+      id: 5,
+      title: 'Greek Island Hopping',
+      author: 'Lisa P.',
+      destination: 'Greek Islands',
+      season: 'Summer',
+      duration: '12 Days',
+      coverImage: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=1080',
+      days: [
+        {
+          day: 1,
+          date: 'Jul 8',
+          year: '2024',
+          title: 'Santorini Blue',
+          mood: '💙 Calm',
+          weather: '☀️ 28°C',
+          entry: 'Whitewashed alleys and caldera views.',
+          highlights: ['🏛️ Oia', '🌅 Caldera sunset'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=800', caption: 'Santorini' },
+            { url: 'https://images.unsplash.com/photo-1526481280698-9971f61ea6df?w=800', caption: 'Island streets' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/8ZcmTl_1ER8', caption: 'Santorini drone', thumbnail: 'https://img.youtube.com/vi/8ZcmTl_1ER8/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/gDbAq4R0t1s',
+          has360: true,
+        },
+        {
+          day: 2,
+          date: 'Jul 11',
+          year: '2024',
+          title: 'Mykonos Wind',
+          mood: '🎉 Lively',
+          weather: '☀️ 30°C',
+          entry: 'Windmills, beach clubs, and sundowners.',
+          highlights: ['🌬️ Windmills', '🏖️ Beach time'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=800', caption: 'Beach' },
+            { url: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=800', caption: 'Sunset' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/W4N-7cP8LQw', caption: 'Mykonos highlights', thumbnail: 'https://img.youtube.com/vi/W4N-7cP8LQw/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/Tm1wG2JkK8o',
+          has360: true,
+        },
+      ],
+    },
+    '6': {
+      id: 6,
+      title: 'New York City Explorer',
+      author: 'Tom W.',
+      destination: 'New York, USA',
+      season: 'Fall',
+      duration: '5 Days',
+      coverImage: 'https://images.unsplash.com/photo-1543716091-a840c05249ec?w=1080',
+      days: [
+        {
+          day: 1,
+          date: 'Oct 2',
+          year: '2024',
+          title: 'Midtown Marvels',
+          mood: '🗽 Ecstatic',
+          weather: '🍂 15°C',
+          entry: 'Times Square lights and a Broadway show.',
+          highlights: ['🎭 Broadway', '🏙️ Times Square'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1543716091-a840c05249ec?w=800', caption: 'Times Square' },
+            { url: 'https://images.unsplash.com/photo-1549692520-acc6669e2f0c?w=800', caption: 'City lights' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/EXeTwQWrcwY', caption: 'Broadway night', thumbnail: 'https://img.youtube.com/vi/EXeTwQWrcwY/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/ibdO1EoBsCk',
+          has360: true,
+        },
+        {
+          day: 2,
+          date: 'Oct 3',
+          year: '2024',
+          title: 'Central Park & Museums',
+          mood: '🍁 Serene',
+          weather: '☀️ 17°C',
+          entry: 'Rowboats, fall colors, and Met masterpieces.',
+          highlights: ['🚣 Rowboats', '🎨 The Met'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1472491235688-bdc81a63246e?w=800', caption: 'Central Park' },
+            { url: 'https://images.unsplash.com/photo-1526158830729-3e97553d61a1?w=800', caption: 'Museum steps' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/hTWKbfoikeg', caption: 'Park walk', thumbnail: 'https://img.youtube.com/vi/hTWKbfoikeg/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/lXpgw9nZpy8',
+          has360: true,
+        },
+      ],
+    },
   };
+
+  const journey = journeysData[(id as string) || '1'] ?? journeysData['1'];
 
   const handleCopyJourney = () => {
     alert('Journey copied to your dashboard! You can now customize it.');
@@ -754,6 +925,64 @@ export default function JourneyDetails() {
                           </motion.div>
                         ))}
                       </motion.div>
+
+                      {/* Video Clips */}
+                      {dayData.videos && dayData.videos.length > 0 && (
+                        <div className="mt-10">
+                          <h3
+                            className="mb-4 text-center text-3xl text-slate-800"
+                            style={{ fontFamily: 'Caveat, cursive' }}
+                          >
+                            Video Clips
+                          </h3>
+                          <div className="space-y-6">
+                            {dayData.videos.map((video, vIndex) => (
+                              <motion.div
+                                key={vIndex}
+                                initial={{ opacity: 0, rotate: 0, y: 20 }}
+                                animate={{
+                                  opacity: 1,
+                                  rotate: vIndex % 2 === 0 ? -1.5 : 1.5,
+                                  y: 0,
+                                }}
+                                transition={{ delay: 0.3 + vIndex * 0.2 }}
+                                whileHover={{ rotate: 0, scale: 1.02, zIndex: 10 }}
+                                className={`relative cursor-pointer bg-white p-3 shadow-xl ${
+                                  vIndex % 2 === 0 ? 'mr-12' : 'ml-12'
+                                }`}
+                                style={{
+                                  boxShadow:
+                                    '0 10px 30px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1)',
+                                }}
+                                onClick={() => handleOpenMedia('video', video.url, video.caption)}
+                              >
+                                <div className="relative aspect-[16/9] overflow-hidden bg-slate-900">
+                                  <img
+                                    src={video.thumbnail || '/travels/placeholder-video.jpg'}
+                                    alt={video.caption}
+                                    className="h-full w-full object-cover opacity-90"
+                                  />
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-xl">
+                                      <Play className="ml-0.5 size-7 text-red-500" />
+                                    </div>
+                                  </div>
+                                </div>
+                                <p
+                                  className="mt-3 text-center text-lg text-slate-600"
+                                  style={{ fontFamily: 'Caveat, cursive' }}
+                                >
+                                  {video.caption}
+                                </p>
+                                <div
+                                  className="absolute -top-2 left-1/2 h-6 w-16 -translate-x-1/2 rotate-0 border border-amber-200/50 bg-amber-100/60"
+                                  style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)' }}
+                                />
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Doodles and decorations */}
                       <motion.div
