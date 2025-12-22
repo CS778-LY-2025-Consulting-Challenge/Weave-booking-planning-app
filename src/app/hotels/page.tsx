@@ -34,6 +34,10 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
+import { HotelSearch, HotelSearchParams } from '@/components/HotelSearch';
+import { HotelResults, HotelResult } from '@/components/HotelResults';
+import { searchHotels } from '@/services/hotelService';
+import { toast } from 'sonner';
 
 interface Room {
   id: number;
@@ -57,7 +61,12 @@ export default function HotelBooking() {
   const [selectingCheckIn, setSelectingCheckIn] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date(2025, 11, 1)); // December 2025
 
-  // Generate calendar days with prices
+  // Hotel search states
+  const [searchResults, setSearchResults] = useState<HotelResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+
   const generateCalendarDays = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -127,6 +136,36 @@ export default function HotelBooking() {
     const diffTime = Math.abs(end.getTime() - start.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
+  };
+
+  // Hotel search handler
+  const handleHotelSearch = async (params: HotelSearchParams) => {
+    setIsSearching(true);
+    setSearchError(null);
+    setHasSearched(true);
+
+    try {
+      const results = await searchHotels(params);
+      setSearchResults(results);
+      
+      if (results.length > 0) {
+        toast.success(`Found ${results.length} hotels matching your criteria`);
+      } else {
+        toast.info('No hotels found for your search criteria');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to search hotels';
+      setSearchError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle hotel booking
+  const handleHotelBooking = (hotel: HotelResult) => {
+    toast.success(`Booking request for ${hotel.name} submitted!`);
+    // In a real app, you would navigate to a booking confirmation page or open a booking modal
   };
 
   const rooms: Room[] = [
@@ -265,82 +304,14 @@ export default function HotelBooking() {
               </p>
             </motion.div>
 
-            {/* Search Bar - Floating */}
+            {/* Hotel Search Bar */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
               className="relative"
             >
-              <Card className="border-0 bg-white/95 shadow-2xl backdrop-blur-xl">
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                    <div>
-                      <Label className="mb-2 block text-xs tracking-wider text-gray-600 uppercase">
-                        Check-in
-                      </Label>
-                      <button
-                        onClick={() => {
-                          setShowCalendar(true);
-                          setSelectingCheckIn(true);
-                        }}
-                        className="flex h-12 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 transition-colors hover:border-gray-400"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Calendar className="size-4 text-gray-500" />
-                          <span>{formatDate(checkIn)}</span>
-                        </div>
-                      </button>
-                    </div>
-                    <div>
-                      <Label className="mb-2 block text-xs tracking-wider text-gray-600 uppercase">
-                        Check-out
-                      </Label>
-                      <button
-                        onClick={() => {
-                          setShowCalendar(true);
-                          setSelectingCheckIn(false);
-                        }}
-                        className="flex h-12 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 transition-colors hover:border-gray-400"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Calendar className="size-4 text-gray-500" />
-                          <span>{formatDate(checkOut)}</span>
-                        </div>
-                      </button>
-                    </div>
-                    <div>
-                      <Label
-                        htmlFor="guests"
-                        className="mb-2 block text-xs tracking-wider text-gray-600 uppercase"
-                      >
-                        Guests
-                      </Label>
-                      <Select
-                        value={guests.toString()}
-                        onValueChange={(val) => setGuests(parseInt(val))}
-                      >
-                        <SelectTrigger id="guests" className="h-12">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">1 Guest</SelectItem>
-                          <SelectItem value="2">2 Guests</SelectItem>
-                          <SelectItem value="3">3 Guests</SelectItem>
-                          <SelectItem value="4">4 Guests</SelectItem>
-                          <SelectItem value="5">5+ Guests</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-end">
-                      <Button className="h-12 w-full bg-black text-white hover:bg-gray-800">
-                        <Search className="mr-2 size-4" />
-                        Check Availability
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <HotelSearch onSearch={handleHotelSearch} isLoading={isSearching} />
 
               {/* Calendar Popup */}
               <AnimatePresence>
@@ -534,6 +505,25 @@ export default function HotelBooking() {
           </div>
         </div>
       </div>
+
+      {/* Hotel Search Results */}
+      {hasSearched && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white px-4 py-20 sm:px-6 lg:px-8"
+        >
+          <div className="mx-auto max-w-7xl">
+            <HotelResults
+              hotels={searchResults}
+              isLoading={isSearching}
+              error={searchError}
+              onBooking={handleHotelBooking}
+            />
+          </div>
+        </motion.div>
+      )}
 
       {/* Introduction Section */}
       <div className="bg-gray-50 px-4 py-20 sm:px-6 lg:px-8">
