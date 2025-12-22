@@ -60,20 +60,22 @@ export default function Packages() {
   const packages: Package[] = [
     {
       id: 1,
-      name: 'Tropical Paradise Getaway',
-      destination: 'Maldives',
-      duration: '7 Days / 6 Nights',
-      price: 2499,
+      name: 'New Zealand Adventure',
+      destination: 'Auckland, Rotorua, Queenstown, Milford Sound',
+      duration: '10 Days / 9 Nights',
+      price: 2899,
       image:
-        'https://images.unsplash.com/photo-1551727095-10465ee6b17f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cm9waWNhbCUyMGJlYWNoJTIwcGFyYWRpc2V8ZW58MXx8fHwxNzY0NTE3NjA4fDA&ixlib=rb-4.1.0&q=80&w=1080',
+        'https://images.unsplash.com/photo-1559827260-dc66d52bef19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuZXclMjB6ZWFsYW5kfGVufDB8fHx8fDA&ixlib=rb-4.1.0&q=80&w=1080',
       includes: [
         'Round-trip flights',
-        '6 nights in 5-star resort',
-        'All meals included',
-        'Water sports activities',
-        'Spa treatment',
+        '9 nights accommodation in scenic locations',
+        'Milford Sound cruise',
+        'Hobbiton movie set tour',
+        'Adventure activities (bungee jumping, sky diving)',
+        'Thermal pools of Rotorua',
+        'Scenic drives and nature hikes',
       ],
-      type: 'Luxury',
+      type: 'Adventure',
     },
     {
       id: 2,
