@@ -19,10 +19,10 @@ import { useState, useEffect, useRef } from 'react';
 export default function Home() {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [journeysScroll, setJourneysScroll] = useState(0);
   const [featuredDestScroll, setFeaturedDestScroll] = useState(0);
   const [satisfiedTravelers, setSatisfiedTravelers] = useState(0);
   const counterRef = useRef<HTMLDivElement>(null);
+  const edgeCarouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -70,6 +70,7 @@ export default function Home() {
       days: 14,
       nights: 9,
       price: 4680,
+      gradientColor: "210 100% 50%",
       image:
         'https://images.unsplash.com/photo-1557207773-caf19e055e40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzYXJkaW5pYSUyMGJlYWNoJTIwaXRhbHl8ZW58MXx8fHwxNzY1MzE3MTQ5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
     },
@@ -80,6 +81,7 @@ export default function Home() {
       days: 14,
       nights: 12,
       price: 8820,
+      gradientColor: "30 100% 50%",
       image:
         'https://images.unsplash.com/photo-1542640244-7e672d6cef4e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb3VudCUyMGZ1amklMjBqYXBhbnxlbnwxfHx8fDE3NjQ1MjYyNjR8MA&ixlib=rb-4.1.0&q=80&w=1080',
     },
@@ -89,6 +91,7 @@ export default function Home() {
       days: 7,
       nights: 6,
       price: 2415,
+      gradientColor: "25 100% 50%",
       image:
         'https://images.unsplash.com/photo-1518638150340-f706e86654de?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZXhpY2FuJTIwZm9vZCUyMHN0cmVldHxlbnwxfHx8fDE3NjQ1MzU0MzF8MA&ixlib=rb-4.1.0&q=80&w=1080',
     },
@@ -99,6 +102,7 @@ export default function Home() {
       days: 8,
       nights: 7,
       price: 2863,
+      gradientColor: "180 75% 45%",
       image:
         'https://images.unsplash.com/photo-1528127269322-539801943592?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aWV0bmFtJTIwZmxvYXRpbmclMjBtYXJrZXR8ZW58MXx8fHwxNzY0NTM3MzExfDA&ixlib=rb-4.1.0&q=80&w=1080',
     },
@@ -109,6 +113,7 @@ export default function Home() {
       days: 11,
       nights: 10,
       price: 3880,
+      gradientColor: "35 100% 45%",
       image:
         'https://images.unsplash.com/photo-1543783207-ec64e4d95325?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzcGFpbiUyMGFuZGFsdXNpYXxlbnwxfHx8fDE3NjQ1MzcyODV8MA&ixlib=rb-4.1.0&q=80&w=1080',
     },
@@ -119,6 +124,7 @@ export default function Home() {
       days: 12,
       nights: 11,
       price: 5200,
+      gradientColor: "200 80% 45%",
       image:
         'https://images.unsplash.com/photo-1504829857797-ddff29c27927?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpY2VsYW5kJTIwd2F0ZXJmYWxsfGVufDF8fHx8MTc2NDUzNzMxMXww&ixlib=rb-4.1.0&q=80&w=1080',
     },
@@ -254,18 +260,6 @@ export default function Home() {
     );
   };
 
-  const nextJourneysSlide = () => {
-    if (journeysScroll < featuredDestinations.length - 1) {
-      setJourneysScroll(journeysScroll + 1);
-    }
-  };
-
-  const prevJourneysSlide = () => {
-    if (journeysScroll > 0) {
-      setJourneysScroll(journeysScroll - 1);
-    }
-  };
-
   const nextFeaturedDestSlide = () => {
     if (featuredDestScroll < destinations.length - 1) {
       setFeaturedDestScroll(featuredDestScroll + 1);
@@ -276,6 +270,13 @@ export default function Home() {
     if (featuredDestScroll > 0) {
       setFeaturedDestScroll(featuredDestScroll - 1);
     }
+  };
+
+  const scrollEdgeCarousel = (direction: 'left' | 'right') => {
+    const el = edgeCarouselRef.current;
+    if (!el) return;
+    const amount = el.clientWidth * 0.8;
+    el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
   };
 
   return (
@@ -402,120 +403,77 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Destinations */}
-      <section className="bg-gray-50 py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Header with Navigation */}
-          <div className="mb-8 flex items-end justify-between">
-            <div>
-              <h2 className="mb-2 font-[Abril_Fatface] text-[40px]">
-                Book your dream trip
-              </h2>
-              <p className="max-w-3xl font-[Adamina] text-[20px] font-normal text-[rgb(0,0,0)]">
-                Lock in your 2025 travel plans with Weave Journeys. Check out
-                our favorite ready-to-book trips, crafted by our team of experts
-                all over the world.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-12 w-12 rounded-sm"
-                onClick={prevJourneysSlide}
-                disabled={journeysScroll === 0}
-              >
-                <ChevronLeft className="size-5" />
-              </Button>
-              <Button
-                variant="default"
-                size="icon"
-                className="h-12 w-12 rounded-sm bg-black hover:bg-gray-800"
-                onClick={nextJourneysSlide}
-                disabled={journeysScroll >= featuredDestinations.length - 4}
-              >
-                <ChevronRight className="size-5" />
-              </Button>
-            </div>
+      {/* Edge-to-edge Ready-to-Book Journeys */}
+      <section className="py-14">
+        <div className="w-full px-4 sm:px-6 lg:px-10">
+          <div className="mb-6 flex flex-col gap-3">
+            <h2 className="font-[Abril_Fatface] text-[40px] leading-tight text-gray-900">
+              Book your dream trip
+            </h2>
+            <p className="max-w-4xl font-[Adamina] text-lg text-gray-800">
+              Lock in your 2026 travel plans with Lonely Planet Journeys. Check out our favorite
+              ready-to-book trips, crafted by our team of experts all over the world.
+            </p>
+          </div>
+        </div>
+
+        <div className="relative w-full">
+          <div className="absolute right-4 -top-13 z-10 flex gap-2 sm:right-6 lg:right-10">
+            <button
+              onClick={() => scrollEdgeCarousel('left')}
+              className="grid h-9 w-9 place-items-center rounded bg-white/80 text-gray-900 shadow-md ring-1 ring-black/5 transition hover:-translate-y-[1px] hover:bg-white"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <button
+              onClick={() => scrollEdgeCarousel('right')}
+              className="grid h-9 w-9 place-items-center rounded bg-neutral-900 text-white shadow-md ring-1 ring-black/10 transition hover:-translate-y-[1px] hover:bg-neutral-800"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="size-4" />
+            </button>
           </div>
 
-          {/* Horizontal Scrolling Cards */}
-          <div className="-mx-4 overflow-hidden px-4">
-            <div
-              className="flex gap-6 transition-transform duration-500 ease-in-out"
-              style={{
-                transform: `translateX(-${journeysScroll * (100 / 4)}%)`,
-              }}
-            >
-              {featuredDestinations.map((destination) => (
-                <div
-                  key={destination.id}
-                  className="w-[calc(25%-18px)] min-w-[280px] flex-shrink-0"
-                >
-                  <div
-                    className="group cursor-pointer overflow-hidden bg-white transition-all duration-300 hover:shadow-xl"
-                    onClick={() =>
-                      router.push(`/featured-journeys/${destination.id}`)
-                    }
-                  >
-                    {/* Weave Journeys Label */}
-                    <div className="bg-black px-4 py-2">
-                      <p className="text-xs tracking-[0.15em] text-white uppercase">
-                        WEAVE JOURNEYS
-                      </p>
-                    </div>
-
-                    {/* Image */}
-                    <div className="relative aspect-[4/3] overflow-hidden">
-                      <img
-                        src={destination.image}
-                        alt={destination.title}
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-6">
-                      {/* Duration */}
-                      <p className="mb-3 text-xs tracking-wider text-gray-600 uppercase">
-                        {destination.days} DAYS / {destination.nights} NIGHTS
-                      </p>
-
-                      {/* Title */}
-                      <h3
-                        className="mb-4 text-lg leading-tight"
-                        style={{ fontWeight: '700' }}
-                      >
-                        {destination.title}
-                      </h3>
-
-                      {/* Price */}
-                      <p className="mb-4 text-sm">
-                        <span className="text-gray-600">FROM </span>
-                        <span style={{ fontWeight: '700' }}>
-                          ${destination.price.toLocaleString()}
-                        </span>
-                        <span className="text-xs text-gray-600">
-                          {' '}
-                          per person
-                        </span>
-                      </p>
-
-                      {/* Book Now Button */}
-                      <button
-                        className="inline-flex items-center gap-2 rounded-sm bg-blue-600 px-6 py-2.5 text-sm tracking-wide text-white uppercase transition-colors hover:bg-blue-700"
-                        onClick={() =>
-                          router.push(`/packages/${destination.id}`)
-                        }
-                      >
-                        BOOK NOW
-                        <ArrowRight className="size-4" />
-                      </button>
-                    </div>
+          <div ref={edgeCarouselRef} className="w-full overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex w-full gap-6 px-4 sm:px-6 lg:px-10">
+            {featuredDestinations.map((destination) => (
+              <div
+                key={`edge-${destination.id}`}
+                className="min-w-[280px] sm:min-w-[320px] md:min-w-[360px] rounded-2xl bg-white shadow-lg shadow-black/5 transition-transform duration-300 hover:-translate-y-1"
+              >
+                <div className="relative aspect-[4/5] overflow-hidden">
+                  <img
+                    src={destination.image}
+                    alt={destination.title}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-transparent" />
+                  <div className="absolute left-4 right-4 top-4 flex items-center justify-between text-[10px] font-semibold tracking-[0.2em] uppercase text-white/90">
+                    <span>Weave Journeys</span>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                <div className="flex flex-col gap-2 p-5">
+                  <p className="text-[11px] font-semibold tracking-[0.2em] text-gray-500 uppercase">
+                    {destination.days} days / {destination.nights} nights
+                  </p>
+                  <h3 className="text-xl font-bold leading-snug text-gray-900">
+                    {destination.title.split(':')[1]?.trim() ?? destination.title}
+                  </h3>
+                  <p className="text-sm font-medium text-gray-600">
+                    From ${destination.price.toLocaleString()} per person
+                  </p>
+                  <div className="flex items-center justify-between pt-3">
+                    <button className="rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-transform duration-200 hover:scale-105">
+                      Book now
+                    </button>
+                    <ArrowRight className="size-4 text-gray-900" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
           </div>
         </div>
       </section>
