@@ -395,6 +395,22 @@ export default function FlightBooking() {
     );
   };
 
+  const swapMultiCityLocations = (id: string) => {
+    setMultiCityFlights(
+      multiCityFlights.map((flight) =>
+        flight.id === id
+          ? { ...flight, from: flight.to, to: flight.from }
+          : flight
+      )
+    );
+  };
+
+  const swapFromTo = () => {
+    const temp = fromInput;
+    setFromInput(toInput);
+    setToInput(temp);
+  };
+
   // 🔽 helper: smooth scroll to any section
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -577,8 +593,8 @@ export default function FlightBooking() {
                         </Button>
                       )}
                     </div>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                      <div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto_1fr_1fr] md:items-end">
+                      <div className="space-y-2">
                         <Label htmlFor={`from-${flight.id}`}>From</Label>
                         <Popover
                           open={multiCityPopovers[flight.id]?.fromOpen || false}
@@ -660,13 +676,23 @@ export default function FlightBooking() {
                           </PopoverContent>
                         </Popover>
                       </div>
-                      <div className="relative flex items-center">
-                        <div className="absolute top-8 left-1/2 z-10 -translate-x-1/2 transform">
-                          <ArrowLeftRight className="size-5 text-blue-600" />
-                        </div>
-                        <div className="flex-1">
-                          <Label htmlFor={`to-${flight.id}`}>To</Label>
-                          <Popover
+                      
+                      {/* Arrow Separator - Perfectly centered using flexbox */}
+                      <div className="hidden md:flex items-center justify-center pb-2">
+                        <button
+                          type="button"
+                          onClick={() => swapMultiCityLocations(flight.id)}
+                          className="group flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 ring-1 ring-blue-200 transition-all duration-200 hover:bg-blue-100 hover:ring-2 hover:ring-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          aria-label="Swap from and to locations"
+                          tabIndex={0}
+                        >
+                          <ArrowLeftRight className="size-5 text-blue-600 transition-transform duration-200 group-hover:scale-110 group-active:rotate-180" />
+                        </button>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`to-${flight.id}`}>To</Label>
+                        <Popover
                             open={multiCityPopovers[flight.id]?.toOpen || false}
                             onOpenChange={(open) =>
                               setMultiCityPopoverOpen(flight.id, 'toOpen', open)
@@ -745,9 +771,9 @@ export default function FlightBooking() {
                               </Command>
                             </PopoverContent>
                           </Popover>
-                        </div>
                       </div>
-                      <div>
+                      
+                      <div className="space-y-2">
                         <DateSelector
                           label="Travel date"
                           selectedDate={flight.date}
@@ -775,9 +801,10 @@ export default function FlightBooking() {
                     <Label className="mb-2 block">Passengers</Label>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <Label className="mb-1 block text-sm text-gray-600">
+                        <Label className="mb-1 block text-sm font-medium text-gray-600">
                           Adults
                         </Label>
+                        <p className="mb-1 text-xs text-gray-500 h-4">&nbsp;</p>
                         <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
@@ -809,10 +836,10 @@ export default function FlightBooking() {
                         </div>
                       </div>
                       <div>
-                        <Label className="mb-1 block text-sm text-gray-600">
+                        <Label className="mb-1 block text-sm font-medium text-gray-600">
                           Children
                         </Label>
-                        <p className="mb-1 text-xs text-gray-500">
+                        <p className="mb-1 text-xs text-gray-500 h-4">
                           2-11 years old
                         </p>
                         <div className="flex items-center gap-2">
@@ -846,10 +873,10 @@ export default function FlightBooking() {
                         </div>
                       </div>
                       <div>
-                        <Label className="mb-1 block text-sm text-gray-600">
+                        <Label className="mb-1 block text-sm font-medium text-gray-600">
                           Infants
                         </Label>
-                        <p className="mb-1 text-xs text-gray-500">
+                        <p className="mb-1 text-xs text-gray-500 h-4">
                           0-23 months old
                         </p>
                         <div className="flex items-center gap-2">
@@ -895,8 +922,8 @@ export default function FlightBooking() {
             ) : (
               // Round trip and One way form
               <>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto_1fr] md:items-end">
+                  <div className="space-y-2">
                     <Label htmlFor="from">From</Label>
                     <Popover open={fromOpen} onOpenChange={setFromOpen}>
                       <PopoverTrigger asChild>
@@ -938,7 +965,21 @@ export default function FlightBooking() {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  <div>
+                  
+                  {/* Arrow Separator - Perfectly centered using flexbox */}
+                  <div className="hidden md:flex items-center justify-center pb-2">
+                    <button
+                      type="button"
+                      onClick={swapFromTo}
+                      className="group flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 ring-1 ring-blue-200 transition-all duration-200 hover:bg-blue-100 hover:ring-2 hover:ring-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                      aria-label="Swap from and to locations"
+                      tabIndex={0}
+                    >
+                      <ArrowLeftRight className="size-5 text-blue-600 transition-transform duration-200 group-hover:scale-110 group-active:rotate-180" />
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-2">
                     <Label htmlFor="to">To</Label>
                     <Popover open={toOpen} onOpenChange={setToOpen}>
                       <PopoverTrigger asChild>
@@ -1003,7 +1044,7 @@ export default function FlightBooking() {
                     value={passengerCounts}
                     onChange={setPassengerCounts}
                   />
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="class">Cabin Class</Label>
                     <Select defaultValue="economy">
                       <SelectTrigger id="class" className="h-14">

@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Mail, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 
 interface PupilProps {
@@ -179,6 +181,8 @@ const EyeBall = ({
 
 
 function LoginPage() {
+  const { setIsAuthenticated } = useAuth();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -312,16 +316,16 @@ function LoginPage() {
     // Simulate API delay (quick)
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Mock authentication - validate against dummy credentials
-    if (email === "erik@gmail.com" && password === "1234") {
+    // Basic validation - just check if fields are not empty
+    if (email.trim() && password.trim()) {
       console.log("✅ Login successful!");
-      alert("Login successful! Welcome, Erik!");
-      // In a real app, you would:
-      // - Store auth token
-      // - Redirect to dashboard
-      // - Set user session
+      // Set authentication state
+      setIsAuthenticated(true);
+      // Store in localStorage (already handled by AuthContext)
+      // Redirect to dashboard
+      router.push("/dashboard");
     } else {
-      setError("Invalid email or password. Please try again.");
+      setError("Please enter both email and password.");
       console.log("❌ Login failed");
     }
 

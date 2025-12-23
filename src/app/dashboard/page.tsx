@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface Journey {
   id: number;
@@ -51,8 +53,17 @@ interface SavedPackage {
 }
 
 export default function Dashboard() {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [savedPackages, setSavedPackages] = useState<SavedPackage[]>([]);
+
+  // Authentication check
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/auth');
+    }
+  }, [isAuthenticated, router]);
 
   // Load saved packages from localStorage
   useEffect(() => {
