@@ -34,11 +34,21 @@ import {
   User,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function Profile() {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/auth');
+    }
+  }, [isAuthenticated, router]);
   const [profileData, setProfileData] = useState({
     firstName: 'John',
     lastName: 'Doe',
