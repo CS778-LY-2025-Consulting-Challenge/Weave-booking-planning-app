@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ChevronDown,
   Heart,
@@ -278,7 +280,7 @@ export default function Navbar() {
                     ))}
 
                     {/* Mobile Auth Section */}
-                    {isAuthenticated && (
+                    {isAuthenticated ? (
                       <>
                         <div className="my-2 h-px bg-white/20" />
                         <Link
@@ -309,6 +311,16 @@ export default function Navbar() {
                             variant="mobile"
                           />
                         </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="my-2 h-px bg-white/20" />
+                        <Button
+                          onClick={() => router.push('/auth')}
+                          className="mx-2 bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-purple-700 text-white"
+                        >
+                          Sign In
+                        </Button>
                       </>
                     )}
                   </div>
