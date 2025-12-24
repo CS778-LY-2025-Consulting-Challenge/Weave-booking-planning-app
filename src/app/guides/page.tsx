@@ -29,18 +29,16 @@ import { useEffect, useRef, useState } from 'react';
 interface Guide {
   id: number;
   name: string;
-  location: string;
   country: string;
-  region: string;
   rating: number;
   reviews: number;
   languages: string[];
   specialties: string[];
   hourlyRate: number;
   image: string;
+  video: string;
   verified: boolean;
   responseTime: string;
-  bio: string;
   featured?: boolean;
   tagline?: string;
 }
@@ -64,6 +62,7 @@ export default function Guides() {
   const [callType, setCallType] = useState<'none' | 'voice' | 'video'>('none');
   const [currentLocationIndex, setCurrentLocationIndex] = useState(0);
   const [isCarouselHovered, setIsCarouselHovered] = useState(false);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const popularLocations = [
@@ -112,156 +111,169 @@ export default function Guides() {
   const guides: Guide[] = [
     {
       id: 1,
-      name: 'Hans Mueller',
-      location: 'Berlin',
-      country: 'Germany',
-      region: 'Europe',
+      name: 'Andrea',
+      country: 'Italy',
       rating: 4.9,
       reviews: 243,
       languages: ['English', 'German', 'French'],
       specialties: ['History', 'Architecture', 'Nightlife'],
       hourlyRate: 35,
-      image:
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+      image: '/images/andrea.jpg',
+      video: '/images/andrea-1.mp4',
       verified: true,
       responseTime: '5 min',
-      bio: 'Berlin native with 10 years of guiding experience. I love showing visitors the hidden gems of this amazing city!',
       featured: true,
-      tagline: "Uncovering Berlin's hidden history and vibrant culture",
+      tagline: 'Discover the hidden gems of Rome.',
     },
     {
       id: 2,
-      name: 'Yuki Tanaka',
-      location: 'Tokyo',
-      country: 'Japan',
-      region: 'Asia',
+      name: 'Thanh',
+      country: 'Vietnam',
       rating: 5.0,
       reviews: 189,
       languages: ['English', 'Japanese'],
       specialties: ['Culture', 'Food', 'Temples'],
       hourlyRate: 40,
-      image:
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
+      image: '/images/thanh.jpg',
+      video: '/images/thanh-1.mp4',
       verified: true,
       responseTime: '10 min',
-      bio: 'Certified tour guide passionate about Japanese culture and cuisine. Let me show you the real Tokyo!',
       featured: true,
-      tagline: 'Experience authentic Tokyo through local eyes',
+      tagline: 'Experience the vibrant culture of Ho Chi Minh City.',
     },
     {
       id: 3,
-      name: 'Marco Rossi',
-      location: 'Rome',
-      country: 'Italy',
-      region: 'Europe',
+      name: 'Lucas',
+      country: 'Argentina',
       rating: 4.8,
       reviews: 312,
       languages: ['English', 'Italian', 'Spanish'],
       specialties: ['History', 'Art', 'Cuisine'],
       hourlyRate: 38,
-      image:
-        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
+      image: '/images/lucas.jpg',
+      video: '/images/lucas-1.mp4',
       verified: true,
+      featured: true,
       responseTime: '3 min',
-      bio: 'Rome is my passion! Art historian and foodie ready to share the eternal city with you.',
-      tagline: 'Journey through the eternal city',
+      tagline: 'Custom art experiences in Buenos Aires.',
     },
     {
       id: 4,
-      name: 'Sophie Laurent',
-      location: 'Paris',
-      country: 'France',
-      region: 'Europe',
+      name: 'Venese',
+      country: 'Japan',
       rating: 4.9,
       reviews: 278,
       languages: ['English', 'French', 'German'],
       specialties: ['Art', 'Fashion', 'Wine'],
       hourlyRate: 42,
-      image:
-        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
-      verified: true,
+      image: '/images/venese.jpg',
+      video: '/images/venese-1.mp4',
+      verified: true, 
+      featured: true,
       responseTime: '8 min',
-      bio: 'Parisian born and raised. Let me show you the city of lights like a true local!',
-      tagline: 'Discover the soul of Paris',
+      tagline: 'Tokyo’s fashion and art insider.',
     },
     {
       id: 5,
-      name: 'Carlos Silva',
-      location: 'Barcelona',
-      country: 'Spain',
-      region: 'Europe',
+      name: 'Tiago',
+      country: 'Portugal',
       rating: 4.7,
       reviews: 156,
       languages: ['English', 'Spanish', 'Catalan'],
       specialties: ['Architecture', 'Beaches', 'Tapas'],
       hourlyRate: 30,
-      image:
-        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400',
+      image: '/images/tiago.jpg',
+      video: '/images/tiago-1.mp4',
       verified: true,
+      featured: true,
       responseTime: '12 min',
-      bio: 'Barcelona enthusiast! Gaudi, beaches, and the best tapas spots - I know them all!',
-      tagline: 'From Gaudi to the Gothic Quarter',
+      tagline: 'Explore Lisbon’s stunning architecture and coastal beauty.',
     },
     {
       id: 6,
-      name: 'Priya Sharma',
-      location: 'Mumbai',
-      country: 'India',
-      region: 'Asia',
+      name: 'June',
+      country: 'Thailand',
       rating: 4.8,
       reviews: 201,
       languages: ['English', 'Hindi', 'Marathi'],
       specialties: ['Culture', 'Food', 'Markets'],
       hourlyRate: 25,
-      image:
-        'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400',
+      image: '/images/june.jpg',
+      video: '/images/june-4.mp4',
       verified: true,
       responseTime: '6 min',
-      bio: 'Experience the vibrant colors, flavors, and energy of Mumbai with me as your guide!',
       featured: true,
-      tagline: 'Explore the colors and flavors of Mumbai',
+      tagline: 'Discover the vibrant culture of Bangkok.',
     },
     {
       id: 7,
-      name: 'Alex Johnson',
-      location: 'New York',
-      country: 'USA',
-      region: 'North America',
+      name: 'Gunnar',
+      country: 'Iceland',
       rating: 4.9,
       reviews: 334,
       languages: ['English', 'Spanish'],
       specialties: ['Museums', 'Food', 'Broadway'],
       hourlyRate: 45,
-      image:
-        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400',
+      image: '/images/gunnar.jpg',
+      video: '/images/gunnar-3.mp4',
       verified: true,
+      featured: true,
       responseTime: '4 min',
-      bio: "NYC is my playground! From hidden speakeasies to world-class museums, I'll show you it all.",
-      tagline: "The New York you've never seen",
+      tagline: "Experience Iceland's natural wonders with a local expert.",
     },
     {
       id: 8,
-      name: 'Emma Wilson',
-      location: 'London',
-      country: 'United Kingdom',
-      region: 'Europe',
+      name: 'Denise & Rob',
+      country: 'Tanzania',
       rating: 5.0,
       reviews: 267,
       languages: ['English', 'French'],
       specialties: ['History', 'Pubs', 'Royal Sites'],
       hourlyRate: 40,
-      image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400',
+      image: '/images/denis.jpg',
+      video: '/images/denise-3.mp4',
       verified: true,
+      featured: true,
       responseTime: '7 min',
-      bio: 'London local with a love for history and culture. Let me take you beyond the tourist traps!',
-      tagline: 'Beyond the London you know',
+      tagline: 'Safari adventures with local wildlife experts.',
+    },
+    {
+      id: 9,
+      name: 'Cris',
+      country: 'Brazil',
+      rating: 4.9,
+      reviews: 215,
+      languages: ['English', 'Portuguese', 'Spanish'],
+      specialties: ['Wine', 'Coastal Towns', 'Food'],
+      hourlyRate: 32,
+      image: '/images/cris.jpg',
+      video: '/images/cris-2.mp4',
+      verified: true,
+      responseTime: '9 min',
+      featured: true,
+      tagline: "Discover Brazil's hidden gems.",
+    },
+    {
+      id: 10,
+      name: 'Zoloo',
+      country: 'Mongolia',
+      rating: 4.8,
+      reviews: 198,
+      languages: ['English', 'Thai', 'Mandarin'],
+      specialties: ['Temples', 'Street Food', 'Night Markets'],
+      hourlyRate: 28,
+      image: '/images/zoloo.jpg',
+      video: '/images/zoloo-1.mp4',
+      verified: true,
+      featured: true,
+      responseTime: '11 min',
+      tagline: 'Explore the wonders of Mongolia with a local guide.',
     },
   ];
 
   const filteredGuides = guides.filter((guide) => {
     const matchesSearch =
       searchQuery === '' ||
-      guide.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
       guide.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
       guide.name.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -328,7 +340,7 @@ export default function Guides() {
       {
         id: 1,
         sender: 'guide',
-        text: `Hi! I'm ${guide.name}. How can I help you explore ${guide.location}?`,
+        text: `Hi! I'm ${guide.name}. How can I help you explore ${guide.country}?`,
         timestamp: new Date(),
       },
     ]);
@@ -480,59 +492,85 @@ export default function Guides() {
           >
             <div className="flex gap-6 px-6 pb-4 lg:px-12">
               {/* Duplicate guides array 3 times for continuous scrolling */}
-              {[...guides, ...guides, ...guides].map((guide, index) => (
-                <div
-                  key={`${guide.id}-${index}`}
-                  className="group w-[320px] flex-none cursor-pointer sm:w-[380px]"
-                  onClick={() => openChat(guide)}
-                >
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-3xl shadow-lg">
-                    <ImageWithFallback
-                      src={guide.image}
-                      alt={guide.name}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
+              {[...guides, ...guides, ...guides].map((guide, index) => {
+                const cardId = `${guide.id}-${index}`;
+                const isPlayingVideo = playingVideoId === cardId;
+                
+                return (
+                  <div
+                    key={cardId}
+                    className="group w-[320px] flex-none cursor-pointer sm:w-[380px]"
+                  >
+                    <div className="relative aspect-[3/4] overflow-hidden rounded-3xl shadow-lg">
+                      {!isPlayingVideo ? (
+                        <>
+                          <ImageWithFallback
+                            src={guide.image}
+                            alt={guide.name}
+                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
 
-                    {/* Video Play Button for specific guide */}
-                    {index % guides.length === 2 && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-xl">
-                          <div className="ml-1 h-0 w-0 border-t-[10px] border-b-[10px] border-l-[16px] border-t-transparent border-b-transparent border-l-blue-600"></div>
+                          {/* Video Play Button - Show on all cards */}
+                          <button
+                            onClick={() => setPlayingVideoId(cardId)}
+                            className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 hover:bg-black/20"
+                          >
+                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-xl transition-transform duration-300 group-hover:scale-110">
+                              <div className="ml-1 h-0 w-0 border-t-[10px] border-b-[10px] border-l-[16px] border-t-transparent border-b-transparent border-l-blue-600"></div>
+                            </div>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <video
+                            src={guide.video}
+                            className="absolute inset-0 h-full w-full object-cover"
+                            autoPlay
+                            controls
+                            loop
+                            muted
+                          />
+                          <button
+                            onClick={() => setPlayingVideoId(null)}
+                            className="absolute top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-black hover:bg-white"
+                          >
+                            <X className="size-4" />
+                          </button>
+                        </>
+                      )}
+
+                      {/* Text Overlay */}
+                      {!isPlayingVideo && (
+                        <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-6 pointer-events-none">
+                          <h3 className="mb-1 text-2xl text-white">
+                            {guide.name.split(' ')[0]}
+                          </h3>
+                          <p className="mb-3 text-sm text-white/90">
+                            Local expert, {guide.country}
+                          </p>
+
+                          {guide.featured && (
+                            <div className="space-y-1">
+                              <p className="text-xs tracking-wide text-white uppercase">
+                                Featured Guide
+                              </p>
+                              <p className="text-xs text-white/80">
+                                {guide.tagline}
+                              </p>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Text Overlay */}
-                    <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-6">
-                      <h3 className="mb-1 text-2xl text-white">
-                        {guide.name.split(' ')[0]}
-                      </h3>
-                      <p className="mb-3 text-sm text-white/90">
-                        Local expert, {guide.location}
-                      </p>
-
-                      {index % guides.length === 2 && (
-                        <div className="space-y-1">
-                          <p className="text-xs tracking-wide text-white uppercase">
-                            Best Experience Planner
-                          </p>
-                          <p className="text-xs text-white/80">
-                            Zipping through Saigon on the back of a vintage
-                            Vespa, sampling the city's best cuisine at local
-                            haunts and street stalls
-                          </p>
+                      {!isPlayingVideo && guide.verified && (
+                        <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-xs text-black shadow-md backdrop-blur-sm">
+                          <BadgeCheck className="size-3" />
                         </div>
                       )}
                     </div>
-
-                    {guide.verified && (
-                      <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-xs text-black shadow-md backdrop-blur-sm">
-                        <BadgeCheck className="size-3" />
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -685,7 +723,7 @@ export default function Guides() {
                         )}
                       </DialogTitle>
                       <p className="text-sm text-gray-500">
-                        {selectedGuide.location}, {selectedGuide.country}
+                        {selectedGuide.country}
                       </p>
                     </div>
                   </div>
