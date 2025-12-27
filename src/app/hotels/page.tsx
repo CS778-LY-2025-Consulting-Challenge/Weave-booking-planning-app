@@ -37,26 +37,14 @@ import { useState } from 'react';
 import { HotelSearch, HotelSearchParams } from '@/components/HotelSearch';
 import { HotelResults, HotelResult } from '@/components/HotelResults';
 import { searchHotels } from '@/services/hotelService';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-interface Room {
-  id: number;
-  name: string;
-  description: string;
-  size: string;
-  beds: string;
-  guests: number;
-  price: number;
-  image: string;
-  amenities: string[];
-  featured?: boolean;
-}
-
 export default function HotelBooking() {
+  const router = useRouter();
   const [checkIn, setCheckIn] = useState('2025-12-15');
   const [checkOut, setCheckOut] = useState('2025-12-22');
   const [guests, setGuests] = useState(2);
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectingCheckIn, setSelectingCheckIn] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date(2025, 11, 1)); // December 2025
@@ -168,81 +156,6 @@ export default function HotelBooking() {
     // In a real app, you would navigate to a booking confirmation page or open a booking modal
   };
 
-  const rooms: Room[] = [
-    {
-      id: 1,
-      name: 'Deluxe Room',
-      description:
-        'Contemporary comfort with city views and modern amenities for the discerning traveler',
-      size: '35 m²',
-      beds: '1 King Bed',
-      guests: 2,
-      price: 299,
-      image:
-        'https://images.unsplash.com/flagged/photo-1582108074095-1730ef6caec9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBkZWx1eGUlMjByb29tJTIwaG90ZWx8ZW58MXx8fHwxNzY0NjIyOTgyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-      amenities: ['City View', 'King Bed', 'WiFi', 'Smart TV', 'Minibar'],
-    },
-    {
-      id: 2,
-      name: 'Executive Suite',
-      description:
-        'Spacious elegance with separate living area, perfect for extended stays and business travelers',
-      size: '55 m²',
-      beds: '1 King Bed + Sofa Bed',
-      guests: 3,
-      price: 449,
-      image:
-        'https://images.unsplash.com/photo-1758448511255-ac2a24a135d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxleGVjdXRpdmUlMjBzdWl0ZSUyMGhvdGVsfGVufDF8fHx8MTc2NDYyMjk4M3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-      amenities: [
-        'Separate Living',
-        'Work Desk',
-        'WiFi',
-        'Nespresso',
-        'City View',
-      ],
-      featured: true,
-    },
-    {
-      id: 3,
-      name: 'Penthouse Suite',
-      description:
-        'The pinnacle of luxury with panoramic views, private terrace, and bespoke services',
-      size: '85 m²',
-      beds: '1 King Bed + Guest Room',
-      guests: 4,
-      price: 799,
-      image:
-        'https://images.unsplash.com/photo-1702411200201-3061d0eea802?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZW50aG91c2UlMjBzdWl0ZSUyMGx1eHVyeXxlbnwxfHx8fDE3NjQ2MjI5ODN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-      amenities: [
-        'Private Terrace',
-        'Butler Service',
-        'Jacuzzi',
-        'Panoramic Views',
-        'Premium Bar',
-      ],
-      featured: true,
-    },
-    {
-      id: 4,
-      name: 'Boutique Room',
-      description:
-        'Artistic design meets comfort in our signature boutique-style accommodation',
-      size: '32 m²',
-      beds: '1 Queen Bed',
-      guests: 2,
-      price: 249,
-      image:
-        'https://images.unsplash.com/photo-1759223198981-661cadbbff36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxib3V0aXF1ZSUyMGhvdGVsJTIwYmVkcm9vbSUyMHN1aXRlfGVufDF8fHx8MTc2NDYyMjk3OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-      amenities: [
-        'Designer Interiors',
-        'Queen Bed',
-        'WiFi',
-        'Rain Shower',
-        'Artwork',
-      ],
-    },
-  ];
-
   const experiences = [
     {
       title: 'Rooftop Pool & Bar',
@@ -297,7 +210,7 @@ export default function HotelBooking() {
                   Boutique Luxury
                 </p>
               </div>
-              <h1 className="mb-4 text-5xl md:text-7xl">Weave Hotel</h1>
+              <h1 className="mb-4 text-5xl md:text-7xl">Book Hotel's</h1>
               <p className="max-w-2xl text-xl text-gray-200 md:text-2xl">
                 Where contemporary design meets timeless elegance in the heart
                 of the city
@@ -515,11 +428,27 @@ export default function HotelBooking() {
           className="bg-white px-4 py-20 sm:px-6 lg:px-8"
         >
           <div className="mx-auto max-w-7xl">
+            <div className="mb-16 text-center">
+              <div className="mb-6 flex items-center justify-center gap-2">
+                <div className="h-px w-12 bg-black" />
+                <p className="text-sm tracking-widest uppercase">
+                  Accommodations
+                </p>
+                <div className="h-px w-12 bg-black" />
+              </div>
+              <h2 className="mb-6 text-4xl md:text-5xl">Rooms & Suites</h2>
+              <p className="mx-auto max-w-3xl text-lg text-gray-600">
+                Each room is a sanctuary of style and comfort, designed with
+                meticulous attention to detail and premium finishes.
+              </p>
+            </div>
             <HotelResults
               hotels={searchResults}
               isLoading={isSearching}
               error={searchError}
-              onBooking={handleHotelBooking}
+              onViewDetails={(hotel) => {
+                router.push(`/hotels/${encodeURIComponent(hotel.name.toLowerCase().replace(/\s+/g, '-'))}`);
+              }}
             />
           </div>
         </motion.div>
@@ -567,109 +496,6 @@ export default function HotelBooking() {
                 className="h-full w-full object-cover"
               />
             </motion.div>
-          </div>
-        </div>
-      </div>
-
-      {/* Rooms & Suites */}
-      <div className="bg-white px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-16 text-center">
-            <div className="mb-6 flex items-center justify-center gap-2">
-              <div className="h-px w-12 bg-black" />
-              <p className="text-sm tracking-widest uppercase">
-                Accommodations
-              </p>
-              <div className="h-px w-12 bg-black" />
-            </div>
-            <h2 className="mb-6 text-4xl md:text-5xl">Rooms & Suites</h2>
-            <p className="mx-auto max-w-3xl text-lg text-gray-600">
-              Each room is a sanctuary of style and comfort, designed with
-              meticulous attention to detail
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            {rooms.map((room, index) => (
-              <motion.div
-                key={room.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{
-                  duration: 0.6,
-                  delay: index * 0.1,
-                }}
-              >
-                <Card className="group overflow-hidden border-0 transition-all duration-500 hover:shadow-2xl">
-                  <div className="relative h-80 overflow-hidden">
-                    <img
-                      src={room.image}
-                      alt={room.name}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    {room.featured && (
-                      <Badge className="absolute top-4 right-4 border-0 bg-amber-500 text-white">
-                        <Award className="mr-1 size-3" />
-                        Featured
-                      </Badge>
-                    )}
-                    <div className="absolute right-0 bottom-0 left-0 p-6 text-white">
-                      <h3 className="mb-2 text-2xl">{room.name}</h3>
-                      <p className="text-sm text-gray-200">
-                        {room.description}
-                      </p>
-                    </div>
-                  </div>
-                  <CardContent className="p-6">
-                    <div className="mb-4 grid grid-cols-3 gap-4 border-b pb-4">
-                      <div>
-                        <p className="mb-1 text-xs text-gray-500">Size</p>
-                        <p className="text-sm">{room.size}</p>
-                      </div>
-                      <div>
-                        <p className="mb-1 text-xs text-gray-500">Beds</p>
-                        <p className="text-sm">{room.beds}</p>
-                      </div>
-                      <div>
-                        <p className="mb-1 text-xs text-gray-500">Guests</p>
-                        <p className="text-sm">{room.guests} max</p>
-                      </div>
-                    </div>
-
-                    <div className="mb-6 flex flex-wrap gap-2">
-                      {room.amenities.map((amenity) => (
-                        <Badge
-                          key={amenity}
-                          variant="outline"
-                          className="border-gray-300"
-                        >
-                          {amenity}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="mb-1 text-xs text-gray-500">From</p>
-                        <p className="text-3xl">
-                          ${room.price}
-                          <span className="text-sm text-gray-500">/night</span>
-                        </p>
-                      </div>
-                      <Button
-                        className="bg-black hover:bg-gray-800"
-                        onClick={() => setSelectedRoom(room)}
-                      >
-                        Book Now
-                        <ChevronRight className="ml-2 size-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
           </div>
         </div>
       </div>
@@ -762,155 +588,6 @@ export default function HotelBooking() {
         </div>
       </div>
 
-      {/* Contact & Location */}
-      <div className="bg-white px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-16 md:grid-cols-2">
-            <div>
-              <h2 className="mb-8 text-4xl">Get In Touch</h2>
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-black">
-                    <MapPin className="size-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-gray-500">Address</p>
-                    <p className="text-lg">
-                      123 Heritage Boulevard
-                      <br />
-                      Downtown District, Auckland
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-black">
-                    <Phone className="size-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-gray-500">Phone</p>
-                    <p className="text-lg">+64 9 123 4567</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-black">
-                    <Mail className="size-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-gray-500">Email</p>
-                    <p className="text-lg">reservations@weavehotel.com</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-black">
-                    <Clock className="size-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-gray-500">
-                      Check-in / Check-out
-                    </p>
-                    <p className="text-lg">3:00 PM / 11:00 AM</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <Card className="border-0 bg-gray-50 p-8">
-                <h3 className="mb-6 text-2xl">Special Offers</h3>
-                <p className="mb-6 text-gray-600">
-                  Subscribe to receive exclusive offers, event invitations, and
-                  the latest news from Weave Hotel.
-                </p>
-                <div className="space-y-4">
-                  <Input placeholder="Your email address" className="h-12" />
-                  <Button className="h-12 w-full bg-black hover:bg-gray-800">
-                    Subscribe
-                    <ArrowRight className="ml-2 size-4" />
-                  </Button>
-                </div>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Booking Dialog would go here */}
-      <AnimatePresence>
-        {selectedRoom && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-            onClick={() => setSelectedRoom(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-lg bg-white"
-            >
-              <div className="relative h-64">
-                <img
-                  src={selectedRoom.image}
-                  alt={selectedRoom.name}
-                  className="h-full w-full object-cover"
-                />
-                <button
-                  onClick={() => setSelectedRoom(null)}
-                  className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-white"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="p-8">
-                <h3 className="mb-4 text-3xl">{selectedRoom.name}</h3>
-                <p className="mb-6 text-gray-600">{selectedRoom.description}</p>
-
-                <div className="mb-6 grid grid-cols-3 gap-4 border-b pb-6">
-                  <div>
-                    <p className="mb-1 text-sm text-gray-500">Size</p>
-                    <p>{selectedRoom.size}</p>
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-gray-500">Beds</p>
-                    <p>{selectedRoom.beds}</p>
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-gray-500">Guests</p>
-                    <p>{selectedRoom.guests} max</p>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <p className="mb-3 text-sm text-gray-500">Amenities</p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedRoom.amenities.map((amenity) => (
-                      <Badge key={amenity} variant="outline">
-                        {amenity}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mb-6 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">Total for your stay</p>
-                    <p className="text-3xl">${selectedRoom.price * 7}</p>
-                    <p className="text-sm text-gray-500">7 nights</p>
-                  </div>
-                </div>
-
-                <Button className="h-14 w-full bg-black text-lg hover:bg-gray-800">
-                  Confirm Booking
-                  <ArrowRight className="ml-2 size-5" />
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
