@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
+import { FlightBookingFlow } from '@/components/FlightBookingFlow';
 
 interface Flight {
   id: number;
@@ -136,6 +137,7 @@ export default function FlightBooking() {
   const [tripType, setTripType] = useState('roundtrip');
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showBookingFlow, setShowBookingFlow] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [fromInput, setFromInput] = useState('');
   const [toInput, setToInput] = useState('');
@@ -346,7 +348,7 @@ export default function FlightBooking() {
 
   const handleSelectFlight = (flight: Flight) => {
     setSelectedFlight(flight);
-    setShowConfirmation(true);
+    setShowBookingFlow(true);
   };
 
   const addMultiCityFlight = () => {
@@ -1842,6 +1844,15 @@ export default function FlightBooking() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Flight Booking Flow Modal */}
+      {selectedFlight && showBookingFlow && (
+        <FlightBookingFlow
+          flight={selectedFlight}
+          totalPassengers={totalPassengers}
+          onClose={() => setShowBookingFlow(false)}
+        />
+      )}
     </div>
   );
 }
