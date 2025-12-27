@@ -1,5 +1,7 @@
 'use client';
 
+import timePreciousImage from '@/images/2.png';
+import heroImage from '@/images/3.jpg';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -595,6 +597,78 @@ export default function Guides() {
           >
             <ChevronDown className="size-6 rotate-90" />
           </button>
+        </div>
+      </section>
+
+      {/* Your Time is Precious */}
+      <section className="px-6 py-16 lg:px-12">
+        <div className="mx-auto max-w-7xl">
+          <div
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 px-8 py-16 lg:px-16 lg:py-20"
+            style={{
+              backgroundImage: `url(${timePreciousImage.src})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'bottom center',
+              backgroundRepeat: 'no-repeat',
+            }}
+          >
+            {/* Overlay for better text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-transparent via-amber-50/80 to-amber-50/95" />
+            
+            {/* Content */}
+            <div className="relative z-10 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+              {/* Left Column */}
+              <div className="flex flex-col justify-center space-y-6 text-center lg:text-left">
+                <h2 className="text-3xl font-bold text-gray-900 lg:text-4xl xl:text-5xl">
+                  Your time is precious.
+                </h2>
+                <p className="text-xl font-bold text-gray-800 lg:text-2xl">
+                  The average international trip takes a minimum of 40 hours of
+                  research.
+                </p>
+              </div>
+
+              {/* Right Column */}
+              <div className="flex items-center">
+                <p className="text-base leading-relaxed text-gray-700 lg:text-lg">
+                  It&apos;s our job to cut through the noise with tailored
+                  recommendations based on our boots-on-the-ground knowledge and
+                  personal connections. We&apos;ve vetted and tested, so you
+                  don&apos;t have to.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Destination Thrives Hero */}
+      <section
+        className="relative flex min-h-[50vh] items-center px-6 py-20 lg:min-h-[65vh] lg:px-12"
+        style={{
+          backgroundImage: `url(${heroImage.src})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {/* Dark gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+
+        {/* Content */}
+        <div className="relative z-10 mx-auto w-full max-w-7xl">
+          <div className="max-w-2xl">
+            <h2 className="mb-6 text-4xl font-bold leading-tight text-white lg:text-5xl xl:text-6xl">
+              When a destination thrives, so does your experience there.
+            </h2>
+            <p className="text-lg leading-relaxed text-white/90 lg:text-xl">
+              Our local guides are deeply invested in their communities. They know
+              the hidden gems, support local businesses, and ensure your travel
+              dollars make a positive impact. When you book with us, you&apos;re not
+              just visiting, you&apos;re contributing to sustainable tourism that
+              benefits everyone.
+            </p>
+          </div>
         </div>
       </section>
 
