@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
 import timePreciousImage from '@/images/2.png';
 import heroImage from '@/images/3.jpg';
+import circleImage from '@/images/1.webp';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -656,18 +657,79 @@ export default function Guides() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
 
         {/* Content */}
-        <div className="relative z-10 mx-auto w-full max-w-7xl">
-          <div className="max-w-2xl">
-            <h2 className="mb-6 text-4xl font-bold leading-tight text-white lg:text-5xl xl:text-6xl">
+        <div className="relative z-10 w-full">
+          <div className="max-w-3xl text-left lg:ml-0 lg:mr-auto">
+            <h2 className="mb-6 text-4xl font-bold leading-tight text-white lg:text-5xl xl:text-6xl text-left">
               When a destination thrives, so does your experience there.
             </h2>
-            <p className="text-lg leading-relaxed text-white/90 lg:text-xl">
+            <p className="text-lg leading-relaxed text-white/90 lg:text-xl text-left">
               Our local guides are deeply invested in their communities. They know
               the hidden gems, support local businesses, and ensure your travel
               dollars make a positive impact. When you book with us, you&apos;re not
               just visiting, you&apos;re contributing to sustainable tourism that
               benefits everyone.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Trips You Can Feel Good About */}
+      <section className="px-6 py-20 lg:px-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold lg:text-4xl">Trips you can feel good about</h2>
+            <p className="mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-gray-700">
+              We believe that travel should be built on local insight, created and sold directly from the destination itself.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 items-center justify-center gap-10 xl:gap-12 lg:grid-cols-2">
+            {/* Left visuals: stacked image with transparent background and labels */}
+            <div className="flex justify-center lg:justify-center">
+              <div className="relative w-full max-w-[220px] sm:max-w-[240px] lg:max-w-[250px] xl:max-w-[260px]">
+                <ImageWithFallback
+                  src={circleImage.src}
+                  alt="You and your destination"
+                  width={600}
+                  height={900}
+                  className="w-full h-auto object-contain bg-transparent"
+                />
+                {/* Label 1: YOU — centered in top circle */}
+                <div className="absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 text-center font-bold uppercase tracking-wide text-white text-sm sm:text-base lg:text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  YOU
+                </div>
+                {/* Label 2: YOUR DESTINATION — centered in bottom circle */}
+                <div className="absolute left-1/2 top-[60%] -translate-x-1/2 -translate-y-1/2 text-center font-bold uppercase tracking-wide text-white text-xs sm:text-sm lg:text-base drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight">
+                  YOUR
+                  <br />
+                  DESTINATION
+                </div>
+              </div>
+            </div>
+
+            {/* Right content blocks */}
+            <div className="space-y-10 lg:self-center">
+              <div>
+                <h3 className="text-2xl font-bold">
+                  By traveling with Weave Journeys, we guarantee inside access to extraordinary trips
+                </h3>
+                <p className="mt-4 leading-relaxed text-gray-700">
+                  Our network of trusted local experts opens doors that typical itineraries miss. From private viewings and
+                  behind-the-scenes encounters to meaningful cultural exchanges, your journey is crafted with insight from the
+                  people who live there.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-2xl font-bold">
+                  By traveling with Weave Journeys, you are supporting the protection and preservation of your host country
+                </h3>
+                <p className="mt-4 leading-relaxed text-gray-700">
+                  Your trip contributes to community-led initiatives and sustainable practices. We partner directly with local
+                  guides and organizations so your experience benefits both you and the destination, today and for the future.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
