@@ -128,6 +128,186 @@ export default function Home() {
       image:
         'https://images.unsplash.com/photo-1504829857797-ddff29c27927?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpY2VsYW5kJTIwd2F0ZXJmYWxsfGVufDF8fHx8MTc2NDUzNzMxMXww&ixlib=rb-4.1.0&q=80&w=1080',
     },
+    {
+      id: 7,
+      title: "PERU'S ANCIENT WONDERS: MACHU PICCHU, CUSCO, AND THE SACRED VALLEY",
+      days: 10,
+      nights: 9,
+      price: 4250,
+      gradientColor: "45 95% 50%",
+      image:
+        'https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=1080&q=80',
+    },
+    {
+      id: 8,
+      title: "CROATIA'S DALMATIAN COAST: DUBROVNIK, SPLIT, AND THE ISLANDS",
+      days: 9,
+      nights: 8,
+      price: 3650,
+      gradientColor: "195 85% 50%",
+      image:
+        'https://images.unsplash.com/photo-1555990538-c3d6bc49b65e?w=1080&q=80',
+    },
+    {
+      id: 9,
+      title: "NEW ZEALAND'S SOUTH ISLAND: ADVENTURE IN THE LAND OF MIDDLE-EARTH",
+      days: 15,
+      nights: 14,
+      price: 6890,
+      gradientColor: "150 75% 45%",
+      image:
+        'https://images.unsplash.com/photo-1469521669194-babb90587d26?w=1080&q=80',
+    },
+    {
+      id: 10,
+      title: "MOROCCO'S IMPERIAL CITIES: MARRAKECH, FES, AND THE SAHARA DESERT",
+      days: 10,
+      nights: 9,
+      price: 3120,
+      gradientColor: "25 85% 55%",
+      image:
+        'https://images.unsplash.com/photo-1489749798305-4fea3ae63d43?w=1080&q=80',
+    },
+    {
+      id: 11,
+      title: "THAILAND'S TROPICAL PARADISE: BANGKOK, CHIANG MAI, AND PHUKET",
+      days: 12,
+      nights: 11,
+      price: 3580,
+      gradientColor: "340 80% 50%",
+      image:
+        'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=1080&q=80',
+    },
+    {
+      id: 12,
+      title: "AUSTRALIA'S EAST COAST: SYDNEY, GREAT BARRIER REEF, AND WHITSUNDAYS",
+      days: 16,
+      nights: 15,
+      price: 7450,
+      gradientColor: "210 90% 50%",
+      image:
+        'https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?w=1080&q=80',
+    },
+    {
+      id: 13,
+      title: "NORWAY'S FJORDS: BERGEN, FLAM, AND THE SCENIC RAILWAYS",
+      days: 8,
+      nights: 7,
+      price: 4980,
+      gradientColor: "220 70% 50%",
+      image:
+        'https://images.unsplash.com/photo-1601439678777-b2d6b8c1f3b7?w=1080&q=80',
+    },
+    {
+      id: 14,
+      title: "PORTUGAL'S COASTAL CHARM: LISBON, PORTO, AND THE ALGARVE",
+      days: 10,
+      nights: 9,
+      price: 3350,
+      gradientColor: "40 85% 50%",
+      image:
+        'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=1080&q=80',
+    },
+    {
+      id: 15,
+      title: "GREECE'S ISLAND HOPPING: SANTORINI, MYKONOS, AND CRETE",
+      days: 13,
+      nights: 12,
+      price: 4750,
+      gradientColor: "210 100% 60%",
+      image:
+        'https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=1080&q=80',
+    },
+    {
+      id: 16,
+      title: "SOUTH AFRICA'S GARDEN ROUTE: CAPE TOWN, SAFARI, AND WINE COUNTRY",
+      days: 14,
+      nights: 13,
+      price: 5680,
+      gradientColor: "15 90% 50%",
+      image:
+        'https://images.unsplash.com/photo-1484318571209-661cf29a69c3?w=1080&q=80',
+    },
+    {
+      id: 17,
+      title: "BALI'S SPIRITUAL JOURNEY: TEMPLES, RICE TERRACES, AND BEACHES",
+      days: 11,
+      nights: 10,
+      price: 3290,
+      gradientColor: "150 85% 45%",
+      image:
+        'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1080&q=80',
+    },
+    {
+      id: 18,
+      title: "SWITZERLAND'S ALPINE ADVENTURE: ZURICH, LUCERNE, AND THE MATTERHORN",
+      days: 9,
+      nights: 8,
+      price: 5890,
+      gradientColor: "0 80% 50%",
+      image:
+        'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=1080&q=80',
+    },
+    {
+      id: 19,
+      title: "EGYPT'S ANCIENT MYSTERIES: CAIRO, LUXOR, AND NILE CRUISE",
+      days: 10,
+      nights: 9,
+      price: 3980,
+      gradientColor: "40 75% 50%",
+      image:
+        'https://images.unsplash.com/photo-1572252009286-268acec5ca0a?w=1080&q=80',
+    },
+    {
+      id: 20,
+      title: "PATAGONIA'S WILDERNESS: TORRES DEL PAINE AND GLACIERS",
+      days: 12,
+      nights: 11,
+      price: 6250,
+      gradientColor: "180 70% 45%",
+      image:
+        'https://images.unsplash.com/photo-1452827073306-6e6e661baf57?w=1080&q=80',
+    },
+    {
+      id: 21,
+      title: "INDIA'S GOLDEN TRIANGLE: DELHI, AGRA, AND JAIPUR",
+      days: 8,
+      nights: 7,
+      price: 2890,
+      gradientColor: "30 90% 55%",
+      image:
+        'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=1080&q=80',
+    },
+    {
+      id: 22,
+      title: "SCOTLAND'S HIGHLANDS: EDINBURGH, LOCH NESS, AND ISLE OF SKYE",
+      days: 9,
+      nights: 8,
+      price: 4120,
+      gradientColor: "140 60% 45%",
+      image:
+        'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1080&q=80',
+    },
+    {
+      id: 23,
+      title: "COSTA RICA'S ECO ADVENTURE: RAINFORESTS, VOLCANOES, AND BEACHES",
+      days: 11,
+      nights: 10,
+      price: 3750,
+      gradientColor: "130 80% 45%",
+      image:
+        'https://images.unsplash.com/photo-1551880568-f3b3c7fc3b4b?w=1080&q=80',
+    },
+    {
+      id: 24,
+      title: "TURKEY'S CULTURAL CROSSROADS: ISTANBUL, CAPPADOCIA, AND EPHESUS",
+      days: 10,
+      nights: 9,
+      price: 3450,
+      gradientColor: "10 85% 50%",
+      image:
+        'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=1080&q=80',
+    },
   ];
 
   const trendingJourneys = [
@@ -275,8 +455,16 @@ export default function Home() {
   const scrollEdgeCarousel = (direction: 'left' | 'right') => {
     const el = edgeCarouselRef.current;
     if (!el) return;
-    const amount = el.clientWidth * 0.8;
-    el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
+    
+    // Calculate scroll amount based on card width + gap
+    const cardWidth = 320; // fixed card width
+    const gap = 24; // gap-6 = 24px
+    const amount = cardWidth + gap;
+    
+    el.scrollBy({ 
+      left: direction === 'left' ? -amount : amount, 
+      behavior: 'smooth' 
+    });
   };
 
   return (
@@ -435,18 +623,27 @@ export default function Home() {
             </button>
           </div>
 
-          <div ref={edgeCarouselRef} className="w-full overflow-x-auto pb-2 scrollbar-hide">
+          <div 
+            ref={edgeCarouselRef} 
+            className="w-full overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch',
+            }}
+          >
             <div className="flex w-full gap-6 px-4 sm:px-6 lg:px-10">
             {featuredDestinations.map((destination) => (
               <div
                 key={`edge-${destination.id}`}
-                className="min-w-[280px] sm:min-w-[320px] md:min-w-[360px] rounded-2xl bg-white shadow-lg shadow-black/5 transition-transform duration-300 hover:-translate-y-1"
+                className="w-[320px] flex-shrink-0 rounded-2xl bg-white shadow-lg shadow-black/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl snap-start"
               >
-                <div className="relative aspect-[4/5] overflow-hidden">
+                <div className="relative aspect-[4/5] overflow-hidden rounded-t-2xl">
                   <img
                     src={destination.image}
                     alt={destination.title}
-                    className="absolute inset-0 h-full w-full object-cover"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-transparent" />
                   <div className="absolute left-4 right-4 top-4 flex items-center justify-between text-[10px] font-semibold tracking-[0.2em] uppercase text-white/90">
@@ -458,14 +655,17 @@ export default function Home() {
                   <p className="text-[11px] font-semibold tracking-[0.2em] text-gray-500 uppercase">
                     {destination.days} days / {destination.nights} nights
                   </p>
-                  <h3 className="text-xl font-bold leading-snug text-gray-900">
+                  <h3 className="text-xl font-bold leading-snug text-gray-900 line-clamp-2">
                     {destination.title.split(':')[1]?.trim() ?? destination.title}
                   </h3>
                   <p className="text-sm font-medium text-gray-600">
                     From ${destination.price.toLocaleString()} per person
                   </p>
                   <div className="flex items-center justify-between pt-3">
-                    <button className="rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-transform duration-200 hover:scale-105">
+                    <button 
+                      className="rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-all duration-200 hover:scale-105 hover:bg-gray-800"
+                      onClick={() => router.push('/packages')}
+                    >
                       Book now
                     </button>
                     <ArrowRight className="size-4 text-gray-900" />
