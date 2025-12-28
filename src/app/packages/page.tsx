@@ -42,6 +42,7 @@ interface Package {
 export default function Packages() {
   const router = useRouter();
   const [addedPackages, setAddedPackages] = useState<number[]>([]);
+  const [isCursorOnContent, setIsCursorOnContent] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('savedPackages');
@@ -262,6 +263,8 @@ export default function Packages() {
       <div
         id="packages-grid"
         className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
+        onMouseEnter={() => setIsCursorOnContent(true)}
+        onMouseLeave={() => setIsCursorOnContent(false)}
       >
         {/* AI Trip Planner - Premium Featured Card */}
         <motion.div
@@ -822,7 +825,7 @@ export default function Packages() {
           )}
         </DialogContent>
       </Dialog>
-      <CursorTrail />
+      <CursorTrail isVisible={!isCursorOnContent} />
     </div>
   );
 }

@@ -2,6 +2,10 @@
 
 import { useEffect, useRef } from 'react';
 
+interface CursorTrailProps {
+  isVisible?: boolean;
+}
+
 const TRAVEL_IMAGES = [
   'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=200&h=200&fit=crop',
   'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=200&h=200&fit=crop',
@@ -25,7 +29,7 @@ interface TrailImage {
   removeTime: number;
 }
 
-export default function CursorTrail() {
+export default function CursorTrail({ isVisible = true }: CursorTrailProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const trailRef = useRef<TrailImage[]>([]);
   const lastSpawnTimeRef = useRef(0);
@@ -235,6 +239,8 @@ export default function CursorTrail() {
         height: '100%',
         pointerEvents: 'none',
         zIndex: 9999,
+        opacity: isVisible ? 1 : 0,
+        transition: 'opacity 400ms cubic-bezier(0.4, 0, 0.2, 1)',
       }}
       aria-hidden="true"
     />
