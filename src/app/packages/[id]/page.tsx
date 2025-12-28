@@ -2668,7 +2668,7 @@ export default function PackageDetails() {
 
                   <Button
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    onClick={handleBookNow}
+                    onClick={() => { localStorage.setItem('selectedPackageId', String(packageData.id)); router.push(`/packages/${packageData.id}/book`); }}
                   >
                     Book This Package
                   </Button>
