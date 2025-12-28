@@ -404,7 +404,8 @@ export default function Packages() {
           {packages.map((pkg) => (
             <Card
               key={pkg.id}
-              className="group overflow-hidden transition-shadow hover:shadow-xl"
+              className="group cursor-pointer overflow-hidden transition-shadow hover:shadow-xl"
+              onClick={() => router.push(`/packages/${pkg.id}`)}
             >
               <div className="relative h-64 overflow-hidden">
                 <img
@@ -464,7 +465,7 @@ export default function Packages() {
                     >
                       <Button
                         className="group relative w-full overflow-hidden"
-                        onClick={() => router.push(`/packages/${pkg.id}`)}
+                        onClick={(e) => { e.stopPropagation(); router.push(`/packages/${pkg.id}`); }}
                       >
                         <motion.span
                           animate={{

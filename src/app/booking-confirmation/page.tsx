@@ -140,7 +140,7 @@ export default function BookingConfirmation() {
   const BookingIcon = getBookingIcon();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 via-blue-50 to-white px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-green-50 via-blue-50 to-white px-4 pt-24 md:pt-28 pb-12">
       <div className="mx-auto max-w-4xl">
         {/* Success Header */}
         <motion.div
