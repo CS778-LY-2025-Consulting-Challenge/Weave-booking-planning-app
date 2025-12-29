@@ -28,6 +28,8 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { GuideBookingDialog } from '@/components/GuideBookingDialog';
+import { VideoCallPopout } from '@/components/VideoCallPopout';
 
 interface Guide {
   id: number;
@@ -67,6 +69,19 @@ export default function Guides() {
   const [isCarouselHovered, setIsCarouselHovered] = useState(false);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
+  
+  // Booking state
+  const [bookingGuide, setBookingGuide] = useState<Guide | null>(null);
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+  const [videoCallOpen, setVideoCallOpen] = useState(false);
+  const [currentBooking, setCurrentBooking] = useState<{
+    guide: Guide;
+    date: Date;
+    timeSlot: string;
+    fullName: string;
+    email: string;
+    notes: string;
+  } | null>(null);
 
   const popularLocations = [
     'Tokyo',
@@ -372,6 +387,25 @@ export default function Guides() {
     // Search logic handled by filteredGuides
   };
 
+  const handleBookAppointment = (guide: Guide) => {
+    setBookingGuide(guide);
+    setBookingDialogOpen(true);
+  };
+
+  const handleBookingConfirmed = (booking: any) => {
+    setCurrentBooking(booking);
+    setBookingDialogOpen(false);
+    // Open video call after a short delay
+    setTimeout(() => {
+      setVideoCallOpen(true);
+    }, 100);
+  };
+
+  const handleVideoCallClose = () => {
+    setVideoCallOpen(false);
+    setCurrentBooking(null);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Hero Section - Centered Container with Full Video Background */}
@@ -544,7 +578,7 @@ export default function Guides() {
 
                       {/* Text Overlay */}
                       {!isPlayingVideo && (
-                        <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-6 pointer-events-none">
+                        <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-6">
                           <h3 className="mb-1 text-2xl text-white">
                             {guide.name.split(' ')[0]}
                           </h3>
@@ -553,7 +587,7 @@ export default function Guides() {
                           </p>
 
                           {guide.featured && (
-                            <div className="space-y-1">
+                            <div className="space-y-1 mb-3">
                               <p className="text-xs tracking-wide text-white uppercase">
                                 Featured Guide
                               </p>
@@ -562,6 +596,16 @@ export default function Guides() {
                               </p>
                             </div>
                           )}
+                          
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleBookAppointment(guide);
+                            }}
+                            className="pointer-events-auto w-full rounded-lg bg-white py-2.5 px-4 text-sm font-medium text-black transition-all hover:bg-blue-600 hover:text-white shadow-lg"
+                          >
+                            Book appointment
+                          </button>
                         </div>
                       )}
 
@@ -1070,6 +1114,25 @@ export default function Guides() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Booking Dialog */}
+      <GuideBookingDialog
+        open={bookingDialogOpen}
+        onOpenChange={setBookingDialogOpen}
+        guide={bookingGuide}
+        onBookingConfirmed={handleBookingConfirmed}
+      />
+
+      {/* Video Call Popout */}
+      {currentBooking && (
+        <VideoCallPopout
+          open={videoCallOpen}
+          onClose={handleVideoCallClose}
+          guide={currentBooking.guide}
+          appointmentDate={currentBooking.date}
+          appointmentTime={currentBooking.timeSlot}
+        />
+      )}
     </div>
   );
 }
