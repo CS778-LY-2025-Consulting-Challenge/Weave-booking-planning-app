@@ -40,7 +40,7 @@ export default function CursorTrail() {
   const smoothedSpeedRef = useRef(0);
   const maxSpeedRef = useRef(0);
   const isMovingRef = useRef(false);
-  const moveTimeoutRef = useRef<NodeJS.Timeout>();
+  const moveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
