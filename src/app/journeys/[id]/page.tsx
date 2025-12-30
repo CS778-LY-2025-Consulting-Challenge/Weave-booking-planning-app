@@ -84,6 +84,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://cloudflare1.360gigapixels.com/pano/milanrademakers/01906841_DSC-1437-Panorama-jpg/equirect_crop_3_1/6.jpg',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
         {
           day: 2,
@@ -109,6 +111,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://upload.wikimedia.org/wikipedia/commons/d/d8/Soissons_Cathedral_Interior_360x180%2C_Picardy%2C_France_-_Diliff.jpg',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
         {
           day: 3,
@@ -129,6 +133,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/KudedLV0tP0',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
       ],
     },
@@ -159,6 +165,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/NMSVQWJv5v8',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
         {
           day: 2,
@@ -178,6 +186,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/qXlhFJXqYcQ',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
         {
           day: 3,
@@ -197,6 +207,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/3q6rZbKQy0Q',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
       ],
     },
@@ -227,6 +239,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/6qT4gFhyxKg',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
         {
           day: 2,
@@ -246,6 +260,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/8Z1eMy1kYfQ',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
         {
           day: 3,
@@ -265,6 +281,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/Q8kqQf2rFhA',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
       ],
     },
@@ -295,6 +313,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/8k-7lFZrKf8',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
         {
           day: 2,
@@ -314,6 +334,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/6IYwWoWZ3xI',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
       ],
     },
@@ -344,6 +366,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/gDbAq4R0t1s',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
         {
           day: 2,
@@ -363,6 +387,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/Tm1wG2JkK8o',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
       ],
     },
@@ -393,6 +419,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/ibdO1EoBsCk',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
         {
           day: 2,
@@ -412,6 +440,8 @@ export default function JourneyDetails() {
           ],
           video360Url: 'https://www.youtube.com/embed/lXpgw9nZpy8',
           has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
         },
       ],
     },
@@ -1063,11 +1093,30 @@ export default function JourneyDetails() {
           />
           <div className="fixed inset-0 z-[101] h-screen w-screen bg-black">
             <div className="relative h-full w-full">
-              <Image360Viewer
-                imageUrl={selectedMedia.url}
-                width="100%"
-                height="100%"
-              />
+              {currentDayData?.isAirPano ? (
+                // AirPano Embed View - Full Screen
+                <div className="relative w-full h-full bg-black">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={currentDayData?.airPanoUrl}
+                    frameBorder="0"
+                    marginHeight={0}
+                    marginWidth={0}
+                    scrolling="no"
+                    framespacing="0"
+                    allowFullScreen
+                    style={{ display: 'block' }}
+                  />
+                </div>
+              ) : (
+                // Regular Image 360 Viewer
+                <Image360Viewer
+                  imageUrl={selectedMedia.url}
+                  width="100%"
+                  height="100%"
+                />
+              )}
 
               {/* Close button - Top Right */}
               <button
