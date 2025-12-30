@@ -154,20 +154,20 @@ export default function AIPlanner() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pt-16 text-black">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pt-10 text-black">
+      <div className="mx-auto max-w-screen-xl px-4 py-6 sm:px-6 lg:px-10">
+        <div className="grid gap-8 lg:grid-cols-[360px_1fr]">
           {/* Left: Chat */}
-          <Card className="sticky top-24 self-start max-h-[calc(100vh-8rem)] overflow-hidden border border-orange-200/60 bg-white/90 shadow-lg flex flex-col">
-            <CardHeader className="pb-2">
-              <div className="inline-flex items-center gap-3 rounded-full bg-slate-900 px-4 py-2 text-white shadow-lg">
+          <Card className="sticky top-24 self-start max-h-[calc(100vh-7rem)] min-h-[calc(100vh-7rem)] overflow-hidden border border-orange-200/60 bg-white/90 shadow-lg flex flex-col py-0">
+            <CardHeader className="pb-2 pt-4">
+              <div className="inline-flex items-center gap-2 px-1 py-1 text-slate-900">
                 <CharizardOrb />
                 <div className="flex flex-col leading-tight">
-                  <span className="text-sm font-semibold">Plan your trip with Charizard</span>
+                  <span className="text-sm font-semibold md:text-base">Plan your trip with Charizard</span>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="flex h-full flex-col gap-3 p-4">
+            <CardContent className="flex flex-1 flex-col gap-3 px-4 pt-4 pb-2">
               <div className="flex-1 space-y-2 overflow-y-auto rounded-lg border border-white/60 bg-white/60 p-3">
                 {messages.map((msg, idx) => (
                   <div
@@ -187,32 +187,34 @@ export default function AIPlanner() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-2">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Tell me destination, dates, travellers, preferences..."
-                  className="flex-1"
-                />
-                <Button onClick={handleSend} disabled={isChatting}>
-                  <Send className="mr-1 h-4 w-4" />
-                  Send
-                </Button>
-              </div>
+              <div className="mt-auto space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                    placeholder="Tell me destination, dates, travellers, preferences..."
+                    className="flex-1"
+                  />
+                  <Button onClick={handleSend} disabled={isChatting}>
+                    <Send className="mr-1 h-4 w-4" />
+                    Send
+                  </Button>
+                </div>
 
-              <div className="flex items-center justify-between text-xs text-gray-600">
-                <span>Destination: {destinationLabel}</span>
-                <Button size="sm" variant="secondary" onClick={handleGenerate} disabled={isGenerating}>
-                  <Sparkles className="mr-1 h-4 w-4" />
-                  {isGenerating ? 'Generating...' : 'Generate itinerary (mock)'}
-                </Button>
+                <div className="flex items-center justify-between text-xs text-gray-600">
+                  <span>Destination: {destinationLabel}</span>
+                  <Button size="sm" variant="secondary" onClick={handleGenerate} disabled={isGenerating}>
+                    <Sparkles className="mr-1 h-4 w-4" />
+                    {isGenerating ? 'Generating...' : 'Generate itinerary (mock)'}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Right: Visualization */}
-          <div className="space-y-4">
+          <div className="space-y-4 mt-4 lg:mt-8">
             <Card className="border border-slate-200 bg-white/90 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-lg">Trip Overview</CardTitle>
