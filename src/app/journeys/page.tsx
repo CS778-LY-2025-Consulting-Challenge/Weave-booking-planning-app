@@ -41,6 +41,21 @@ export default function Journeys() {
   const journeys = [
     {
       id: 1,
+      title: 'New Zealand Explorer',
+      author: 'James T.',
+      destination: 'New Zealand',
+      season: 'Spring',
+      weather: 'Clear',
+      duration: '18 Days',
+      type: 'Adventure',
+      image:
+        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuZXclMjB6ZWFsYW5kfGVufDB8fHx8fDE3NzA1MjYyNjR8MA&ixlib=rb-4.1.0&q=80&w=1080',
+      description:
+        "A transformative journey through Aotearoa's most iconic landscapes. Navigate the Fiordland cruises, experience adrenaline-pumping activities in Queenstown, and contemplate majesty at Milford Sound. Where adventure meets serenity.",
+      likes: 567,
+    },
+    {
+      id: 2,
       title: 'Bali Adventure',
       author: 'Sarah M.',
       destination: 'Bali, Indonesia',
@@ -51,11 +66,11 @@ export default function Journeys() {
       image:
         'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiYWxpJTIwaW5kb25lc2lhfGVufDF8fHx8MTc2NDUzNzMxMXww&ixlib=rb-4.1.0&q=80&w=1080',
       description:
-        'An incredible journey through temples, beaches, and rice terraces. Perfect blend of culture and relaxation.',
+        'Sacred temples whisper ancient wisdom while emerald rice paddies stretch endlessly. Dive into cenote pools, embrace spiritual ceremonies, and discover the art of slow travel through Balinese hospitality.',
       likes: 234,
     },
     {
-      id: 2,
+      id: 3,
       title: 'European Grand Tour',
       author: 'Mike R.',
       destination: 'Multiple Cities, Europe',
@@ -66,11 +81,11 @@ export default function Journeys() {
       image:
         'https://images.unsplash.com/photo-1431274172761-fca41d930114?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXJpcyUyMGVpZmZlbCUyMHRvd2VyfGVufDF8fHx8MTc2NDQ3MTg2NHww&ixlib=rb-4.1.0&q=80&w=1080',
       description:
-        'Visited 7 countries in 3 weeks. Every moment was magical, from Paris cafes to Roman ruins.',
+        'A scholarly pilgrimage through Europe\'s cultural heart. From Renaissance masterpieces in Florence to Gothic grandeur in Paris, experience centuries of art, architecture, and storytelling in seven countries.',
       likes: 456,
     },
     {
-      id: 3,
+      id: 4,
       title: 'Mountain Trekking Nepal',
       author: 'Emma K.',
       destination: 'Himalayas, Nepal',
@@ -81,11 +96,11 @@ export default function Journeys() {
       image:
         'https://images.unsplash.com/photo-1669986480140-2c90b8edb443?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb3VudGFpbiUyMGFkdmVudHVyZSUyMHRyYXZlbHxlbnwxfHx8fDE3NjQ1MTI0ODB8MA&ixlib=rb-4.1.0&q=80&w=1080',
       description:
-        'Challenging but rewarding trek through the Himalayas. Views that will take your breath away.',
+        'Summit your inner peak amid the world\'s highest mountains. Through alpine meadows and prayer flag-adorned passes, witness crystalline skies and find profound silence that only the Himalayas can offer.',
       likes: 189,
     },
     {
-      id: 4,
+      id: 5,
       title: 'Tokyo Food Tour',
       author: 'David L.',
       destination: 'Tokyo, Japan',
@@ -96,11 +111,11 @@ export default function Journeys() {
       image:
         'https://images.unsplash.com/photo-1591194233688-dca69d406068?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0b2t5byUyMGphcGFuJTIwY2l0eXxlbnwxfHx8fDE3NjQ1MjYyNjR8MA&ixlib=rb-4.1.0&q=80&w=1080',
       description:
-        "A culinary adventure through Tokyo's best restaurants, street food, and hidden gems.",
+        "Taste the soul of Japan through Michelin-starred precision and street-corner perfection. From omakase temples to midnight ramen sanctuaries, discover how Tokyo elevates every meal into ritual.",
       likes: 312,
     },
     {
-      id: 5,
+      id: 6,
       title: 'Greek Island Hopping',
       author: 'Lisa P.',
       destination: 'Greek Islands',
@@ -111,11 +126,11 @@ export default function Journeys() {
       image:
         'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzYW50b3JpbmklMjBncmVlY2V8ZW58MXx8fHwxNzY0NDIxNzYxfDA&ixlib=rb-4.1.0&q=80&w=1080',
       description:
-        'Explored 5 beautiful Greek islands. Crystal clear waters, stunning sunsets, amazing food.',
+        'Island-hop through the Aegean where whitewashed villages meet azure waters. Each island unveils its own mythology, flavors, and the timeless rhythm of Mediterranean living.',
       likes: 278,
     },
     {
-      id: 6,
+      id: 7,
       title: 'New York City Explorer',
       author: 'Tom W.',
       destination: 'New York, USA',
@@ -126,7 +141,7 @@ export default function Journeys() {
       image:
         'https://images.unsplash.com/photo-1543716091-a840c05249ec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuZXclMjB5b3JrJTIwY2l0eXxlbnwxfHx8fDE3NjQ1MjUyMTh8MA&ixlib=rb-4.1.0&q=80&w=1080',
       description:
-        'Fast-paced NYC adventure covering all major attractions, Broadway shows, and rooftop bars.',
+        'Immerse in the electric choreography of the city that never sleeps. From Broadway\'s golden lights to Central Park\'s autumn foliage, experience the pulse of ambition and culture.',
       likes: 201,
     },
   ];

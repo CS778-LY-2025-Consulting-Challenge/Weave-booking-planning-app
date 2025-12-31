@@ -26,10 +26,12 @@ import {
   Play,
   Star,
   X,
+  BookOpen,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useParams, useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
+import JourneyBookingFlow from '@/components/JourneyBookingFlow';
 
 export default function JourneyDetails() {
   const { id } = useParams();
@@ -37,6 +39,7 @@ export default function JourneyDetails() {
   const [currentDay, setCurrentDay] = useState(0);
   const [isBookOpen, setIsBookOpen] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
+  const [showBookingFlow, setShowBookingFlow] = useState(false);
   const [flipDirection, setFlipDirection] = useState<'forward' | 'backward'>(
     'forward'
   );
@@ -51,36 +54,36 @@ export default function JourneyDetails() {
   const journeysData: Record<string, any> = {
     '1': {
       id: 1,
-      title: 'Bali Adventure',
-      author: 'Sarah M.',
-      destination: 'Bali, Indonesia',
-      season: 'Summer',
-      duration: '10 Days',
+      title: 'New Zealand Explorer',
+      author: 'James T.',
+      destination: 'New Zealand',
+      season: 'Spring',
+      duration: '18 Days',
       coverImage:
-        'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=1080',
+        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1080',
       days: [
         {
           day: 1,
-          date: 'June 15',
+          date: 'Sep 15',
           year: '2024',
-          title: 'First Day in Paradise',
-          mood: '😊 Excited',
-          weather: '☀️ 28°C',
+          title: 'Arrival in Aotearoa',
+          mood: '✨ Inspired',
+          weather: '☀️ 18°C',
           entry:
-            'Arrived in Bali and checked into a beachfront hotel. Sunset at Seminyak was unreal — purple-orange skyscape and warm breeze. 🌅',
+            'Landed in Auckland and immediately felt the Southern Hemisphere magic. Drove south towards the Waitomo Caves and stayed in a luxury lodge overlooking pastoral farmland. First glimpse of the incredible landscapes that define New Zealand.',
           highlights: [
-            '🛬 Ngurah Rai Airport arrival',
-            '🏨 Beachfront hotel check-in',
-            '🌊 Sunset walk',
-            '🍽️ Fresh seafood dinner',
+            '✈️ Auckland arrival',
+            '🏨 Luxury lodge check-in',
+            '🌄 Pastoral landscapes',
+            '🌅 Southern sunset',
           ],
           images: [
-            { url: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800', caption: 'Seminyak Sunset' },
-            { url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800', caption: 'Beach vibes' },
-            { url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800', caption: 'Hotel view' },
+            { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800', caption: 'Mount Cook vista' },
+            { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800', caption: 'Aotearoa landscapes' },
+            { url: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800', caption: 'Pastoral farmland' },
           ],
           videos: [
-            { url: 'https://www.youtube.com/embed/dQw4w9WgXcQ', caption: 'Sunset timelapse', thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg' },
+            { url: 'https://www.youtube.com/embed/0Hy8Ck_pXqo', caption: 'New Zealand intro', thumbnail: 'https://img.youtube.com/vi/0Hy8Ck_pXqo/hqdefault.jpg' },
           ],
           video360Url: 'https://cloudflare1.360gigapixels.com/pano/milanrademakers/01906841_DSC-1437-Panorama-jpg/equirect_crop_3_1/6.jpg',
           has360: true,
@@ -89,25 +92,26 @@ export default function JourneyDetails() {
         },
         {
           day: 2,
-          date: 'June 16',
+          date: 'Sep 18',
           year: '2024',
-          title: 'Ubud Cultural Journey',
-          mood: '🤩 Amazed',
-          weather: '⛅ 26°C',
+          title: 'Milford Sound Magnificence',
+          mood: '🌊 Awed',
+          weather: '⛅ 16°C',
           entry:
-            'Rice terraces, Monkey Forest antics, and a soothing Balinese massage — Ubud is pure magic.',
+            'Cruised through Milford Sound where waterfalls cascade directly into the fjord and rainforests meet the sea. Watched dolphins and seals from the ship. Pure sublime beauty.',
           highlights: [
-            '🌾 Tegalalang sunrise',
-            '🐵 Monkey Forest',
-            '💆 Spa session',
+            '🚢 Milford Sound cruise',
+            '🐬 Dolphin & seal encounters',
+            '💧 Towering waterfalls',
+            '🌲 Rainforest scenery',
           ],
           images: [
-            { url: 'https://images.unsplash.com/photo-1559628376-f3fe5f782a2e?w=800', caption: 'Evening stroll' },
-            { url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800', caption: 'Villa morning' },
-            { url: 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=800', caption: 'Night lights' },
+            { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800', caption: 'Milford Sound' },
+            { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800', caption: 'Fjord waterfalls' },
+            { url: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800', caption: 'Sea wildlife' },
           ],
           videos: [
-            { url: 'https://www.youtube.com/embed/ScMzIvxBSi4', caption: 'Ubud recap', thumbnail: 'https://img.youtube.com/vi/ScMzIvxBSi4/hqdefault.jpg' },
+            { url: 'https://www.youtube.com/embed/T-CKuPM94CU', caption: 'Milford Sound journey', thumbnail: 'https://img.youtube.com/vi/T-CKuPM94CU/hqdefault.jpg' },
           ],
           video360Url: 'https://upload.wikimedia.org/wikipedia/commons/d/d8/Soissons_Cathedral_Interior_360x180%2C_Picardy%2C_France_-_Diliff.jpg',
           has360: true,
@@ -116,20 +120,20 @@ export default function JourneyDetails() {
         },
         {
           day: 3,
-          date: 'June 17',
+          date: 'Sep 21',
           year: '2024',
-          title: 'Temple Hopping',
-          mood: '🙏 Peaceful',
-          weather: '🌤️ 29°C',
+          title: 'Queenstown Adventure',
+          mood: '🎯 Exhilarated',
+          weather: '🌤️ 17°C',
           entry:
-            'Tanah Lot at sunrise and Uluwatu cliffside views; Kecak fire dance at dusk — unforgettable.',
-          highlights: ['⛩️ Tanah Lot sunrise', '🔥 Kecak performance'],
+            'Adventure capital of the world. Did a thrilling jetboat ride through narrow canyons, then took the Skyline gondola for panoramic alpine views of Lake Wakatipu.',
+          highlights: ['🚤 Jetboat adventure', '🚡 Skyline gondola', '🏔️ Alpine vistas'],
           images: [
-            { url: 'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?w=800', caption: 'Tanah Lot' },
-            { url: 'https://images.unsplash.com/photo-1570789210967-2cac24afeb00?w=800', caption: 'Uluwatu sunset' },
+            { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800', caption: 'Queenstown heights' },
+            { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800', caption: 'Lake Wakatipu' },
           ],
           videos: [
-            { url: 'https://www.youtube.com/embed/KudedLV0tP0', caption: 'Temple highlights', thumbnail: 'https://img.youtube.com/vi/KudedLV0tP0/hqdefault.jpg' },
+            { url: 'https://www.youtube.com/embed/JJFVM7A_fAk', caption: 'Queenstown thrills', thumbnail: 'https://img.youtube.com/vi/JJFVM7A_fAk/hqdefault.jpg' },
           ],
           video360Url: 'https://www.youtube.com/embed/KudedLV0tP0',
           has360: true,
@@ -140,6 +144,83 @@ export default function JourneyDetails() {
     },
     '2': {
       id: 2,
+      title: 'Bali Adventure',
+      author: 'Sarah M.',
+      destination: 'Bali, Indonesia',
+      season: 'Summer',
+      duration: '10 Days',
+      coverImage: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=1080',
+      days: [
+        {
+          day: 1,
+          date: 'Jun 5',
+          year: '2024',
+          title: 'Arrival in Paradise',
+          mood: '🌴 Serene',
+          weather: '☀️ 28°C',
+          entry: 'Landed in Ubud, where rice paddies stretch endlessly and the air smells of incense and frangipani. Checked into a traditional villa with infinity pool overlooking the jungle.',
+          highlights: ['✈️ Ubud arrival', '🏘️ Traditional villa', '🌾 Rice paddies', '🌸 Jungle retreat'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=800', caption: 'Bali landscape' },
+            { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800', caption: 'Rice terraces' },
+            { url: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800', caption: 'Villa view' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/8A7E7mFd7Q8', caption: 'Bali intro', thumbnail: 'https://img.youtube.com/vi/8A7E7mFd7Q8/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/F8qYHT-LhLQ',
+          has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
+        },
+        {
+          day: 2,
+          date: 'Jun 8',
+          year: '2024',
+          title: 'Temple Rituals & Spiritual Awakening',
+          mood: '🙏 Transcendent',
+          weather: '☀️ 26°C',
+          entry: 'Joined a dawn ceremony at Pura Tanah Lot, perched on dramatic sea cliffs. Watched monks chant while incense curled into the morning light. The spiritual energy here is undeniable.',
+          highlights: ['⛩️ Pura Tanah Lot', '🙏 Sacred ceremony', '🌅 Sunrise ritual', '🕯️ Incense blessing'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800', caption: 'Temple at sunrise' },
+            { url: 'https://images.unsplash.com/photo-1516026122158-f21d14e0c06b?w=800', caption: 'Spiritual ceremony' },
+            { url: 'https://images.unsplash.com/photo-1520763185298-1b434c919abe?w=800', caption: 'Bali coastline' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/MJq3Jz8FBzQ', caption: 'Temple ceremony', thumbnail: 'https://img.youtube.com/vi/MJq3Jz8FBzQ/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/tCPO7k8MR_8',
+          has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
+        },
+        {
+          day: 3,
+          date: 'Jun 11',
+          year: '2024',
+          title: 'Cenote Diving & Underwater Wonder',
+          mood: '🤿 Enchanted',
+          weather: '☀️ 29°C',
+          entry: 'Dove into pristine cenotes where visibility stretched forever. Schools of tropical fish glided past ancient rock formations. Pure magic beneath the surface.',
+          highlights: ['🤿 Cenote diving', '🐠 Tropical fish', '💎 Crystal waters', '🌊 Underwater paradise'],
+          images: [
+            { url: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800', caption: 'Cenote waters' },
+            { url: 'https://images.unsplash.com/photo-1583080001130-d0e4e6bac54d?w=800', caption: 'Diving adventure' },
+            { url: 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800', caption: 'Reef life' },
+          ],
+          videos: [
+            { url: 'https://www.youtube.com/embed/OXEVfGbvFss', caption: 'Cenote dive', thumbnail: 'https://img.youtube.com/vi/OXEVfGbvFss/hqdefault.jpg' },
+          ],
+          video360Url: 'https://www.youtube.com/embed/E7HjQRQqX84',
+          has360: true,
+          isAirPano: true,
+          airPanoUrl: 'https://www.airpano.com/embed.php?3D=fiordland-new-zealand',
+        },
+      ],
+    },
+    '3': {
+      id: 3,
       title: 'European Grand Tour',
       author: 'Mike R.',
       destination: 'Paris, Rome, Barcelona',
@@ -212,8 +293,8 @@ export default function JourneyDetails() {
         },
       ],
     },
-    '3': {
-      id: 3,
+    '4': {
+      id: 4,
       title: 'Mountain Trekking Nepal',
       author: 'Emma K.',
       destination: 'Himalayas, Nepal',
@@ -286,8 +367,8 @@ export default function JourneyDetails() {
         },
       ],
     },
-    '4': {
-      id: 4,
+    '5': {
+      id: 5,
       title: 'Tokyo Food Tour',
       author: 'David L.',
       destination: 'Tokyo, Japan',
@@ -339,8 +420,8 @@ export default function JourneyDetails() {
         },
       ],
     },
-    '5': {
-      id: 5,
+    '6': {
+      id: 6,
       title: 'Greek Island Hopping',
       author: 'Lisa P.',
       destination: 'Greek Islands',
@@ -392,8 +473,8 @@ export default function JourneyDetails() {
         },
       ],
     },
-    '6': {
-      id: 6,
+    '7': {
+      id: 7,
       title: 'New York City Explorer',
       author: 'Tom W.',
       destination: 'New York, USA',
@@ -1055,6 +1136,13 @@ export default function JourneyDetails() {
               <Download className="mr-2 size-4" />
               Download PDF
             </Button>
+            <Button
+              onClick={() => setShowBookingFlow(true)}
+              className="bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-700 hover:to-orange-700 shadow-lg"
+            >
+              <BookOpen className="mr-2 size-4" />
+              Book This Journey
+            </Button>
           </div>
 
           {/* Page Number Indicator Below */}
@@ -1171,6 +1259,16 @@ export default function JourneyDetails() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Booking Flow Modal */}
+      <Dialog open={showBookingFlow} onOpenChange={setShowBookingFlow}>
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto p-0">
+          <JourneyBookingFlow 
+            journey={journey} 
+            onClose={() => setShowBookingFlow(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
