@@ -28,6 +28,7 @@ type DayPlan = {
 
 type TripState = {
   destination?: string | string[];
+  departureCity?: string;
   dates?: { start?: string; end?: string; durationDays?: number };
   travellers?: number;
   purpose?: string;
@@ -58,7 +59,7 @@ export default function AIPlanner() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       type: 'ai',
-      text: "Hi, I'm your AI trip planner. Tell me where/when you want to go and what you like.",
+      text: "Hey there! I'm Charizard 🔥 Your AI travel co-pilot. Ready to ignite your next adventure? Tell me where you're dreaming of going!",
     },
   ]);
   const [input, setInput] = useState('');
@@ -158,17 +159,17 @@ export default function AIPlanner() {
       <div className="mx-auto max-w-screen-xl px-4 py-6 sm:px-6 lg:px-10">
         <div className="grid gap-8 lg:grid-cols-[360px_1fr]">
           {/* Left: Chat */}
-          <Card className="sticky top-24 self-start max-h-[calc(100vh-7rem)] min-h-[calc(100vh-7rem)] overflow-hidden border border-orange-200/60 bg-white/90 shadow-lg flex flex-col py-0">
-            <CardHeader className="pb-2 pt-4">
-              <div className="inline-flex items-center gap-2 px-1 py-1 text-slate-900">
-                <CharizardOrb />
+          <Card className="sticky top-24 self-start max-h-[calc(100vh-7rem)] min-h-[calc(100vh-7rem)] overflow-hidden border border-orange-200/60 bg-white/90 shadow-lg flex flex-col py-0 gap-0">
+            <CardHeader className="py-2 pb-0">
+              <div className="inline-flex items-center gap-2 px-1 text-slate-900">
+                <CharizardOrb size="medium" />
                 <div className="flex flex-col leading-tight">
                   <span className="text-sm font-semibold md:text-base">Plan your trip with Charizard</span>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="flex flex-1 flex-col gap-3 px-4 pt-4 pb-2">
-              <div className="flex-1 space-y-2 overflow-y-auto rounded-lg border border-white/60 bg-white/60 p-3">
+            <CardContent className="flex flex-1 flex-col gap-3 px-4 pt-2 pb-2 min-h-0">
+              <div className="flex-1 min-h-0 space-y-2 overflow-y-auto rounded-lg border border-white/60 bg-white/60 p-3">
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
@@ -204,10 +205,10 @@ export default function AIPlanner() {
 
                 <div className="flex items-center justify-between text-xs text-gray-600">
                   <span>Destination: {destinationLabel}</span>
-                  <Button size="sm" variant="secondary" onClick={handleGenerate} disabled={isGenerating}>
-                    <Sparkles className="mr-1 h-4 w-4" />
-                    {isGenerating ? 'Generating...' : 'Generate itinerary (mock)'}
-                  </Button>
+                <Button size="sm" variant="secondary" onClick={handleGenerate} disabled={isGenerating}>
+                  <Sparkles className="mr-1 h-4 w-4" />
+                  {isGenerating ? 'Generating...' : 'Generate itinerary'}
+                </Button>
                 </div>
               </div>
             </CardContent>
@@ -218,11 +219,14 @@ export default function AIPlanner() {
             <Card className="border border-slate-200 bg-white/90 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-lg">Trip Overview</CardTitle>
-                <p className="text-sm text-gray-600">
-                  Destination: {destinationLabel} • Travellers:{' '}
-                  {plannerState.travellers ?? itinerary?.travellers ?? '—'} • Purpose:{' '}
-                  {plannerState.purpose ?? '—'}
-                </p>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>Destination: {destinationLabel}</p>
+                  <p>From: {plannerState.departureCity ?? itinerary?.departureCity ?? '—'}</p>
+                  <p>
+                    Travellers: {plannerState.travellers ?? itinerary?.travellers ?? '—'} • 
+                    Purpose: {plannerState.purpose ?? '—'}
+                  </p>
+                </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-gray-700">
                 <div className="flex flex-wrap gap-3">
@@ -258,7 +262,7 @@ export default function AIPlanner() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {(itinerary?.transportation ?? []).map((leg, idx) => (
-                  <div key={idx} className="rounded-md bg-slate-50 p-2 text-sm text-gray-700">
+                  <div key={`trans-${idx}`} className="rounded-md bg-slate-50 p-2 text-sm text-gray-700">
                     <p className="font-semibold">
                       {leg.mode.toUpperCase()}: {leg.from} → {leg.to}
                     </p>
@@ -279,7 +283,7 @@ export default function AIPlanner() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {(itinerary?.accommodation ?? []).map((stay, idx) => (
-                  <div key={idx} className="rounded-md bg-slate-50 p-2 text-sm text-gray-700">
+                  <div key={`stay-${idx}`} className="rounded-md bg-slate-50 p-2 text-sm text-gray-700">
                     <p className="font-semibold">
                       <Hotel className="mr-1 inline h-4 w-4" />
                       {stay.name}
@@ -304,13 +308,13 @@ export default function AIPlanner() {
               </CardHeader>
               <CardContent className="flex flex-wrap gap-3">
                 {(itinerary?.media?.photos ?? []).map((url, idx) => (
-                  <div key={idx} className="relative h-28 w-40 overflow-hidden rounded-md">
+                  <div key={`photo-${idx}`} className="relative h-28 w-40 overflow-hidden rounded-md">
                     <img src={url} alt="trip" className="h-full w-full object-cover" />
                   </div>
                 ))}
                 {(itinerary?.media?.videos ?? []).map((url, idx) => (
                   <a
-                    key={idx}
+                    key={`video-${idx}`}
                     href={url}
                     target="_blank"
                     rel="noreferrer"

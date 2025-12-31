@@ -5,10 +5,15 @@ import { motion } from 'framer-motion';
 
 const ORB_SRC = '/image.png'; // file in /public
 
-export default function CharizardOrb() {
+export default function CharizardOrb({ size = 'default' }: { size?: 'default' | 'medium' | 'small' }) {
+  const dimensions = 
+    size === 'small' ? 'h-8 w-8' : 
+    size === 'medium' ? 'h-10 w-10' :
+    'h-12 w-12 sm:h-14 sm:w-14';
+  
   return (
     <motion.div
-      className="relative h-12 w-12 sm:h-14 sm:w-14"
+      className={`relative ${dimensions}`}
       animate={{ y: [0, -3, 0], scale: [1, 1.02, 1] }}
       transition={{ duration: 2.3, repeat: Infinity, ease: 'easeInOut' }}
     >
