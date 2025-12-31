@@ -23,8 +23,9 @@ import {
   Map,
   MapPin,
   Sun,
+  X,
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -35,6 +36,7 @@ export default function Journeys() {
   const [selectedWeather, setSelectedWeather] = useState<Set<string>>(new Set());
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
   const [selectedDurations, setSelectedDurations] = useState<Set<string>>(new Set());
+  const [wishlistAnimating, setWishlistAnimating] = useState<number | null>(null);
 
   const journeys = [
     {
@@ -130,6 +132,8 @@ export default function Journeys() {
   ];
 
   const toggleFavorite = (id: number) => {
+    setWishlistAnimating(id);
+    setTimeout(() => setWishlistAnimating(null), 600);
     setFavorites((prev) =>
       prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
     );
@@ -179,13 +183,79 @@ export default function Journeys() {
       ?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const hasActiveFilters = 
+    selectedSeasons.size > 0 || 
+    selectedWeather.size > 0 || 
+    selectedTypes.size > 0 || 
+    selectedDurations.size > 0;
+
+  const clearAllFilters = () => {
+    setSelectedSeasons(new Set());
+    setSelectedWeather(new Set());
+    setSelectedTypes(new Set());
+    setSelectedDurations(new Set());
+  };
+
+  const removeFilter = (category: 'season' | 'weather' | 'type' | 'duration', value: string) => {
+    switch (category) {
+      case 'season':
+        toggleInSet(setSelectedSeasons, selectedSeasons, value, false);
+        break;
+      case 'weather':
+        toggleInSet(setSelectedWeather, selectedWeather, value, false);
+        break;
+      case 'type':
+        toggleInSet(setSelectedTypes, selectedTypes, value, false);
+        break;
+      case 'duration':
+        toggleInSet(setSelectedDurations, selectedDurations, value, false);
+        break;
+    }
+  };
+
+  const FilterSection = ({ title, items, selectedSet, setter, category }: { 
+    title: string; 
+    items: string[]; 
+    selectedSet: Set<string>; 
+    setter: (s: Set<string>) => void;
+    category: 'season' | 'weather' | 'type' | 'duration';
+  }) => (
+    <div>
+      <h4 className="mb-4 text-xs font-medium uppercase tracking-[0.15em] text-zinc-500">
+        {title}
+      </h4>
+      <div className="flex flex-wrap gap-2">
+        {items.map((item) => {
+          const isSelected = selectedSet.has(item);
+          return (
+            <motion.button
+              key={item}
+              onClick={() => toggleInSet(setter, selectedSet, item, !isSelected)}
+              className={`
+                rounded-full px-4 py-2 text-sm font-light tracking-wide transition-all duration-300
+                ${isSelected 
+                  ? 'bg-zinc-900 text-white shadow-lg' 
+                  : 'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200 hover:border-zinc-300'
+                }
+              `}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {item}
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-white via-zinc-50/30 to-white">
       {/* HERO COVER SECTION */}
       <section className="relative flex h-screen items-center justify-center overflow-hidden">
-        {/* Background Image with Parallax */}
+        {/* Background Image with Overlay */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 z-10 bg-gradient-to-br from-blue-900/80 via-purple-900/70 to-pink-900/80" />
+          <div className="absolute inset-0 z-10 bg-gradient-to-br from-zinc-900/60 via-zinc-800/50 to-amber-900/40" />
           <img
             src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920"
             alt="Travel background"
@@ -193,116 +263,106 @@ export default function Journeys() {
           />
         </div>
 
-        {/* Floating Elements */}
+        {/* Floating Elements - More Subtle */}
         <motion.div
           animate={{
-            y: [0, -20, 0],
-            rotate: [0, 5, 0],
+            y: [0, -15, 0],
+            rotate: [0, 3, 0],
           }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-20 left-10 text-white/20"
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-20 left-10 text-white/10"
         >
-          <Compass className="size-32" />
+          <Compass className="size-28" strokeWidth={0.5} />
         </motion.div>
 
         <motion.div
           animate={{
-            y: [0, 20, 0],
-            rotate: [0, -5, 0],
+            y: [0, 15, 0],
+            rotate: [0, -3, 0],
           }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute right-10 bottom-20 text-white/20"
+          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute right-10 bottom-20 text-white/10"
         >
-          <Camera className="size-24" />
+          <Camera className="size-20" strokeWidth={0.5} />
         </motion.div>
 
         {/* Hero Content */}
         <div className="relative z-20 mx-auto max-w-5xl px-4 text-center">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
           >
             <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className="mb-6 inline-block"
+              animate={{ scale: [1, 1.03, 1] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              className="mb-8 inline-block"
             >
               <div className="relative">
-                <div className="absolute inset-0 rounded-full bg-amber-400 opacity-50 blur-2xl" />
+                <div className="absolute inset-0 rounded-full bg-amber-400/30 opacity-60 blur-3xl" />
                 <Map
-                  className="relative size-20 text-white"
-                  strokeWidth={1.5}
+                  className="relative size-16 text-white/90"
+                  strokeWidth={1}
                 />
               </div>
             </motion.div>
 
-            <h1
-              className="mb-6 text-7xl text-white md:text-8xl"
-              style={{ fontFamily: 'Playfair Display, serif' }}
-            >
-              Community Journeys
+            <h1 className="font-cormorant mb-8 text-7xl font-light tracking-tight text-white md:text-8xl lg:text-9xl">
+              Featured Journeys
             </h1>
 
-            <p className="mx-auto mb-4 max-w-3xl text-2xl leading-relaxed text-white/90 md:text-3xl">
-              Discover Real Stories from Real Travelers
+            <p className="font-inter mx-auto mb-6 max-w-3xl text-xl font-light leading-relaxed tracking-wide text-white/90 md:text-2xl">
+              Curated stories from discerning travelers
             </p>
 
-            <p className="mx-auto mb-12 max-w-2xl text-lg text-white/70 md:text-xl">
-              Explore authentic travel experiences, get inspired by incredible
-              adventures, and plan your next journey with insights from our
-              global community
+            <p className="font-inter mx-auto mb-16 max-w-2xl text-base font-light leading-loose text-white/60 md:text-lg">
+              Discover authentic experiences crafted by explorers who seek more than destinations — they seek transformation
             </p>
 
             {/* Stats */}
-            <div className="mb-12 flex flex-wrap justify-center gap-8">
+            <div className="mb-16 flex flex-wrap justify-center gap-12 md:gap-16">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.4, duration: 0.8 }}
                 className="text-center"
               >
-                <div
-                  className="mb-2 text-4xl text-white md:text-5xl"
-                  style={{ fontFamily: 'Playfair Display, serif' }}
-                >
+                <div className="font-cormorant mb-2 text-5xl font-light text-white md:text-6xl">
                   150+
                 </div>
-                <div className="text-sm tracking-wider text-white/70 uppercase">
+                <div className="font-inter text-xs font-light uppercase tracking-[0.2em] text-white/60">
                   Journeys
                 </div>
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="text-center"
-              >
-                <div
-                  className="mb-2 text-4xl text-white md:text-5xl"
-                  style={{ fontFamily: 'Playfair Display, serif' }}
-                >
-                  80+
-                </div>
-                <div className="text-sm tracking-wider text-white/70 uppercase">
-                  Countries
-                </div>
-              </motion.div>
+              <div className="h-16 w-px bg-white/20" />
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
+                transition={{ delay: 0.5, duration: 0.8 }}
                 className="text-center"
               >
-                <div
-                  className="mb-2 text-4xl text-white md:text-5xl"
-                  style={{ fontFamily: 'Playfair Display, serif' }}
-                >
+                <div className="font-cormorant mb-2 text-5xl font-light text-white md:text-6xl">
+                  80+
+                </div>
+                <div className="font-inter text-xs font-light uppercase tracking-[0.2em] text-white/60">
+                  Countries
+                </div>
+              </motion.div>
+
+              <div className="h-16 w-px bg-white/20" />
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.8 }}
+                className="text-center"
+              >
+                <div className="font-cormorant mb-2 text-5xl font-light text-white md:text-6xl">
                   10k+
                 </div>
-                <div className="text-sm tracking-wider text-white/70 uppercase">
+                <div className="font-inter text-xs font-light uppercase tracking-[0.2em] text-white/60">
                   Travelers
                 </div>
               </motion.div>
@@ -312,279 +372,191 @@ export default function Journeys() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 0.7, duration: 0.8 }}
             >
               <Button
                 size="lg"
                 onClick={scrollToJourneys}
-                className="rounded-full bg-white px-8 py-6 text-lg text-slate-900 shadow-2xl transition-all hover:scale-105 hover:bg-white/90 hover:shadow-white/20"
+                className="font-inter group rounded-full border border-white/20 bg-white/10 px-10 py-7 text-base font-light tracking-widest uppercase text-white backdrop-blur-md transition-all duration-500 hover:bg-white hover:text-zinc-900 hover:shadow-2xl hover:shadow-white/20"
               >
-                Explore Journeys
-                <ChevronDown className="ml-2 size-5" />
+                Explore Collection
+                <ChevronDown className="ml-3 size-4 transition-transform duration-300 group-hover:translate-y-1" />
               </Button>
             </motion.div>
           </motion.div>
         </div>
 
-        {/* Scroll Indicator */}
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-8 left-1/2 z-20 -translate-x-1/2 cursor-pointer"
-          onClick={scrollToJourneys}
-        ></motion.div>
-
-        {/* Decorative gradient overlay at bottom */}
-        <div className="absolute right-0 bottom-0 left-0 z-10 h-32 bg-gradient-to-t from-gray-50 to-transparent" />
+        {/* Gradient overlay at bottom */}
+        <div className="absolute right-0 bottom-0 left-0 z-10 h-32 bg-gradient-to-t from-white to-transparent" />
       </section>
 
       {/* JOURNEYS SECTION */}
-      <section id="journeys-section" className="py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section id="journeys-section" className="py-24">
+        <div className="mx-auto max-w-[1600px] px-6 sm:px-8 lg:px-12">
           {/* Section Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="mb-12 text-center"
+            transition={{ duration: 0.8 }}
+            className="mb-20 text-center"
           >
-            <h2
-              className="mb-4 text-5xl"
-              style={{ fontFamily: 'Playfair Display, serif' }}
-            >
-              Featured Journeys
+            <p className="font-inter mb-4 text-xs font-light uppercase tracking-[0.25em] text-zinc-500">
+              Handpicked Selection
+            </p>
+            <h2 className="font-cormorant mb-6 text-6xl font-light tracking-tight text-zinc-900 md:text-7xl">
+              Signature Experiences
             </h2>
-            <p className="mx-auto max-w-2xl text-xl text-gray-600">
-              Hand-picked adventures from our community of passionate travelers
+            <p className="font-inter mx-auto max-w-2xl text-lg font-light leading-loose text-zinc-600">
+              Each journey represents a carefully curated narrative of discovery, luxury, and authentic connection
             </p>
           </motion.div>
 
-          <div className="flex gap-8">
+          <div className="flex gap-12 lg:gap-16">
             {/* Filters Sidebar - Desktop */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="hidden w-64 flex-shrink-0 lg:block"
+              transition={{ duration: 0.8 }}
+              className="hidden w-80 flex-shrink-0 lg:block"
             >
-              <Card className="sticky top-20">
-                <CardContent className="p-6">
-                  <div className="mb-4 flex items-center gap-2">
-                    <Filter className="text-primary size-5" />
-                    <h3 className="">Filters</h3>
+              <div className="sticky top-24">
+                <div className="rounded-3xl border border-zinc-200/60 bg-white/60 p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-sm">
+                  <div className="mb-8 flex items-center gap-3">
+                    <div className="rounded-full bg-zinc-900 p-2">
+                      <Filter className="size-4 text-white" strokeWidth={1.5} />
+                    </div>
+                    <h3 className="font-cormorant text-2xl font-light text-zinc-900">Refine</h3>
                   </div>
 
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="mb-3 text-sm">Season</h4>
-                      <div className="space-y-2">
-                        {['Summer', 'Spring', 'Fall', 'Winter'].map(
-                          (season) => (
-                            <div
-                              key={season}
-                              className="flex items-center space-x-2"
-                            >
-                              <Checkbox
-                                id={`season-${season}`}
-                                checked={selectedSeasons.has(season)}
-                                onCheckedChange={(c) =>
-                                  toggleInSet(setSelectedSeasons, selectedSeasons, season, !!c)
-                                }
-                              />
-                              <Label
-                                htmlFor={`season-${season}`}
-                                className="cursor-pointer text-sm"
-                              >
-                                {season}
-                              </Label>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    </div>
+                  <div className="space-y-8">
+                    {/* Elegant Divider */}
+                    <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
 
-                    <div>
-                      <h4 className="mb-3 text-sm">Weather</h4>
-                      <div className="space-y-2">
-                        {['Sunny', 'Rainy', 'Mild', 'Cool'].map((weather) => (
-                          <div
-                            key={weather}
-                            className="flex items-center space-x-2"
-                          >
-                            <Checkbox
-                              id={`weather-${weather}`}
-                              checked={selectedWeather.has(weather)}
-                              onCheckedChange={(c) =>
-                                toggleInSet(setSelectedWeather, selectedWeather, weather, !!c)
-                              }
-                            />
-                            <Label
-                              htmlFor={`weather-${weather}`}
-                              className="cursor-pointer text-sm"
-                            >
-                              {weather}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <FilterSection 
+                      title="Season"
+                      items={['Summer', 'Spring', 'Fall', 'Winter']}
+                      selectedSet={selectedSeasons}
+                      setter={setSelectedSeasons}
+                      category="season"
+                    />
 
-                    <div>
-                      <h4 className="mb-3 text-sm">Trip Type</h4>
-                      <div className="space-y-2">
-                        {[
-                          'Adventure',
-                          'Beach & Relaxation',
-                          'Culture',
-                          'Food & Culture',
-                          'Family',
-                          'City Break',
-                        ].map((type) => (
-                          <div
-                            key={type}
-                            className="flex items-center space-x-2"
-                          >
-                            <Checkbox
-                              id={`type-${type}`}
-                              checked={selectedTypes.has(type)}
-                              onCheckedChange={(c) =>
-                                toggleInSet(setSelectedTypes, selectedTypes, type, !!c)
-                              }
-                            />
-                            <Label
-                              htmlFor={`type-${type}`}
-                              className="cursor-pointer text-sm"
-                            >
-                              {type}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
 
-                    <div>
-                      <h4 className="mb-3 text-sm">Duration</h4>
-                      <div className="space-y-2">
-                        {[
-                          '< 1 week',
-                          '1-2 weeks',
-                          '2-3 weeks',
-                          '> 3 weeks',
-                        ].map((duration) => (
-                          <div
-                            key={duration}
-                            className="flex items-center space-x-2"
-                          >
-                            <Checkbox
-                              id={`duration-${duration}`}
-                              checked={selectedDurations.has(duration)}
-                              onCheckedChange={(c) =>
-                                toggleInSet(setSelectedDurations, selectedDurations, duration, !!c)
-                              }
-                            />
-                            <Label
-                              htmlFor={`duration-${duration}`}
-                              className="cursor-pointer text-sm"
-                            >
-                              {duration}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <FilterSection 
+                      title="Weather"
+                      items={['Sunny', 'Rainy', 'Mild', 'Cool']}
+                      selectedSet={selectedWeather}
+                      setter={setSelectedWeather}
+                      category="weather"
+                    />
+
+                    <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
+
+                    <FilterSection 
+                      title="Experience"
+                      items={['Adventure', 'Beach & Relaxation', 'Culture', 'Food & Culture', 'Family', 'City Break']}
+                      selectedSet={selectedTypes}
+                      setter={setSelectedTypes}
+                      category="type"
+                    />
+
+                    <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
+
+                    <FilterSection 
+                      title="Duration"
+                      items={['< 1 week', '1-2 weeks', '2-3 weeks', '> 3 weeks']}
+                      selectedSet={selectedDurations}
+                      setter={setSelectedDurations}
+                      category="duration"
+                    />
                   </div>
 
-                  <Button
-                    className="mt-6 w-full"
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedSeasons(new Set());
-                      setSelectedWeather(new Set());
-                      setSelectedTypes(new Set());
-                      setSelectedDurations(new Set());
-                    }}
-                  >
-                    Reset Filters
-                  </Button>
-                </CardContent>
-              </Card>
+                  {hasActiveFilters && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="mt-8"
+                    >
+                      <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent mb-6" />
+                      <Button
+                        variant="ghost"
+                        onClick={clearAllFilters}
+                        className="font-inter w-full rounded-full border border-zinc-200 py-6 text-sm font-light tracking-wide text-zinc-600 transition-all duration-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white"
+                      >
+                        Clear All Filters
+                      </Button>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
             </motion.div>
 
             {/* Mobile Filter Button */}
-            <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 lg:hidden">
+            <div className="fixed bottom-8 left-1/2 z-40 -translate-x-1/2 lg:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button size="lg" className="shadow-lg">
-                    <Filter className="mr-2 size-4" />
+                  <Button 
+                    size="lg" 
+                    className="font-inter rounded-full bg-zinc-900 px-8 py-6 text-sm font-light uppercase tracking-widest text-white shadow-2xl transition-all duration-300 hover:bg-zinc-800 hover:shadow-zinc-900/50"
+                  >
+                    <Filter className="mr-2 size-4" strokeWidth={1.5} />
                     Filters
+                    {hasActiveFilters && (
+                      <span className="ml-2 flex size-5 items-center justify-center rounded-full bg-amber-500 text-xs font-medium text-zinc-900">
+                        {selectedSeasons.size + selectedWeather.size + selectedTypes.size + selectedDurations.size}
+                      </span>
+                    )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left">
+                <SheetContent side="left" className="w-[90vw] sm:w-[400px]">
                   <SheetHeader>
-                    <SheetTitle>Filters</SheetTitle>
+                    <SheetTitle className="font-cormorant text-3xl font-light">Refine</SheetTitle>
                   </SheetHeader>
-                  <div className="mt-6 space-y-6">
-                    <div>
-                      <h4 className="mb-3 text-sm">Season</h4>
-                      <div className="space-y-2">
-                        {['Summer', 'Spring', 'Fall', 'Winter'].map(
-                          (season) => (
-                            <div
-                              key={season}
-                              className="flex items-center space-x-2"
-                            >
-                              <Checkbox
-                                id={`mobile-season-${season}`}
-                                checked={selectedSeasons.has(season)}
-                                onCheckedChange={(c) =>
-                                  toggleInSet(setSelectedSeasons, selectedSeasons, season, !!c)
-                                }
-                              />
-                              <Label
-                                htmlFor={`mobile-season-${season}`}
-                                className="cursor-pointer text-sm"
-                              >
-                                {season}
-                              </Label>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="mb-3 text-sm">Trip Type</h4>
-                      <div className="space-y-2">
-                        {[
-                          'Adventure',
-                          'Beach & Relaxation',
-                          'Culture',
-                          'Food & Culture',
-                          'Family',
-                        ].map((type) => (
-                          <div
-                            key={type}
-                            className="flex items-center space-x-2"
-                          >
-                              <Checkbox
-                                id={`mobile-type-${type}`}
-                                checked={selectedTypes.has(type)}
-                                onCheckedChange={(c) =>
-                                  toggleInSet(setSelectedTypes, selectedTypes, type, !!c)
-                                }
-                              />
-                            <Label
-                              htmlFor={`mobile-type-${type}`}
-                              className="cursor-pointer text-sm"
-                            >
-                              {type}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                  <div className="mt-8 space-y-8">
+                    <FilterSection 
+                      title="Season"
+                      items={['Summer', 'Spring', 'Fall', 'Winter']}
+                      selectedSet={selectedSeasons}
+                      setter={setSelectedSeasons}
+                      category="season"
+                    />
+                    <div className="h-px bg-zinc-200" />
+                    <FilterSection 
+                      title="Weather"
+                      items={['Sunny', 'Rainy', 'Mild', 'Cool']}
+                      selectedSet={selectedWeather}
+                      setter={setSelectedWeather}
+                      category="weather"
+                    />
+                    <div className="h-px bg-zinc-200" />
+                    <FilterSection 
+                      title="Experience"
+                      items={['Adventure', 'Beach & Relaxation', 'Culture', 'Food & Culture', 'Family', 'City Break']}
+                      selectedSet={selectedTypes}
+                      setter={setSelectedTypes}
+                      category="type"
+                    />
+                    <div className="h-px bg-zinc-200" />
+                    <FilterSection 
+                      title="Duration"
+                      items={['< 1 week', '1-2 weeks', '2-3 weeks', '> 3 weeks']}
+                      selectedSet={selectedDurations}
+                      setter={setSelectedDurations}
+                      category="duration"
+                    />
+                    {hasActiveFilters && (
+                      <Button
+                        variant="ghost"
+                        onClick={clearAllFilters}
+                        className="font-inter w-full rounded-full py-6"
+                      >
+                        Clear All
+                      </Button>
+                    )}
                   </div>
                 </SheetContent>
               </Sheet>
@@ -592,95 +564,116 @@ export default function Journeys() {
 
             {/* Journey Grid */}
             <div className="flex-1">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {/* Active Filters Bar */}
+              {hasActiveFilters && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.4 }}
+                  className="mb-8 rounded-2xl border border-zinc-200/60 bg-white/60 p-6 backdrop-blur-sm"
+                >
+                  <div className="mb-4 flex items-center justify-between">
+                    <p className="font-inter text-sm font-light tracking-wide text-zinc-600">
+                      Active Filters
+                    </p>
+                    <button 
+                      onClick={clearAllFilters}
+                      className="font-inter text-xs font-light uppercase tracking-widest text-zinc-500 transition-colors hover:text-zinc-900"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from(selectedSeasons).map((season) => (
+                      <motion.div
+                        key={`active-season-${season}`}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        className="flex items-center gap-2 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-light text-zinc-700"
+                      >
+                        {season}
+                        <button 
+                          onClick={() => removeFilter('season', season)}
+                          className="transition-transform hover:scale-110"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </motion.div>
+                    ))}
+                    {Array.from(selectedWeather).map((weather) => (
+                      <motion.div
+                        key={`active-weather-${weather}`}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        className="flex items-center gap-2 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-light text-zinc-700"
+                      >
+                        {weather}
+                        <button 
+                          onClick={() => removeFilter('weather', weather)}
+                          className="transition-transform hover:scale-110"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </motion.div>
+                    ))}
+                    {Array.from(selectedTypes).map((type) => (
+                      <motion.div
+                        key={`active-type-${type}`}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        className="flex items-center gap-2 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-light text-zinc-700"
+                      >
+                        {type}
+                        <button 
+                          onClick={() => removeFilter('type', type)}
+                          className="transition-transform hover:scale-110"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </motion.div>
+                    ))}
+                    {Array.from(selectedDurations).map((duration) => (
+                      <motion.div
+                        key={`active-duration-${duration}`}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        className="flex items-center gap-2 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-light text-zinc-700"
+                      >
+                        {duration}
+                        <button 
+                          onClick={() => removeFilter('duration', duration)}
+                          className="transition-transform hover:scale-110"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
                 {journeys.filter(matchesFilters).map((journey, index) => {
                   const WeatherIcon =
                     weatherIcons[
                       journey.weather as keyof typeof weatherIcons
                     ] || Sun;
                   return (
-                    <motion.div
+                    <JourneyCard 
                       key={journey.id}
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: '-100px' }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                      <Card className="group h-full cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                        <div className="relative h-56 overflow-hidden">
-                          <img
-                            src={journey.image}
-                            alt={journey.title}
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className={`absolute top-3 right-3 ${favorites.includes(journey.id) ? 'text-red-500' : 'text-white'} backdrop-blur-sm hover:bg-white/20`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleFavorite(journey.id);
-                            }}
-                          >
-                            <Heart
-                              className={`size-5 ${favorites.includes(journey.id) ? 'fill-current' : ''}`}
-                            />
-                          </Button>
-                          <div className="absolute right-3 bottom-3 left-3">
-                            <h3
-                              className="mb-1 text-2xl text-white"
-                              style={{ fontFamily: 'Playfair Display, serif' }}
-                            >
-                              {journey.title}
-                            </h3>
-                            <p className="text-sm text-white/90">
-                              by {journey.author}
-                            </p>
-                          </div>
-                        </div>
-
-                        <CardContent className="p-5">
-                          <div className="mb-3 flex flex-wrap gap-2">
-                            <Badge
-                              variant="secondary"
-                              className="bg-primary/10 text-primary hover:bg-primary/20"
-                            >
-                              <MapPin className="mr-1 size-3" />
-                              {journey.destination}
-                            </Badge>
-                            <Badge variant="outline">
-                              <Calendar className="mr-1 size-3" />
-                              {journey.duration}
-                            </Badge>
-                            <Badge variant="outline">
-                              <WeatherIcon className="mr-1 size-3" />
-                              {journey.season}
-                            </Badge>
-                          </div>
-
-                          <p className="mb-4 line-clamp-2 text-sm text-gray-600">
-                            {journey.description}
-                          </p>
-
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1 text-sm text-gray-500">
-                              <Heart className="size-4" />
-                              {journey.likes} likes
-                            </div>
-                            <Button
-                              size="sm"
-                              onClick={() =>
-                                router.push(`/journeys/${journey.id}`)
-                              }
-                              className="transition-transform group-hover:scale-105"
-                            >
-                              View Details
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
+                      journey={journey}
+                      index={index}
+                      isFavorite={favorites.includes(journey.id)}
+                      onToggleFavorite={toggleFavorite}
+                      WeatherIcon={WeatherIcon}
+                      isAnimating={wishlistAnimating === journey.id}
+                      onViewDetails={() => router.push(`/journeys/${journey.id}`)}
+                    />
                   );
                 })}
               </div>
@@ -689,5 +682,177 @@ export default function Journeys() {
         </div>
       </section>
     </div>
+  );
+}
+
+// Luxury Journey Card Component with Parallax Hover
+function JourneyCard({ 
+  journey, 
+  index, 
+  isFavorite, 
+  onToggleFavorite, 
+  WeatherIcon,
+  isAnimating,
+  onViewDetails 
+}: { 
+  journey: any; 
+  index: number; 
+  isFavorite: boolean; 
+  onToggleFavorite: (id: number) => void;
+  WeatherIcon: any;
+  isAnimating: boolean;
+  onViewDetails: () => void;
+}) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  
+  const mouseXSpring = useSpring(x, { damping: 25, stiffness: 150 });
+  const mouseYSpring = useSpring(y, { damping: 25, stiffness: 150 });
+  
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ['2deg', '-2deg']);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ['-2deg', '2deg']);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const xPct = mouseX / width - 0.5;
+    const yPct = mouseY / height - 0.5;
+    x.set(xPct);
+    y.set(yPct);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-100px' }}
+      transition={{ duration: 0.7, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+      style={{ 
+        rotateX, 
+        rotateY,
+        transformStyle: 'preserve-3d'
+      }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="group"
+    >
+      <Card className="h-full cursor-pointer overflow-hidden rounded-3xl border-0 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-700 hover:shadow-[0_20px_60px_rgb(0,0,0,0.12)]">
+        {/* Image Container */}
+        <div className="relative h-96 overflow-hidden">
+          <motion.img
+            src={journey.image}
+            alt={journey.title}
+            className="h-full w-full object-cover"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          />
+          
+          {/* Cinematic Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+          
+          {/* Wishlist Button */}
+          <motion.button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite(journey.id);
+            }}
+            className={`absolute top-6 right-6 flex size-12 items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 ${
+              isFavorite 
+                ? 'bg-white/20 text-red-500' 
+                : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            animate={isAnimating ? {
+              scale: [1, 1.3, 1],
+              rotate: [0, 10, -10, 0]
+            } : {}}
+            transition={{ duration: 0.6 }}
+          >
+            <Heart
+              className={`size-5 transition-all ${isFavorite ? 'fill-current' : ''}`}
+              strokeWidth={1.5}
+            />
+          </motion.button>
+
+          {/* Title Overlay */}
+          <div className="absolute right-6 bottom-6 left-6">
+            <motion.h3 
+              className="font-cormorant mb-2 text-4xl font-light tracking-tight text-white"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              {journey.title}
+            </motion.h3>
+            <p className="font-inter text-sm font-light tracking-wide text-white/80">
+              curated by {journey.author}
+            </p>
+          </div>
+        </div>
+
+        {/* Card Content */}
+        <CardContent className="p-8">
+          {/* Luxury Badges */}
+          <div className="mb-6 flex flex-wrap gap-2">
+            <Badge
+              variant="secondary"
+              className="rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-xs font-light tracking-wide text-zinc-700 hover:border-zinc-300"
+            >
+              <MapPin className="mr-1.5 size-3" strokeWidth={1.5} />
+              {journey.destination}
+            </Badge>
+            <Badge 
+              variant="outline"
+              className="rounded-full border-zinc-200 bg-transparent px-4 py-1.5 text-xs font-light tracking-wide text-zinc-600"
+            >
+              <Calendar className="mr-1.5 size-3" strokeWidth={1.5} />
+              {journey.duration}
+            </Badge>
+            <Badge 
+              variant="outline"
+              className="rounded-full border-zinc-200 bg-transparent px-4 py-1.5 text-xs font-light tracking-wide text-zinc-600"
+            >
+              <WeatherIcon className="mr-1.5 size-3" strokeWidth={1.5} />
+              {journey.season}
+            </Badge>
+          </div>
+
+          {/* Description */}
+          <p className="font-inter mb-6 line-clamp-2 text-base font-light leading-relaxed text-zinc-600">
+            {journey.description}
+          </p>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between">
+            <div className="font-inter flex items-center gap-2 text-sm font-light text-zinc-500">
+              <Heart className="size-4" strokeWidth={1.5} />
+              <span>{journey.likes} travelers inspired</span>
+            </div>
+            <motion.button
+              onClick={onViewDetails}
+              className="font-inter group/btn flex items-center gap-2 rounded-full border border-zinc-900 bg-zinc-900 px-6 py-3 text-sm font-light tracking-wide text-white transition-all duration-300 hover:bg-transparent hover:text-zinc-900"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Discover
+              <motion.span
+                className="transition-transform duration-300 group-hover/btn:translate-x-1"
+              >
+                →
+              </motion.span>
+            </motion.button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
