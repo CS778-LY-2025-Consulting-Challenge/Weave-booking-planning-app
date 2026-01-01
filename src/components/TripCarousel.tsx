@@ -31,12 +31,13 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
     const [selectedId, setSelectedId] = useState(trips[0].id);
     const [isDragging, setIsDragging] = useState(false);
     const [hiddenIds, setHiddenIds] = useState<number[]>([]);
+    const [isAnimating, setIsAnimating] = useState(false);
     const constraintsRef = useRef<HTMLDivElement>(null);
     const x = useMotionValue(0);
     const controls = useAnimation();
 
     const handleCardClick = async (trip: Trip) => {
-      if (!isDragging) {
+      if (!isDragging && !isAnimating) {
         setSelectedId(trip.id);
         onTripSelect?.(trip);
 
@@ -45,6 +46,8 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
         if (clickedIndex === 0) {
           return;
         }
+
+        setIsAnimating(true);
 
         const cardWidth = 264; // padding + gap
         const moveDistance = -(clickedIndex * cardWidth);
@@ -68,9 +71,10 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
         ];
         setOrderedTrips(newOrder);
 
-        x.set(0);
+        controls.set({ x: 0 });
 
         setHiddenIds([]);
+        setIsAnimating(false);
       }
     };
 
@@ -88,7 +92,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
         ref={constraintsRef}
       >
         <motion.div
-          drag="x"
+          drag={!isAnimating && "x"}
           dragConstraints={constraintsRef}
           dragElastic={0.1}
           onDragStart={() => setIsDragging(true)}
