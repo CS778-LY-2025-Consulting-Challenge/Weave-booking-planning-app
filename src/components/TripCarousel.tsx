@@ -1,19 +1,20 @@
 import clsx from 'clsx';
 import { motion, useAnimation, useMotionValue } from 'framer-motion';
 import { HeartIcon } from 'lucide-react';
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
 
-interface Trip {
+export interface Trip {
   id: number;
   title: string;
   location: string;
   image: string;
-  video: string;
+  video?: string;
   cardImage: string;
   distance: string;
   elevation: string;
   likes: number;
   bestTime: string;
+  customComponent?: () => ReactNode;
 }
 
 interface TripCarouselProps {
@@ -31,12 +32,13 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
     const [selectedId, setSelectedId] = useState(trips[0].id);
     const [isDragging, setIsDragging] = useState(false);
     const [hiddenIds, setHiddenIds] = useState<number[]>([]);
+    const [isAnimating, setIsAnimating] = useState(false);
     const constraintsRef = useRef<HTMLDivElement>(null);
     const x = useMotionValue(0);
     const controls = useAnimation();
 
     const handleCardClick = async (trip: Trip) => {
-      if (!isDragging) {
+      if (!isDragging && !isAnimating) {
         setSelectedId(trip.id);
         onTripSelect?.(trip);
 
@@ -45,6 +47,8 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
         if (clickedIndex === 0) {
           return;
         }
+
+        setIsAnimating(true);
 
         const cardWidth = 264; // padding + gap
         const moveDistance = -(clickedIndex * cardWidth);
@@ -68,9 +72,10 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
         ];
         setOrderedTrips(newOrder);
 
-        x.set(0);
+        controls.set({ x: 0 });
 
         setHiddenIds([]);
+        setIsAnimating(false);
       }
     };
 
@@ -88,7 +93,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
         ref={constraintsRef}
       >
         <motion.div
-          drag="x"
+          drag={!isAnimating && "x"}
           dragConstraints={constraintsRef}
           dragElastic={0.1}
           onDragStart={() => setIsDragging(true)}
