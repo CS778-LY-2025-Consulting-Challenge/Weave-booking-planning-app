@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { FlightBookingFlow } from '@/components/FlightBookingFlow';
 
 interface Flight {
@@ -133,6 +134,7 @@ const CITIES: City[] = [
 ];
 
 export default function FlightBooking() {
+  const router = useRouter();
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [tripType, setTripType] = useState('roundtrip');
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
@@ -500,15 +502,7 @@ export default function FlightBooking() {
                 size="lg"
                 variant="outline"
                 className="border-white/30 bg-white/10 px-8 py-6 text-lg text-white shadow-2xl backdrop-blur-md hover:bg-white/20"
-                onClick={() => {
-                  // 1. expand
-                  setIsPrivateJetExpanded(true);
-
-                  // 2. after layout settles, scroll down
-                  setTimeout(() => {
-                    scrollToSection('private-jet-section');
-                  }, 250); // 200–300ms feels good
-                }}
+                onClick={() => router.push('/private-jet')}
               >
                 <Crown className="mr-2 size-5" />
                 Private Jet
