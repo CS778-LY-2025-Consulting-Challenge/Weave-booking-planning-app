@@ -33,26 +33,17 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import {
   ArrowLeftRight,
   ArrowRight,
-  Bed,
   CheckCircle,
   ChevronDown,
-  Clock,
   Crown,
   Filter,
   Minus,
-  Music,
-  PawPrint,
   Plane,
   Plus,
   Search,
-  Shield,
-  Sparkles,
-  Utensils,
-  Wifi,
-  Wine,
   X,
 } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FlightBookingFlow } from '@/components/FlightBookingFlow';
@@ -175,7 +166,6 @@ export default function FlightBooking() {
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('price');
-  const [isPrivateJetExpanded, setIsPrivateJetExpanded] = useState(false);
 
   const totalPassengers =
     passengerCounts.adults + passengerCounts.children + passengerCounts.infants;
@@ -497,7 +487,6 @@ export default function FlightBooking() {
                 Search Flights
               </Button>
 
-              {/* Hero - Private Jet */}
               <Button
                 size="lg"
                 variant="outline"
@@ -507,7 +496,6 @@ export default function FlightBooking() {
                 <Crown className="mr-2 size-5" />
                 Private Jet
               </Button>
-
             </motion.div>
           </motion.div>
 
@@ -1065,400 +1053,6 @@ export default function FlightBooking() {
             )}
           </CardContent>
         </Card>
-
-        {/* Private Jet Button - Ultra Luxury */}
-        <div id="private-jet-section" className="mb-8">
-          <motion.div
-            initial={false}
-            animate={{
-              marginBottom: isPrivateJetExpanded ? '2rem' : '0',
-            }}
-          >
-            <Button
-              onClick={() => setIsPrivateJetExpanded(!isPrivateJetExpanded)}
-              className="group relative h-20 w-full overflow-hidden border-2 border-amber-300 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white shadow-2xl backdrop-blur-md hover:from-amber-600 hover:via-amber-700 hover:to-amber-800"
-            >
-              {/* Animated Background Effect */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-amber-600/20"
-                animate={{
-                  x: ['-100%', '100%'],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: 'linear',
-                }}
-              />
-
-              <div className="relative z-10 flex w-full items-center justify-center gap-4">
-                <motion.div
-                  animate={{
-                    rotate: isPrivateJetExpanded ? 0 : [0, -10, 10, -10, 0],
-                    scale: isPrivateJetExpanded ? 1 : [1, 1.1, 1],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: isPrivateJetExpanded ? 0 : Infinity,
-                    repeatDelay: 1,
-                  }}
-                  className="rounded-xl bg-white/20 p-3 backdrop-blur-sm"
-                >
-                  <Crown className="size-8 text-white drop-shadow-lg" />
-                </motion.div>
-
-                <div className="flex-1 text-left">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-white drop-shadow-lg">
-                      Private Jet Experience
-                    </h2>
-                    <Sparkles className="size-5 animate-pulse text-amber-200" />
-                  </div>
-                  <p className="text-sm text-amber-100">
-                    Exclusive charter service for discerning travelers
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="hidden text-right sm:block">
-                    <p className="text-xs text-amber-100">Starting from</p>
-                    <p className="text-2xl">
-                      $4,500<span className="text-sm">/hr</span>
-                    </p>
-                  </div>
-
-                  <motion.div
-                    animate={{ rotate: isPrivateJetExpanded ? 180 : 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <ArrowRight className="size-6" />
-                  </motion.div>
-                </div>
-              </div>
-
-              {/* Shimmer Effect */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                animate={{
-                  x: ['-200%', '200%'],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 3,
-                  ease: 'easeInOut',
-                }}
-              />
-            </Button>
-          </motion.div>
-
-          {/* Expandable Content */}
-          <AnimatePresence>
-            {isPrivateJetExpanded && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, y: -20 }}
-                animate={{ opacity: 1, height: 'auto', y: 0 }}
-                exit={{ opacity: 0, height: 0, y: -20 }}
-                transition={{
-                  duration: 0.5,
-                  ease: [0.4, 0, 0.2, 1],
-                }}
-                className="overflow-hidden"
-              >
-                <motion.div
-                  initial={{ scale: 0.95 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0.95 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card className="mt-4 border-2 border-amber-200 bg-gradient-to-br from-amber-50/95 via-white/95 to-amber-50/95 shadow-2xl backdrop-blur-md">
-                    <CardContent className="p-0">
-                      <div className="grid gap-0 lg:grid-cols-2 lg:items-stretch">
-                        {/* Left: Luxury Content */}
-                        <div className="p-8 lg:p-10">
-                          <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.2 }}
-                          >
-                            <div className="mb-4 flex items-center gap-3">
-                              <div className="rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 p-3">
-                                <Crown className="size-8 text-white" />
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h2 className="bg-gradient-to-r from-amber-600 to-amber-900 bg-clip-text text-transparent">
-                                    Private Jet Charter
-                                  </h2>
-                                  <Sparkles className="size-5 text-amber-500" />
-                                </div>
-                                <p className="text-sm text-amber-700">
-                                  Unparalleled Luxury & Privacy
-                                </p>
-                              </div>
-                            </div>
-
-                            <p className="mb-6 text-gray-700">
-                              Experience the pinnacle of air travel with our
-                              exclusive private jet charter service. Fly on your
-                              schedule with bespoke luxury, complete privacy,
-                              and world-class service.
-                            </p>
-                          </motion.div>
-
-                          {/* Luxury Features Grid */}
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                            className="mb-6 grid grid-cols-2 gap-4"
-                          >
-                            {[
-                              {
-                                icon: Clock,
-                                title: 'Custom Schedule',
-                                desc: 'Depart anytime',
-                              },
-                              {
-                                icon: Shield,
-                                title: 'Total Privacy',
-                                desc: 'Exclusive aircraft',
-                              },
-                              {
-                                icon: Utensils,
-                                title: 'Gourmet Dining',
-                                desc: 'Michelin-star chef',
-                              },
-                              {
-                                icon: Bed,
-                                title: 'Sky Suite',
-                                desc: 'Full bedroom',
-                              },
-                              {
-                                icon: Wine,
-                                title: 'Premium Bar',
-                                desc: 'Vintage collection',
-                              },
-                              {
-                                icon: PawPrint,
-                                title: 'Pet-Friendly',
-                                desc: 'Luxury pet suite',
-                              },
-                            ].map((feature, index) => (
-                              <motion.div
-                                key={feature.title}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.4 + index * 0.05 }}
-                                className="flex items-start gap-3 rounded-lg border border-amber-200 bg-white/60 p-3"
-                              >
-                                <div className="rounded-lg bg-amber-100 p-2">
-                                  <feature.icon className="size-5 text-amber-600" />
-                                </div>
-                                <div>
-                                  <p className="text-sm">{feature.title}</p>
-                                  <p className="text-xs text-gray-600">
-                                    {feature.desc}
-                                  </p>
-                                </div>
-                              </motion.div>
-                            ))}
-                          </motion.div>
-
-                          {/* Quick Form */}
-                          <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.7 }}
-                            className="space-y-4 rounded-xl border border-amber-200 bg-white/80 p-4"
-                          >
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <Label
-                                  htmlFor="private-from"
-                                  className="text-xs"
-                                >
-                                  Departure
-                                </Label>
-                                <Input
-                                  id="private-from"
-                                  placeholder="Any airport"
-                                  className="h-10"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="private-to" className="text-xs">
-                                  Destination
-                                </Label>
-                                <Input
-                                  id="private-to"
-                                  placeholder="Any airport"
-                                  className="h-10"
-                                />
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <Label
-                                  htmlFor="private-date"
-                                  className="text-xs"
-                                >
-                                  Departure Date
-                                </Label>
-                                <Input
-                                  id="private-date"
-                                  type="date"
-                                  className="h-10"
-                                />
-                              </div>
-                              <div>
-                                <Label
-                                  htmlFor="private-guests"
-                                  className="text-xs"
-                                >
-                                  Passengers
-                                </Label>
-                                <Select defaultValue="1-4">
-                                  <SelectTrigger
-                                    id="private-guests"
-                                    className="h-10"
-                                  >
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="1-4">
-                                      1-4 passengers
-                                    </SelectItem>
-                                    <SelectItem value="5-8">
-                                      5-8 passengers
-                                    </SelectItem>
-                                    <SelectItem value="9-12">
-                                      9-12 passengers
-                                    </SelectItem>
-                                    <SelectItem value="13+">
-                                      13+ passengers
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                            <div>
-                              <Label
-                                htmlFor="private-aircraft"
-                                className="text-xs"
-                              >
-                                Aircraft Type
-                              </Label>
-                              <Select defaultValue="light">
-                                <SelectTrigger
-                                  id="private-aircraft"
-                                  className="h-10"
-                                >
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="light">
-                                    Light Jet (4-7 pax) - $4,500/hr
-                                  </SelectItem>
-                                  <SelectItem value="midsize">
-                                    Midsize Jet (7-9 pax) - $6,500/hr
-                                  </SelectItem>
-                                  <SelectItem value="super-midsize">
-                                    Super Midsize (8-10 pax) - $8,500/hr
-                                  </SelectItem>
-                                  <SelectItem value="heavy">
-                                    Heavy Jet (10-16 pax) - $12,000/hr
-                                  </SelectItem>
-                                  <SelectItem value="ultra-long">
-                                    Ultra Long Range (12-18 pax) - $15,000/hr
-                                  </SelectItem>
-                                  <SelectItem value="vip-airliner">
-                                    VIP Airliner (19-50 pax) - $25,000/hr
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <Button className="h-12 w-full bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800">
-                              <Crown className="mr-2 size-4" />
-                              Request Private Charter Quote
-                            </Button>
-                          </motion.div>
-
-                          {/* Premium Badges */}
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.8 }}
-                            className="mt-6 flex flex-wrap gap-2"
-                          >
-                            <Badge className="border-amber-300 bg-amber-100 text-amber-800">
-                              <Wifi className="mr-1 size-3" />
-                              Starlink WiFi
-                            </Badge>
-                            <Badge className="border-amber-300 bg-amber-100 text-amber-800">
-                              <Music className="mr-1 size-3" />
-                              Premium Audio
-                            </Badge>
-                            <Badge className="border-amber-300 bg-amber-100 text-amber-800">
-                              <Shield className="mr-1 size-3" />
-                              24/7 Concierge
-                            </Badge>
-                            <Badge className="border-amber-300 bg-amber-100 text-amber-800">
-                              <Sparkles className="mr-1 size-3" />
-                              VIP Lounge Access
-                            </Badge>
-                          </motion.div>
-                        </div>
-
-                        {/* Right: Luxury Jet Images */}
-                        <motion.div
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.4 }}
-                          className="relative overflow-hidden rounded-b-xl lg:rounded-b-none lg:rounded-r-xl h-[300px] sm:h-[400px] lg:h-[800px]"
-                        >
-                          <div className="grid h-full grid-rows-2 gap-2">
-                            <div className="relative overflow-hidden">
-                              <img
-                                src="https://images.unsplash.com/photo-1661954864180-e61dea14208a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBwcml2YXRlJTIwamV0JTIwaW50ZXJpb3J8ZW58MXx8fHwxNzY0NTU1NjY0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                                alt="Private Jet Interior"
-                                className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                              <Badge className="absolute bottom-4 left-4 border-0 bg-white/90 text-gray-900">
-                                Luxury Interior
-                              </Badge>
-                            </div>
-
-                            <div className="relative overflow-hidden">
-                              <img
-                                src="https://images.unsplash.com/photo-1701874309317-33d5b62b9a46?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcml2YXRlJTIwamV0JTIwZXh0ZXJpb3IlMjBhaXJwb3J0fGVufDF8fHx8MTc2NDU1NTY2NHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                                alt="Private Jet Exterior"
-                                className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                              <Badge className="absolute bottom-4 left-4 border-0 bg-white/90 text-gray-900">
-                                Fleet Excellence
-                              </Badge>
-                            </div>
-                          </div>
-
-                          {/* Floating Price Badge */}
-                          <div className="absolute top-4 right-4 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 p-4 text-white shadow-2xl backdrop-blur-sm">
-                            <p className="text-xs opacity-90">Starting from</p>
-                            <p className="text-2xl">
-                              $4,500<span className="text-sm">/hr</span>
-                            </p>
-                          </div>
-                        </motion.div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
 
         {hasSearched && (
         <div className="flex gap-8">
