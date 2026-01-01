@@ -1,15 +1,22 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import TripCarousel, { type TripCarouselRef } from './TripCarousel';
+import TripCarousel, { type Trip, type TripCarouselRef } from './TripCarousel';
+import ZhangjiajieParallax from './ZhangjiajieParallax';
 
 const TripsSection = () => {
   const [selectedTrip, setSelectedTrip] = useState(upcomingTrips[0]);
+  const [selectionKey, setSelectionKey] = useState(0);
   const [isInitialMount, setIsInitialMount] = useState(true);
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
   const SCROLL_INDICATOR_HIDE_OFFSET = 120;
 
   const carouselRef = useRef<TripCarouselRef>(null);
+
+  const handleTripSelect = (trip: Trip) => {
+    setSelectedTrip(trip);
+    setSelectionKey((prev) => prev + 1);
+  };
 
   useEffect(() => {
     setIsInitialMount(false);
@@ -37,7 +44,7 @@ const TripsSection = () => {
       {/* Landmark background */}
       <AnimatePresence>
         <motion.div
-          key={selectedTrip.id}
+          key={selectionKey}
           className="absolute inset-0"
           style={{ zIndex: selectedTrip.id }}
           initial={{
@@ -50,7 +57,9 @@ const TripsSection = () => {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.7, ease: [0.43, 0.13, 0.23, 0.96] }}
         >
-          {selectedTrip.video ? (
+          {selectedTrip.customComponent ? (
+            selectedTrip.customComponent()
+          ) : selectedTrip.video ? (
             <video
               key={selectedTrip.video}
               className="bg-slate-900 absolute inset-0 h-full w-full object-cover"
@@ -116,7 +125,7 @@ const TripsSection = () => {
           <TripCarousel
             ref={carouselRef}
             trips={upcomingTrips}
-            onTripSelect={setSelectedTrip}
+            onTripSelect={handleTripSelect}
           />
 
           {/* Statistics indicators */}
@@ -162,9 +171,21 @@ const TripsSection = () => {
 
 export default TripsSection;
 
-export const upcomingTrips = [
+export const upcomingTrips: Trip[] = [
   {
     id: 1,
+    title: 'ZHANGJIAJIE PEAKS',
+    location: 'Hunan, China',
+    image: '/zhangjiajie/background.png',
+    cardImage: '/travels/zhangjiajie_card.jpg',
+    distance: '18.2M',
+    elevation: '1262M',
+    bestTime: 'April – October',
+    likes: 1580,
+    customComponent: () => <ZhangjiajieParallax imagePath="/zhangjiajie" />,
+  },
+  {
+    id: 2,
     title: 'PATAGONIA EXPRESS',
     location: 'Tierra del Fuego, Chile',
     image: '/travels/america.jpg',
@@ -176,7 +197,7 @@ export const upcomingTrips = [
     likes: 730,
   },
   {
-    id: 2,
+    id: 3,
     title: 'TOKYO NIGHTS',
     location: 'Shibuya, Tokyo',
     image: '/travels/tokyo.jpg',
@@ -188,7 +209,7 @@ export const upcomingTrips = [
     likes: 892,
   },
   {
-    id: 3,
+    id: 4,
     title: 'GREAT WALL TREK',
     location: 'Beijing, China',
     image: '/travels/china.jpg',
@@ -200,7 +221,7 @@ export const upcomingTrips = [
     likes: 654,
   },
   {
-    id: 4,
+    id: 5,
     title: 'HIMALAYAN SUNRISE',
     location: 'Ladakh, India',
     image: '/travels/india.jpg',
@@ -212,7 +233,7 @@ export const upcomingTrips = [
     likes: 1024,
   },
   {
-    id: 5,
+    id: 6,
     title: 'FJORD EXPLORER',
     location: 'South Island, New Zealand',
     image: '/travels/new_zealand.jpg',
@@ -224,7 +245,7 @@ export const upcomingTrips = [
     likes: 765,
   },
   {
-    id: 6,
+    id: 7,
     title: 'THAI TEMPLE TRAIL',
     location: 'Chiang Mai, Thailand',
     image: '/travels/thailand.jpg',

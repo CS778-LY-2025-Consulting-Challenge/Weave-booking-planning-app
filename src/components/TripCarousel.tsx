@@ -1,19 +1,20 @@
 import clsx from 'clsx';
 import { motion, useAnimation, useMotionValue } from 'framer-motion';
 import { HeartIcon } from 'lucide-react';
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
 
-interface Trip {
+export interface Trip {
   id: number;
   title: string;
   location: string;
   image: string;
-  video: string;
+  video?: string;
   cardImage: string;
   distance: string;
   elevation: string;
   likes: number;
   bestTime: string;
+  customComponent?: () => ReactNode;
 }
 
 interface TripCarouselProps {
