@@ -1,9 +1,21 @@
 'use client';
 
-'use client';
-
 import { useMemo, useState } from 'react';
-import { Sparkles, Send, MapPin, Calendar, Users, Globe2, Video, Hotel, Plane, Info, MoreHorizontal } from 'lucide-react';
+import {
+  Sparkles,
+  Send,
+  MapPin,
+  Calendar,
+  Users,
+  Globe2,
+  Video,
+  Hotel,
+  Plane,
+  Info,
+  MoreHorizontal,
+  Star,
+  Train,
+} from 'lucide-react';
 import CharizardOrb from '@/components/CharizardOrb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +40,15 @@ type DayPlan = {
 };
 
 type TripState = {
+  tripTitle?: string;
+  summary?: {
+    days: number;
+    cities: number;
+    activitiesCount: number;
+    hotelsCount: number;
+    transportsCount: number;
+  };
+  routeFlow?: string[];
   destination?: string | string[];
   departureCity?: string;
   dates?: { start?: string; end?: string; durationDays?: number };
@@ -69,11 +90,13 @@ export default function AIPlanner() {
   const [isChatting, setIsChatting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  const activeState = useMemo(() => itinerary || plannerState, [itinerary, plannerState]);
+
   const destinationLabel = useMemo(() => {
-    const dest = plannerState.destination;
+    const dest = activeState.destination;
     if (Array.isArray(dest)) return dest.join(', ');
     return dest ?? '—';
-  }, [plannerState.destination]);
+  }, [activeState.destination]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -157,10 +180,29 @@ export default function AIPlanner() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pt-10 text-black">
+      <style jsx>{`
+        .route-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 transparent; /* slate-300 */
+        }
+        .route-scroll::-webkit-scrollbar {
+          height: 8px;
+        }
+        .route-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .route-scroll::-webkit-scrollbar-thumb {
+          background-color: #cbd5e1; /* slate-300 */
+          border-radius: 9999px;
+        }
+        .route-scroll::-webkit-scrollbar-thumb:hover {
+          background-color: #94a3b8; /* slate-400 */
+        }
+      `}</style>
       <div className="mx-auto max-w-screen-xl px-4 py-6 sm:px-6 lg:px-10">
         <div className="grid gap-8 lg:grid-cols-[360px_1fr]">
           {/* Left: Chat */}
-          <Card className="sticky top-24 self-start max-h-[calc(100vh-7rem)] min-h-[calc(100vh-7rem)] overflow-hidden border border-orange-200/60 bg-white/90 shadow-lg flex flex-col py-0 gap-0">
+          <Card className="sticky top-24 flex flex-col self-start border border-orange-200/60 bg-white/90 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
             <CardHeader className="py-2 pb-0">
               <div className="inline-flex items-center gap-2 px-1 text-slate-900">
                 <CharizardOrb size="medium" />
@@ -170,7 +212,7 @@ export default function AIPlanner() {
               </div>
             </CardHeader>
             <CardContent className="flex flex-1 flex-col gap-3 px-4 pt-2 pb-2 min-h-0">
-              <div className="flex-1 min-h-0 space-y-2 overflow-y-auto rounded-lg border border-white/60 bg-white/60 p-3">
+              <div className="flex-1 space-y-2 overflow-y-auto rounded-lg border border-white/60 bg-white/60 p-3 min-h-0">
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
@@ -187,11 +229,11 @@ export default function AIPlanner() {
                     </div>
                   </div>
                 ))}
-                
+
                 {isChatting && (
                   <div className="flex justify-start">
-                    <div className="flex items-center gap-1.5 max-w-[80%] rounded-2xl bg-slate-900 px-4 py-3 text-sm text-white shadow">
-                      <span className="text-xs font-medium text-slate-400 mr-1">Charizard is thinking</span>
+                    <div className="flex max-w-[80%] items-center gap-1.5 rounded-2xl bg-slate-900 px-4 py-3 text-sm text-white shadow">
+                      <span className="mr-1 text-xs font-medium text-slate-400">Charizard is thinking</span>
                       <div className="flex gap-1">
                         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-400 [animation-delay:-0.3s]"></span>
                         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-400 [animation-delay:-0.15s]"></span>
@@ -219,46 +261,111 @@ export default function AIPlanner() {
 
                 <div className="flex items-center justify-between text-xs text-gray-600">
                   <span>Destination: {destinationLabel}</span>
-                <Button size="sm" variant="secondary" onClick={handleGenerate} disabled={isGenerating}>
-                  <Sparkles className="mr-1 h-4 w-4" />
-                  {isGenerating ? 'Generating...' : 'Generate itinerary'}
-                </Button>
+                  <Button size="sm" variant="secondary" onClick={handleGenerate} disabled={isGenerating}>
+                    <Sparkles className="mr-1 h-4 w-4" />
+                    {isGenerating ? 'Generating...' : 'Generate itinerary'}
+                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Right: Visualization */}
-          <div className="space-y-4 mt-4 lg:mt-8">
-            <Card className="border border-slate-200 bg-white/90 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-lg">Trip Overview</CardTitle>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <p>Destination: {destinationLabel}</p>
-                  <p>From: {plannerState.departureCity ?? itinerary?.departureCity ?? '—'}</p>
-                  <p>
-                    Travellers: {plannerState.travellers ?? itinerary?.travellers ?? '—'} • 
-                    Purpose: {plannerState.purpose ?? '—'}
-                  </p>
+          <div className="mt-4 min-w-0 space-y-4 lg:mt-8">
+            {/* Trip Overview Refactored */}
+            <Card className="min-w-0 border border-slate-200 bg-white/90 shadow-lg">
+              <CardHeader className="space-y-3 pb-6">
+                <CardTitle className="text-3xl font-extrabold tracking-tight text-slate-900">
+                  {activeState.tripTitle || 'Your Dream Journey'}
+                </CardTitle>
+                
+                {/* Icons & Counts Summary */}
+                <div className="min-w-0 lg:w-[56%] lg:min-w-[520px]">
+                  <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-slate-600">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-4 w-4 text-slate-400" />
+                      <span>{activeState.summary?.days || plannerState.dates?.durationDays || '—'} days</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-4 w-4 text-slate-400" />
+                      <span>{activeState.summary?.cities || 1} cities</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Star className="h-4 w-4 text-slate-400" />
+                      <span>{activeState.summary?.activitiesCount || '—'} activities</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Hotel className="h-4 w-4 text-slate-400" />
+                      <span>{activeState.summary?.hotelsCount || '—'} hotels</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Plane className="h-4 w-4 text-slate-400" />
+                      <span>{activeState.summary?.transportsCount || '—'} transports</span>
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm text-gray-700">
-                <div className="flex flex-wrap gap-3">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs">
-                    <Calendar className="h-3 w-3" />
-                    {plannerState.dates?.start ?? itinerary?.dates?.start ?? 'Start ?'} -{' '}
-                    {plannerState.dates?.end ?? itinerary?.dates?.end ?? 'End ?'}
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs">
-                    <Users className="h-3 w-3" />
-                    {plannerState.travellers ?? itinerary?.travellers ?? '?'} travellers
-                  </span>
-                  {plannerState.preferences?.length ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs">
-                      <Globe2 className="h-3 w-3" />
-                      {plannerState.preferences.join(', ')}
-                    </span>
-                  ) : null}
+              
+              <CardContent className="min-w-0 overflow-hidden bg-white/90 px-6 py-6">
+                <div className="flex min-w-0 flex-col gap-6 lg:flex-row">
+                  {/* Left: Route Flow (fixed area; scroll only inside this strip when needed) */}
+                  <div className="min-w-0 lg:w-[56%] lg:min-w-[520px] lg:pr-6">
+                    <div className="relative">
+                      <div className="w-full max-w-full overflow-x-auto pb-2 route-scroll">
+                        <div className="inline-flex min-w-max items-center gap-2">
+                          {(activeState.routeFlow || [
+                            activeState.departureCity || 'Departure',
+                            destinationLabel,
+                          ]).map((city, idx, arr) => (
+                            <div key={`${city}-${idx}`} className="flex items-center">
+                              <div className="shrink-0">
+                                <div
+                                  className={`flex h-12 items-center justify-center rounded-2xl px-6 shadow-sm transition-all ${
+                                    idx === 0 || idx === arr.length - 1
+                                      ? 'border border-slate-200 bg-white'
+                                      : 'border border-indigo-200 bg-indigo-100 text-indigo-900'
+                                  }`}
+                                >
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <span className="whitespace-nowrap text-xs font-bold">{city}</span>
+                                    {idx > 0 && idx < arr.length - 1 ? (
+                                      <span className="text-[10px] opacity-70">Stop</span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {idx < arr.length - 1 ? (
+                                <div className="flex shrink-0 items-center px-0.5">
+                                  <div className="dashed-line h-[2px] w-4 shrink-0 bg-slate-200"></div>
+                                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 shadow-inner">
+                                    {idx === 0 ? (
+                                      <Plane className="h-3.5 w-3.5 text-slate-400" />
+                                    ) : (
+                                      <Train className="h-3.5 w-3.5 text-slate-400" />
+                                    )}
+                                  </div>
+                                  <div className="dashed-line h-[2px] w-4 shrink-0 bg-slate-200"></div>
+                                </div>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Fade hint to indicate there is more to scroll (only over the route strip) */}
+                      {(activeState.routeFlow?.length ?? 0) > 3 ? (
+                        <div className="pointer-events-none absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-white/90 to-transparent" />
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Right: reserved space for future Map card */}
+                  <div className="min-w-0 lg:w-[44%]">
+                    <div className="flex h-24 w-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/60 text-xs text-slate-400 lg:h-full">
+                      Map preview (coming next)
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -267,7 +374,7 @@ export default function AIPlanner() {
               <CardHeader>
                 <CardTitle className="text-lg">Day Plans</CardTitle>
               </CardHeader>
-              <CardContent>{renderDayPlans(itinerary?.dayPlans ?? plannerState.dayPlans)}</CardContent>
+              <CardContent>{renderDayPlans(activeState.dayPlans)}</CardContent>
             </Card>
 
             <Card className="border border-slate-200 bg-white/90 shadow">
@@ -278,7 +385,7 @@ export default function AIPlanner() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 p-0 px-4 pt-2 pb-3">
-                {(itinerary?.transportation ?? plannerState.transportation ?? []).map((leg, idx) => (
+                {(activeState.transportation ?? []).map((leg, idx) => (
                   <div
                     key={`trans-${idx}`}
                     className="relative rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
@@ -305,7 +412,7 @@ export default function AIPlanner() {
                       
                       <div className="flex flex-col items-end">
                         <p className="text-sm font-bold text-slate-900">{leg.priceEstimate ?? '—'}</p>
-                        <p className="text-[10px] text-slate-400">Total for {plannerState.travellers ?? 1} travellers</p>
+                        <p className="text-[10px] text-slate-400">Total for {activeState.travellers ?? 1} travellers</p>
                       </div>
                     </div>
 
@@ -321,7 +428,7 @@ export default function AIPlanner() {
                     </div>
                   </div>
                 ))}
-                {!(itinerary?.transportation?.length || plannerState.transportation?.length) && (
+                {!(activeState.transportation?.length) && (
                   <div className="flex flex-col items-center justify-center py-4 text-center">
                     <Plane className="mb-2 h-8 w-8 text-slate-200" />
                     <p className="text-sm text-gray-500">No transportation yet.</p>
@@ -338,10 +445,9 @@ export default function AIPlanner() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 p-0 px-4 pt-2 pb-3">
-                {(itinerary?.accommodation ?? plannerState.accommodation ?? []).map((stay, idx) => (
+                {(activeState.accommodation ?? []).map((stay, idx) => (
                   <div key={`stay-${idx}`} className="group relative overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md">
                     <div className="flex flex-col sm:flex-row">
-                      {/* Placeholder for Image - in a real app this would be a real URL */}
                       <div className="h-32 w-full bg-slate-100 sm:h-auto sm:w-32 flex items-center justify-center">
                         <Hotel className="h-8 w-8 text-slate-300" />
                       </div>
@@ -374,7 +480,7 @@ export default function AIPlanner() {
                     </div>
                   </div>
                 ))}
-                {!(itinerary?.accommodation?.length || plannerState.accommodation?.length) && (
+                {!(activeState.accommodation?.length) && (
                   <div className="flex flex-col items-center justify-center py-4 text-center">
                     <Hotel className="mb-2 h-8 w-8 text-slate-200" />
                     <p className="text-sm text-gray-500">No accommodation yet.</p>
@@ -388,12 +494,12 @@ export default function AIPlanner() {
                 <CardTitle className="text-lg">Media</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-3">
-                {(itinerary?.media?.photos ?? []).map((url, idx) => (
+                {(activeState.media?.photos ?? []).map((url, idx) => (
                   <div key={`photo-${idx}`} className="relative h-28 w-40 overflow-hidden rounded-md">
                     <img src={url} alt="trip" className="h-full w-full object-cover" />
                   </div>
                 ))}
-                {(itinerary?.media?.videos ?? []).map((url, idx) => (
+                {(activeState.media?.videos ?? []).map((url, idx) => (
                   <a
                     key={`video-${idx}`}
                     href={url}
@@ -405,7 +511,7 @@ export default function AIPlanner() {
                     Video {idx + 1}
                   </a>
                 ))}
-                {!itinerary?.media?.photos?.length && !itinerary?.media?.videos?.length && (
+                {!activeState.media?.photos?.length && !activeState.media?.videos?.length && (
                   <p className="text-sm text-gray-500">No media yet.</p>
                 )}
               </CardContent>
