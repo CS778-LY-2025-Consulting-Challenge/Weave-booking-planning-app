@@ -13,16 +13,19 @@ Now you must generate a COMPLETE, DETAILED itinerary.
 Generate a full trip plan with day-by-day activities, transportation, accommodation, and map data.
 
 **CRITICAL Requirements:**
-1. **mapPoints**: MUST include ALL cities in the journey, INCLUDING the departure city.
-   - Example: If trip is Auckland → Tokyo → Kyoto → Auckland, include:
+1. **mapPoints**: MUST include ALL UNIQUE cities in the journey, INCLUDING the departure city.
+   - Example: If trip is Auckland → Tokyo → Shanghai → Auckland (round trip), include:
      [
        { "name": "Auckland", "lat": -36.8485, "lng": 174.7633 },
        { "name": "Tokyo", "lat": 35.6762, "lng": 139.6503 },
-       { "name": "Kyoto", "lat": 35.0116, "lng": 135.7681 }
+       { "name": "Shanghai", "lat": 31.2304, "lng": 121.4737 }
      ]
+   - Note: List each city ONCE, even if returning to departure city
 
-2. **routeFlow**: Array of city names showing the journey path, including departure and return.
-   - Example: ["Auckland", "Tokyo", "Kyoto", "Auckland"]
+2. **routeFlow**: Array of city names showing the COMPLETE journey path, MUST include the return journey.
+   - Example for round trip: ["Auckland", "Tokyo", "Shanghai", "Auckland"]
+   - CRITICAL: If the trip returns to the starting city, the routeFlow MUST include the departure city at BOTH the beginning AND the end
+   - This ensures the map displays the complete round-trip route with return flight
 
 3. **dayPlans**: For EVERY day of the trip, create detailed activities.
    - Each activity MUST have:

@@ -144,43 +144,58 @@ export default function AIPlanner() {
     return points;
   }, [activeState.dayPlans]);
 
-  // Unified city points for the map (combine AI mapPoints + mock mapRoute, dedupe by name+coords)
+  // Unified city points for the map - builds route from routeFlow and mapPoints
   const mapCityPoints = useMemo(() => {
-    const combined: { name: string; lat: number; lng: number }[] = [];
-
     console.log('[mapCityPoints] Building city points...', {
       hasMapRoute: !!activeState.mapRoute,
       mapRoutePoints: activeState.mapRoute?.points?.length || 0,
       hasMapPoints: !!activeState.mapPoints,
       mapPointsCount: activeState.mapPoints?.length || 0,
+      hasRouteFlow: !!activeState.routeFlow,
+      routeFlowLength: activeState.routeFlow?.length || 0,
     });
 
-    // First: mock route points (e.g., Auckland -> Tokyo -> Kyoto -> Auckland)
-    if (activeState.mapRoute?.points) {
-      activeState.mapRoute.points.forEach((p) => {
-        combined.push({ name: p.name, lat: p.coords.lat, lng: p.coords.lng });
-        console.log('[mapCityPoints] Added from mapRoute:', p.name);
-      });
-    }
-
-    // Then: AI mapPoints (e.g., Tokyo -> Kyoto)
-    if (activeState.mapPoints && activeState.mapPoints.length > 0) {
-      activeState.mapPoints.forEach((p) => {
-        const exists = combined.some(
-          (c) => c.name === p.name || (Math.abs(c.lat - p.lat) < 1e-4 && Math.abs(c.lng - p.lng) < 1e-4)
-        );
-        if (!exists) {
-          combined.push(p);
-          console.log('[mapCityPoints] Added from mapPoints:', p.name);
+    // Strategy: Use routeFlow (with order and duplicates) + mapPoints (with coordinates)
+    // This ensures round trips are correctly displayed
+    
+    if (activeState.routeFlow && activeState.routeFlow.length > 0 && activeState.mapPoints && activeState.mapPoints.length > 0) {
+      // Build ordered route from routeFlow using coordinates from mapPoints
+      const orderedRoute: { name: string; lat: number; lng: number }[] = [];
+      
+      activeState.routeFlow.forEach((cityName) => {
+        const cityData = activeState.mapPoints!.find(p => p.name === cityName);
+        if (cityData) {
+          orderedRoute.push(cityData);
+          console.log('[mapCityPoints] Added from routeFlow:', cityName);
         } else {
-          console.log('[mapCityPoints] Skipped duplicate:', p.name);
+          console.warn('[mapCityPoints] City in routeFlow not found in mapPoints:', cityName);
         }
       });
+      
+      console.log('[mapCityPoints] Final route from routeFlow:', orderedRoute.map(p => p.name).join(' → '));
+      return orderedRoute;
+    }
+    
+    // Fallback: Use mapRoute if available (for backward compatibility)
+    if (activeState.mapRoute?.points) {
+      const route = activeState.mapRoute.points.map((p) => ({
+        name: p.name,
+        lat: p.coords.lat,
+        lng: p.coords.lng
+      }));
+      console.log('[mapCityPoints] Using mapRoute fallback:', route.map(p => p.name).join(' → '));
+      return route;
+    }
+    
+    // Fallback: Just use mapPoints as-is
+    if (activeState.mapPoints && activeState.mapPoints.length > 0) {
+      console.log('[mapCityPoints] Using mapPoints only:', activeState.mapPoints.map(p => p.name).join(' → '));
+      return activeState.mapPoints;
     }
 
-    console.log('[mapCityPoints] Final result:', combined.map(p => p.name).join(' → '));
-    return combined;
-  }, [activeState.mapPoints, activeState.mapRoute]);
+    console.log('[mapCityPoints] No route data available');
+    return [];
+  }, [activeState.mapPoints, activeState.mapRoute, activeState.routeFlow]);
 
   const destinationLabel = useMemo(() => {
     const dest = activeState.destination;

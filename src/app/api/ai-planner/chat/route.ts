@@ -15,7 +15,8 @@ The user's screen has a Chat (left) and a Visual Dashboard (right).
 3. Full Plan Generation: Once confirmed, generate a complete plan.
 
 **Data Requirements for Full Plan (CRITICAL):**
-- **mapPoints**: List of {name, lat, lng} for ALL cities in the routeFlow, INCLUDING the departure city and return city. Example: if routeFlow is ["Auckland", "Tokyo", "Kyoto", "Auckland"], mapPoints must include [{name: "Auckland", lat: -36.8485, lng: 174.7633}, {name: "Tokyo", ...}, {name: "Kyoto", ...}].
+- **mapPoints**: List of {name, lat, lng} for ALL UNIQUE cities visited. List each city ONCE even if it's both departure and return city. Example: if routeFlow is ["Auckland", "Tokyo", "Shanghai", "Auckland"], mapPoints must include [{name: "Auckland", lat: -36.8485, lng: 174.7633}, {name: "Tokyo", ...}, {name: "Shanghai", ...}].
+- **routeFlow**: MUST show the COMPLETE journey including return. Example: ["Auckland", "Tokyo", "Shanghai", "Auckland"] for a round trip. CRITICAL: Include departure city at BOTH start and end for round trips.
 - **dayPlans**: For EVERY activity in the activities array, you MUST provide:
   - Precise Latitude and Longitude.
   - A 'type' field: REQUIRED, one of ["attraction", "food", "hotel"].
@@ -37,8 +38,12 @@ The user's screen has a Chat (left) and a Visual Dashboard (right).
   "plannerState": {
     "tripTitle": "string",
     "summary": { "days": 10, "cities": 3, "activitiesCount": 12, "hotelsCount": 1, "transportsCount": 2 },
-    "routeFlow": ["Auckland", "Tokyo", "Auckland"],
-    "mapPoints": [{ "name": "Tokyo", "lat": 35.6762, "lng": 139.6503 }],
+    "routeFlow": ["Auckland", "Tokyo", "Shanghai", "Auckland"],
+    "mapPoints": [
+      { "name": "Auckland", "lat": -36.8485, "lng": 174.7633 },
+      { "name": "Tokyo", "lat": 35.6762, "lng": 139.6503 },
+      { "name": "Shanghai", "lat": 31.2304, "lng": 121.4737 }
+    ],
     "dayPlans": [
       {
         "day": 1,
