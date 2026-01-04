@@ -15,12 +15,15 @@ import {
   MoreHorizontal,
   Star,
   Train,
+  ArrowRight,
 } from 'lucide-react';
 import CharizardOrb from '@/components/CharizardOrb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import TripMap from '@/components/TripMap';
 
 type Coordinates = { lat: number; lng: number };
 type DayPlan = {
@@ -39,6 +42,12 @@ type DayPlan = {
   }>;
 };
 
+type MapPoint = {
+  name: string;
+  lat: number;
+  lng: number;
+};
+
 type TripState = {
   tripTitle?: string;
   summary?: {
@@ -49,6 +58,7 @@ type TripState = {
     transportsCount: number;
   };
   routeFlow?: string[];
+  mapPoints?: MapPoint[];
   destination?: string | string[];
   departureCity?: string;
   dates?: { start?: string; end?: string; durationDays?: number };
@@ -92,6 +102,86 @@ export default function AIPlanner() {
 
   const activeState = useMemo(() => itinerary || plannerState, [itinerary, plannerState]);
 
+  // Extract all attraction points from dayPlans for 3D Globe
+  const attractionPoints = useMemo(() => {
+    const points: any[] = [];
+    activeState.dayPlans?.forEach((day) => {
+      day.activities?.forEach((act: any) => {
+        if (act.coords) {
+          // Smart type detection based on title keywords
+          let detectedType = act.type || 'attraction';
+          
+          if (!act.type) {
+            const title = act.title.toLowerCase();
+            const location = (act.location || '').toLowerCase();
+            const desc = (act.desc || '').toLowerCase();
+            const combined = `${title} ${location} ${desc}`;
+            
+            // Food/Restaurant keywords
+            const foodKeywords = ['food', 'restaurant', 'dinner', 'lunch', 'breakfast', 'brunch', 'cafe', 'coffee', 'dining', 'eat', 'meal', 'sushi', 'ramen', 'cuisine', 'kitchen', 'bar', 'izakaya', 'market', 'snack'];
+            // Hotel/Accommodation keywords
+            const hotelKeywords = ['hotel', 'accommodation', 'check-in', 'check in', 'hostel', 'inn', 'resort', 'lodge', 'stay'];
+            
+            if (foodKeywords.some(keyword => combined.includes(keyword))) {
+              detectedType = 'food';
+            } else if (hotelKeywords.some(keyword => combined.includes(keyword))) {
+              detectedType = 'hotel';
+            }
+          }
+          
+          points.push({
+            name: act.title,
+            lat: act.coords.lat,
+            lng: act.coords.lng,
+            type: detectedType,
+            day: day.day
+          });
+          console.log(`[attractionPoints] Day ${day.day}: ${act.title} (type: ${detectedType}) at [${act.coords.lng}, ${act.coords.lat}]`);
+        }
+      });
+    });
+    console.log(`[attractionPoints] Total extracted: ${points.length} attractions`);
+    return points;
+  }, [activeState.dayPlans]);
+
+  // Unified city points for the map (combine AI mapPoints + mock mapRoute, dedupe by name+coords)
+  const mapCityPoints = useMemo(() => {
+    const combined: { name: string; lat: number; lng: number }[] = [];
+
+    console.log('[mapCityPoints] Building city points...', {
+      hasMapRoute: !!activeState.mapRoute,
+      mapRoutePoints: activeState.mapRoute?.points?.length || 0,
+      hasMapPoints: !!activeState.mapPoints,
+      mapPointsCount: activeState.mapPoints?.length || 0,
+    });
+
+    // First: mock route points (e.g., Auckland -> Tokyo -> Kyoto -> Auckland)
+    if (activeState.mapRoute?.points) {
+      activeState.mapRoute.points.forEach((p) => {
+        combined.push({ name: p.name, lat: p.coords.lat, lng: p.coords.lng });
+        console.log('[mapCityPoints] Added from mapRoute:', p.name);
+      });
+    }
+
+    // Then: AI mapPoints (e.g., Tokyo -> Kyoto)
+    if (activeState.mapPoints && activeState.mapPoints.length > 0) {
+      activeState.mapPoints.forEach((p) => {
+        const exists = combined.some(
+          (c) => c.name === p.name || (Math.abs(c.lat - p.lat) < 1e-4 && Math.abs(c.lng - p.lng) < 1e-4)
+        );
+        if (!exists) {
+          combined.push(p);
+          console.log('[mapCityPoints] Added from mapPoints:', p.name);
+        } else {
+          console.log('[mapCityPoints] Skipped duplicate:', p.name);
+        }
+      });
+    }
+
+    console.log('[mapCityPoints] Final result:', combined.map(p => p.name).join(' → '));
+    return combined;
+  }, [activeState.mapPoints, activeState.mapRoute]);
+
   const destinationLabel = useMemo(() => {
     const dest = activeState.destination;
     if (Array.isArray(dest)) return dest.join(', ');
@@ -125,15 +215,23 @@ export default function AIPlanner() {
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
+      console.log('[handleGenerate] Sending plannerState to API:', plannerState);
       const res = await fetch('/api/ai-planner/itinerary', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plannerState }),
       });
       const data = await res.json();
+      console.log('[handleGenerate] Received itinerary:', data);
+      if (data.error) {
+        throw new Error(data.error);
+      }
       setItinerary(data?.data ?? null);
-    } catch (err) {
+    } catch (err: any) {
+      console.error('[handleGenerate] Error:', err);
       setMessages((prev) => [
         ...prev,
-        { type: 'ai', text: 'Unable to generate itinerary. Please try again.' },
+        { type: 'ai', text: `Unable to generate itinerary: ${err.message || 'Please try again.'}` },
       ]);
     } finally {
       setIsGenerating(false);
@@ -156,7 +254,7 @@ export default function AIPlanner() {
               {day.summary ? <p className="text-sm text-gray-600">{day.summary}</p> : null}
             </CardHeader>
             <CardContent className="space-y-2">
-              {day.activities.map((act, idx) => (
+              {(day.activities ?? []).map((act, idx) => (
                 <div key={idx} className="rounded-md bg-slate-50 p-2">
                   <p className="text-sm font-semibold">
                     {act.time ? `${act.time} • ` : ''}
@@ -308,7 +406,7 @@ export default function AIPlanner() {
               
               <CardContent className="min-w-0 overflow-hidden bg-white/90 px-6 py-6">
                 <div className="flex min-w-0 flex-col gap-6 lg:flex-row">
-                  {/* Left: Route Flow (fixed area; scroll only inside this strip when needed) */}
+                  {/* Left: Route Flow */}
                   <div className="min-w-0 lg:w-[56%] lg:min-w-[520px] lg:pr-6">
                     <div className="relative">
                       <div className="w-full max-w-full overflow-x-auto pb-2 route-scroll">
@@ -353,18 +451,54 @@ export default function AIPlanner() {
                         </div>
                       </div>
 
-                      {/* Fade hint to indicate there is more to scroll (only over the route strip) */}
+                      {/* Fade hint */}
                       {(activeState.routeFlow?.length ?? 0) > 3 ? (
                         <div className="pointer-events-none absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-white/90 to-transparent" />
                       ) : null}
                     </div>
                   </div>
 
-                  {/* Right: reserved space for future Map card */}
+                  {/* Right: Map Thumbnail + Dialog */}
                   <div className="min-w-0 lg:w-[44%]">
-                    <div className="flex h-24 w-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/60 text-xs text-slate-400 lg:h-full">
-                      Map preview (coming next)
-                    </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button className="group relative h-24 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm transition-all hover:shadow-md lg:h-full">
+                          {/* Map Image Placeholder / Background */}
+                          <div className="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
+                          
+                          {/* Overlay Content */}
+                          <div className="relative flex h-full flex-col items-center justify-center text-white">
+                            <div className="mb-1 rounded-full bg-white/20 p-2 backdrop-blur-md transition-transform group-hover:scale-110">
+                              <Globe2 className="h-5 w-5" />
+                            </div>
+                            <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-white/90">
+                              View full map <ArrowRight className="h-3 w-3" />
+                            </span>
+                          </div>
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl h-[80vh] p-0 overflow-hidden bg-slate-950 border-slate-800 [&_svg]:text-white">
+                        <DialogHeader className="absolute top-4 left-6 z-10">
+                          <DialogTitle className="text-white text-xl font-bold bg-slate-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg">
+                            3D Trip Journey
+                          </DialogTitle>
+                        </DialogHeader>
+                        
+                        <div className="h-full w-full">
+                          {activeState.mapPoints || activeState.mapRoute ? (
+                            <TripMap 
+                              cityPoints={mapCityPoints} 
+                              attractionPoints={attractionPoints}
+                            />
+                          ) : (
+                            <div className="flex h-full w-full flex-col items-center justify-center text-white space-y-4">
+                              <Globe2 className="h-12 w-12 text-slate-500 animate-pulse" />
+                              <p className="text-slate-400">Waiting for route data to ignite the map...</p>
+                            </div>
+                          )}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </CardContent>
@@ -377,6 +511,7 @@ export default function AIPlanner() {
               <CardContent>{renderDayPlans(activeState.dayPlans)}</CardContent>
             </Card>
 
+            {/* ... Rest of the cards (Transportation, Accommodation, Media) remain same ... */}
             <Card className="border border-slate-200 bg-white/90 shadow">
               <CardHeader className="flex flex-row items-center justify-between p-0 px-4 pt-2 pb-1">
                 <div className="flex items-center gap-2">
