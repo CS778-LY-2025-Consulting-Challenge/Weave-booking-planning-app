@@ -181,8 +181,9 @@ const EyeBall = ({
 
 
 function LoginPage() {
-  const { setIsAuthenticated } = useAuth();
+  const { setIsAuthenticated, setUserType, setGuideInfo } = useAuth();
   const router = useRouter();
+  const [loginMode, setLoginMode] = useState<'traveler' | 'guide'>('traveler');
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -318,12 +319,46 @@ function LoginPage() {
 
     // Basic validation - just check if fields are not empty
     if (email.trim() && password.trim()) {
-      console.log("✅ Login successful!");
+      console.log(`✅ ${loginMode === 'guide' ? 'Guide' : 'Traveler'} login successful!`);
+      
       // Set authentication state
       setIsAuthenticated(true);
-      // Store in localStorage (already handled by AuthContext)
-      // Redirect to dashboard
-      router.push("/dashboard");
+      setUserType(loginMode);
+      
+      if (loginMode === 'guide') {
+        // Extract name from email or use a default
+        const name = email.split('@')[0];
+        setGuideInfo(
+          `guide-${Math.random().toString(36).substr(2, 9)}`,
+          email,
+          name
+        );
+        // Store guide appointments for this demo
+        const demoAppointments = [
+          {
+            id: '1',
+            guideEmail: email,
+            travelerName: 'Sarah Johnson',
+            journeyName: 'Tokyo 5-Day Adventure',
+            dateTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+            meetingType: 'video call',
+            status: 'confirmed',
+          },
+          {
+            id: '2',
+            guideEmail: email,
+            travelerName: 'Michael Chen',
+            journeyName: 'Kyoto Heritage Walk',
+            dateTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+            meetingType: 'in-person',
+            status: 'confirmed',
+          },
+        ];
+        localStorage.setItem('guideAppointments', JSON.stringify(demoAppointments));
+        router.push("/guide-dashboard");
+      } else {
+        router.push("/dashboard");
+      }
     } else {
       setError("Please enter both email and password.");
       console.log("❌ Login failed");
@@ -526,6 +561,38 @@ function LoginPage() {
             <p className="text-muted-foreground text-sm">Please enter your details</p>
           </div>
 
+          {/* Login Mode Toggle */}
+          <div className="flex gap-2 mb-8 p-1 bg-gray-100 rounded-lg">
+            <button
+              onClick={() => {
+                setLoginMode('traveler');
+                setError('');
+              }}
+              className={cn(
+                "flex-1 py-2 px-4 rounded-md font-medium text-sm transition-all",
+                loginMode === 'traveler'
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Login as Traveler
+            </button>
+            <button
+              onClick={() => {
+                setLoginMode('guide');
+                setError('');
+              }}
+              className={cn(
+                "flex-1 py-2 px-4 rounded-md font-medium text-sm transition-all",
+                loginMode === 'guide'
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Login as Guide
+            </button>
+          </div>
+
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
@@ -612,16 +679,27 @@ function LoginPage() {
               type="button"
             >
               <Mail className="mr-2 size-5" />
-              Log in with Google
+              {loginMode === 'guide' ? 'Sign up as a Guide' : 'Log in with Google'}
             </Button>
           </div>
 
               {/* Sign Up Link */}
               <div className="text-center text-sm text-muted-foreground mt-8">
-                Don't have an account?{" "}
-                <a href="/signup" className="text-foreground font-medium hover:underline">
-                  Sign Up
-                </a>
+                {loginMode === 'guide' ? (
+                  <>
+                    Not a guide yet?{" "}
+                    <a href="#" className="text-foreground font-medium hover:underline">
+                      Apply Here
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    Don't have an account?{" "}
+                    <a href="/signup" className="text-foreground font-medium hover:underline">
+                      Sign Up
+                    </a>
+                  </>
+                )}
               </div>
             </div>
           </div>

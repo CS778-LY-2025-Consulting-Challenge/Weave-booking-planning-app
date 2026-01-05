@@ -580,13 +580,13 @@ export default function Home() {
       <section className="bg-white py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-8 text-center">
-            <p className="text-sm tracking-[0.2em] text-gray-700 uppercase">
+            <p className="text-sm font-bold tracking-[0.2em] uppercase text-[#a20000]">
               FEATURED EXPERIENCES
             </p>
-            <h2 className="font-[Abril_Fatface] text-4xl text-gray-900 md:text-5xl">
+            <h2 className="font-[Abril_Fatface] font-bold text-4xl text-[#a20000] md:text-5xl">
               Explore Our Best Packages
             </h2>
-            <p className="mt-4 text-gray-600">
+            <p className="mt-4 font-bold text-[#a20000]">
               Handpicked tour packages designed to showcase the world's most incredible destinations
             </p>
           </div>
