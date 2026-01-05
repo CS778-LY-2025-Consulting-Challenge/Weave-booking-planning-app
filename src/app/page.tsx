@@ -2,6 +2,7 @@
 
 import ParallaxHero from '@/components/ParallaxHero';
 import TripsSection from '@/components/TripsSection';
+import TourPackagesCarousel from '@/components/TourPackagesCarousel';
 import { Button } from '@/components/ui/button';
 import {
   ArrowRight,
@@ -22,7 +23,6 @@ export default function Home() {
   const [featuredDestScroll, setFeaturedDestScroll] = useState(0);
   const [satisfiedTravelers, setSatisfiedTravelers] = useState(0);
   const counterRef = useRef<HTMLDivElement>(null);
-  const edgeCarouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -452,21 +452,6 @@ export default function Home() {
     }
   };
 
-  const scrollEdgeCarousel = (direction: 'left' | 'right') => {
-    const el = edgeCarouselRef.current;
-    if (!el) return;
-    
-    // Calculate scroll amount based on card width + gap
-    const cardWidth = 320; // fixed card width
-    const gap = 24; // gap-6 = 24px
-    const amount = cardWidth + gap;
-    
-    el.scrollBy({ 
-      left: direction === 'left' ? -amount : amount, 
-      behavior: 'smooth' 
-    });
-  };
-
   return (
     <div className="pt-0">
       {/* Trips Section - First Screen */}
@@ -591,91 +576,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Edge-to-edge Ready-to-Book Journeys */}
-      <section className="py-14">
-        <div className="w-full px-4 sm:px-6 lg:px-10">
-          <div className="mb-6 flex flex-col gap-3">
-            <h2 className="font-[Abril_Fatface] text-[40px] leading-tight text-gray-900">
-              Book your dream trip
+      {/* Tour Packages Carousel */}
+      <section className="bg-white py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-8 text-center">
+            <p className="text-sm font-bold tracking-[0.2em] uppercase text-[#a20000]">
+              FEATURED EXPERIENCES
+            </p>
+            <h2 className="font-[Abril_Fatface] font-bold text-4xl text-[#a20000] md:text-5xl">
+              Explore Our Best Packages
             </h2>
-            <p className="max-w-4xl font-[Adamina] text-lg text-gray-800">
-              Lock in your 2026 travel plans with Lonely Planet Journeys. Check out our favorite
-              ready-to-book trips, crafted by our team of experts all over the world.
+            <p className="mt-4 font-bold text-[#a20000]">
+              Handpicked tour packages designed to showcase the world's most incredible destinations
             </p>
           </div>
         </div>
-
-        <div className="relative w-full">
-          <div className="absolute right-4 -top-13 z-10 flex gap-2 sm:right-6 lg:right-10">
-            <button
-              onClick={() => scrollEdgeCarousel('left')}
-              className="grid h-9 w-9 place-items-center rounded bg-white/80 text-gray-900 shadow-md ring-1 ring-black/5 transition hover:-translate-y-[1px] hover:bg-white"
-              aria-label="Scroll left"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            <button
-              onClick={() => scrollEdgeCarousel('right')}
-              className="grid h-9 w-9 place-items-center rounded bg-neutral-900 text-white shadow-md ring-1 ring-black/10 transition hover:-translate-y-[1px] hover:bg-neutral-800"
-              aria-label="Scroll right"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
-
-          <div 
-            ref={edgeCarouselRef} 
-            className="w-full overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory"
-            style={{
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch',
-            }}
-          >
-            <div className="flex w-full gap-6 px-4 sm:px-6 lg:px-10">
-            {featuredDestinations.map((destination) => (
-              <div
-                key={`edge-${destination.id}`}
-                className="w-[320px] flex-shrink-0 rounded-2xl bg-white shadow-lg shadow-black/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl snap-start"
-              >
-                <div className="relative aspect-[4/5] overflow-hidden rounded-t-2xl">
-                  <img
-                    src={destination.image}
-                    alt={destination.title}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-transparent" />
-                  <div className="absolute left-4 right-4 top-4 flex items-center justify-between text-[10px] font-semibold tracking-[0.2em] uppercase text-white/90">
-                    <span>Weave Journeys</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2 p-5">
-                  <p className="text-[11px] font-semibold tracking-[0.2em] text-gray-500 uppercase">
-                    {destination.days} days / {destination.nights} nights
-                  </p>
-                  <h3 className="text-xl font-bold leading-snug text-gray-900 line-clamp-2">
-                    {destination.title.split(':')[1]?.trim() ?? destination.title}
-                  </h3>
-                  <p className="text-sm font-medium text-gray-600">
-                    From ${destination.price.toLocaleString()} per person
-                  </p>
-                  <div className="flex items-center justify-between pt-3">
-                    <button 
-                      className="rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-all duration-200 hover:scale-105 hover:bg-gray-800"
-                      onClick={() => router.push('/packages')}
-                    >
-                      Book now
-                    </button>
-                    <ArrowRight className="size-4 text-gray-900" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          </div>
-        </div>
+        <TourPackagesCarousel />
       </section>
 
       {/* Satisfied Travelers Section */}

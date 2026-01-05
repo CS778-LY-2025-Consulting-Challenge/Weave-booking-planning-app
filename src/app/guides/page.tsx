@@ -28,8 +28,10 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { VideoCall } from '@/components/VideoCall';
 import { GuideBookingDialog } from '@/components/GuideBookingDialog';
-import { VideoCallPopout } from '@/components/VideoCallPopout';
+import { VideoCallModal } from '@/components/VideoCallModal';
 
 interface Guide {
   id: number;
@@ -56,6 +58,7 @@ interface Message {
 }
 
 export default function Guides() {
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGuide, setSelectedGuide] = useState<Guide | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -395,16 +398,26 @@ export default function Guides() {
   const handleBookingConfirmed = (booking: any) => {
     setCurrentBooking(booking);
     setBookingDialogOpen(false);
-    // Open video call after a short delay
+    // Open video call modal after a brief delay to ensure dialog closes smoothly
     setTimeout(() => {
       setVideoCallOpen(true);
-    }, 100);
+    }, 500);
   };
 
   const handleVideoCallClose = () => {
     setVideoCallOpen(false);
     setCurrentBooking(null);
   };
+
+  const roomIDFromQuery = searchParams.get('roomID');
+
+  if (roomIDFromQuery) {
+    return (
+      <div className="min-h-screen bg-black">
+        <VideoCall roomID={roomIDFromQuery} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -1123,16 +1136,12 @@ export default function Guides() {
         onBookingConfirmed={handleBookingConfirmed}
       />
 
-      {/* Video Call Popout */}
-      {currentBooking && (
-        <VideoCallPopout
-          open={videoCallOpen}
-          onClose={handleVideoCallClose}
-          guide={currentBooking.guide}
-          appointmentDate={currentBooking.date}
-          appointmentTime={currentBooking.timeSlot}
-        />
-      )}
+      {/* Video Call Modal - Embedded in Guides Page */}
+      <VideoCallModal
+        open={videoCallOpen}
+        onClose={handleVideoCallClose}
+        roomID={currentBooking?.guide.id.toString()}
+      />
     </div>
   );
 }

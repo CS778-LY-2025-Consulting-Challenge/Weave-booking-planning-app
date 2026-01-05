@@ -1,0 +1,244 @@
+/* Tour Packages Carousel Styles */
+
+.tpc-stage {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  background: #ffffff;
+  color: #0b0b0b;
+  overflow: hidden;
+  perspective: 1800px;
+  overscroll-behavior: none;
+  user-select: none;
+  cursor: grab;
+  margin: 2rem 0;
+}
+
+.tpc-stage.tpc-dragging {
+  cursor: grabbing;
+}
+
+/* Cards container */
+.tpc-cards {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  transform-style: preserve-3d;
+}
+
+/* Card styling - exactly like gradientslider */
+.tpc-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(26vw, 360px);
+  aspect-ratio: 4 / 5;
+  isolation: isolate;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, filter;
+  transform-origin: 90% center;
+  contain: layout paint;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+.tpc-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.3));
+  z-index: 1;
+}
+
+.tpc-card__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  text-align: left;
+  position: relative;
+  z-index: 2;
+  color: white;
+}
+
+.tpc-card__days {
+  font-size: 10px;
+  font-weight: 700;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.tpc-card__title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 8px 0;
+  color: white;
+  line-height: 1.3;
+}
+
+.tpc-card__description {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  line-height: 1.4;
+  flex-grow: 1;
+}
+
+.tpc-card__price-info {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 12px 0 8px 0;
+  font-weight: 500;
+}
+
+.tpc-card__button-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.tpc-card__button {
+  background: #0b0b0b;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.tpc-card__button:hover {
+  background: #2a2a2a;
+  transform: scale(1.05);
+}
+
+.tpc-card__arrow {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  transition: transform 0.3s ease;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .tpc-stage {
+    height: 500px;
+  }
+
+  .tpc-card {
+    width: min(35vw, 300px);
+  }
+
+  .tpc-card__days {
+    font-size: 9px;
+  }
+
+  .tpc-card__title {
+    font-size: 16px;
+    margin: 6px 0;
+  }
+
+  .tpc-card__description {
+    font-size: 12px;
+  }
+
+  .tpc-card__price-info {
+    font-size: 11px;
+  }
+
+  .tpc-card__button {
+    padding: 7px 14px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tpc-stage {
+    height: 400px;
+  }
+
+  .tpc-card {
+    width: min(45vw, 250px);
+  }
+
+  .tpc-card__days {
+    font-size: 8px;
+  }
+
+  .tpc-card__title {
+    font-size: 14px;
+    margin: 4px 0;
+  }
+
+  .tpc-card__description {
+    font-size: 11px;
+  }
+
+  .tpc-card__price-info {
+    font-size: 10px;
+    margin: 8px 0 6px 0;
+  }
+
+  .tpc-card__button {
+    padding: 6px 12px;
+    font-size: 9px;
+  }
+
+  .tpc-card__arrow {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tpc-stage {
+    height: 350px;
+    margin: 1rem 0;
+  }
+
+  .tpc-card {
+    width: min(60vw, 220px);
+  }
+
+  .tpc-card__days {
+    font-size: 7px;
+  }
+
+  .tpc-card__title {
+    font-size: 13px;
+    margin: 3px 0;
+  }
+
+  .tpc-card__description {
+    font-size: 10px;
+  }
+
+  .tpc-card__price-info {
+    font-size: 9px;
+    margin: 6px 0 4px 0;
+  }
+
+  .tpc-card__button {
+    padding: 5px 10px;
+    font-size: 8px;
+  }
+
+  .tpc-card__arrow {
+    font-size: 12px;
+  }
+}
