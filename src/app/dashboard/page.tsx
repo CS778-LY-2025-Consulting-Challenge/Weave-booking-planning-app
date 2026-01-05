@@ -17,6 +17,7 @@ import {
   Check,
   Edit,
   Hotel,
+  LogOut,
   MapPin,
   Plane,
   Plus,
@@ -53,17 +54,22 @@ interface SavedPackage {
 }
 
 export default function Dashboard() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, userType, logout } = useAuth();
   const router = useRouter();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [savedPackages, setSavedPackages] = useState<SavedPackage[]>([]);
 
   // Authentication check
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || userType === 'guide') {
       router.push('/auth');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, userType, router]);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/auth');
+  };
 
   // Load saved packages from localStorage
   useEffect(() => {
@@ -137,6 +143,22 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
+      {/* Header with Logout */}
+      <div className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+          <h2 className="text-lg font-semibold text-gray-900">Dashboard</h2>
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Logout</span>
+          </Button>
+        </div>
+      </div>
+
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Welcome Header */}
         <div className="mb-8">
