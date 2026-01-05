@@ -1192,7 +1192,7 @@ export default function JourneyDetails() {
                     marginHeight={0}
                     marginWidth={0}
                     scrolling="no"
-                    framespacing="0"
+                    // framespacing="0"
                     allowFullScreen
                     style={{ display: 'block' }}
                   />
