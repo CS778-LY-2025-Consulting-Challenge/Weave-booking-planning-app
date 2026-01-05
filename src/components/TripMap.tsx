@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Star, MapPin, Phone, Globe, Clock, Loader2 } from 'lucide-react';
+import PlaceDetailPanel from './PlaceDetailPanel';
 
 mapboxgl.accessToken =
   process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ??
@@ -13,18 +14,50 @@ mapboxgl.accessToken =
 interface TripMapProps {
   cityPoints?: Array<{ name: string; lat: number; lng: number }>;
   attractionPoints?: Array<{ name: string; lat: number; lng: number; type?: string; day?: number; rating?: number; reviewCount?: number }>;
+  isDetailPanelOpen: boolean;
+  setIsDetailPanelOpen: (isOpen: boolean) => void;
+  selectedPlace: any;
+  setSelectedPlace: (place: any) => void;
 }
 
-const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [] }) => {
+const TripMap: React.FC<TripMapProps> = ({ 
+  cityPoints = [], 
+  attractionPoints = [],
+  isDetailPanelOpen,
+  setIsDetailPanelOpen,
+  selectedPlace,
+  setSelectedPlace
+}) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const globalBoundsRef = useRef<mapboxgl.LngLatBounds | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const previewCacheRef = useRef<Map<string, any>>(new Map());
   const [isMapReady, setIsMapReady] = useState(false);
   const [hoveredData, setHoveredData] = useState<any>(null);
   const [isHoverLoading, setIsHoverLoading] = useState(false);
   const [previewPos, setPreviewPos] = useState({ x: 0, y: 0 });
+
+  // Helper: Extract real place name from activity description
+  const extractPlaceName = (activityName: string): string => {
+    // Remove common activity prefixes like "Dinner at", "Lunch at", "Visit", etc.
+    const patterns = [
+      /^(Dinner|Lunch|Breakfast|Brunch|Snack|Coffee|Tea|Drinks)\s+at\s+/i,
+      /^(Visit|Explore|Tour|See|Discover|Experience)\s+/i,
+      /^(Check[- ]in|Stay|Accommodation)\s+at\s+/i,
+      /^(Cruise|Walk|Hike|Drive)\s+(on|through|along|at)\s+/i,
+    ];
+    
+    let cleanedName = activityName;
+    for (const pattern of patterns) {
+      cleanedName = cleanedName.replace(pattern, '');
+    }
+    
+    console.log('[TripMap] Extracted place name:', cleanedName, 'from:', activityName);
+    return cleanedName.trim();
+  };
 
   // Safe resize to avoid "Cannot set properties of undefined (width)"
   const safeResize = (map?: mapboxgl.Map | null) => {
@@ -100,6 +133,12 @@ const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [
         hoverTimeoutRef.current = null;
       }
       
+      // Cancel any pending requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      
       resizeObserver.disconnect();
       try {
         map.remove();
@@ -145,27 +184,72 @@ const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [
           hoverTimeoutRef.current = null;
         }
         
+        // Cancel any pending request
+        if (abortControllerRef.current) {
+          console.log('[TripMap] Canceling previous request');
+          abortControllerRef.current.abort();
+        }
+        
         const isCity = cities.some(cp => cp.name === p.name);
         if (isCity) {
           console.log('[TripMap] Skipping city hover (cities use popup)');
           return; // Skip cities for now, focus on attractions/food/hotels
         }
 
+        // Check cache first
+        const cacheKey = `${p.name}-${p.lat}-${p.lng}`;
+        const cached = previewCacheRef.current.get(cacheKey);
+        if (cached) {
+          console.log('[TripMap] Using cached data for:', p.name);
+          setPreviewPos({ x: e.clientX, y: e.clientY });
+          setHoveredData({ ...p, ...cached, isLoading: false });
+          return;
+        }
+
         setPreviewPos({ x: e.clientX, y: e.clientY });
         setHoveredData({ ...p, isLoading: true });
         setIsHoverLoading(true);
 
+        // Create new AbortController for this request
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         try {
           console.log('[TripMap] Fetching place details from API...');
-          const res = await fetch(`/api/places/search?name=${encodeURIComponent(p.name)}&lat=${p.lat}&lng=${p.lng}`);
+          
+          // Extract real place name for better API results
+          const realPlaceName = extractPlaceName(p.name);
+          
+          const res = await fetch(
+            `/api/places/search?name=${encodeURIComponent(realPlaceName)}&lat=${p.lat}&lng=${p.lng}`,
+            { signal: controller.signal }
+          );
+          
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          
           const data = await res.json();
           console.log('[TripMap] Place details received:', data);
-          setHoveredData({ ...p, ...data, isLoading: false });
-        } catch (err) {
-          console.error('[TripMap] Hover fetch error:', err);
-          setHoveredData({ ...p, isLoading: false });
+          
+          // Cache the result
+          previewCacheRef.current.set(cacheKey, data);
+          
+          // Only update state if this request wasn't aborted
+          if (!controller.signal.aborted) {
+            setHoveredData({ ...p, ...data, isLoading: false });
+          }
+        } catch (err: any) {
+          if (err.name === 'AbortError') {
+            console.log('[TripMap] Request aborted (user moved to another marker)');
+          } else {
+            console.error('[TripMap] Hover fetch error:', err);
+            if (!controller.signal.aborted) {
+              setHoveredData({ ...p, isLoading: false });
+            }
+          }
         } finally {
-          setIsHoverLoading(false);
+          if (!controller.signal.aborted) {
+            setIsHoverLoading(false);
+          }
         }
       };
 
@@ -776,7 +860,16 @@ const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [
             </div>
 
             <div className="mt-3 flex gap-2">
-              <button className="flex-1 rounded-lg bg-blue-600 py-1.5 text-[10px] font-bold text-white shadow-sm transition-colors hover:bg-blue-700">
+              <button 
+                className="flex-1 rounded-lg bg-blue-600 py-1.5 text-[10px] font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log('[TripMap] Opening detail panel for:', hoveredData.name);
+                  setSelectedPlace(hoveredData);
+                  setIsDetailPanelOpen(true);
+                  setHoveredData(null); // Close preview card when opening detail panel
+                }}
+              >
                 View Details
               </button>
             </div>

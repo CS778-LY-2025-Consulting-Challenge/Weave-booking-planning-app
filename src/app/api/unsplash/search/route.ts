@@ -45,8 +45,40 @@ export async function GET(request: Request) {
     const data = await response.json();
 
     if (!data.results || data.results.length === 0) {
-      console.log(`[Unsplash API] No results for ${city}, using fallback`);
-      // Fallback to generic travel image
+      console.log(`[Unsplash API] No results for "${city}", trying generic query...`);
+      
+      // Try a more generic search by taking only the first word
+      const genericQuery = city.split(' ')[0];
+      if (genericQuery !== city && genericQuery.length > 2) {
+        console.log(`[Unsplash API] Retrying with: "${genericQuery}"`);
+        const retryResponse = await fetch(
+          `https://api.unsplash.com/search/photos?query=${encodeURIComponent(genericQuery)}&orientation=landscape&per_page=1&client_id=${UNSPLASH_ACCESS_KEY}`,
+          {
+            headers: {
+              'Accept-Version': 'v1',
+            },
+          }
+        );
+        
+        if (retryResponse.ok) {
+          const retryData = await retryResponse.json();
+          if (retryData.results && retryData.results.length > 0) {
+            const photo = retryData.results[0];
+            const imageUrl = `${photo.urls.regular}&w=1600&q=80`;
+            imageCache.set(city, { url: imageUrl, timestamp: Date.now() });
+            console.log(`[Unsplash API] Found photo for ${genericQuery}`);
+            return NextResponse.json({
+              imageUrl,
+              photographer: photo.user.name,
+              photographerUrl: photo.user.links.html,
+              cached: false,
+            });
+          }
+        }
+      }
+      
+      // Final fallback to generic travel image
+      console.log(`[Unsplash API] Using fallback image for ${city}`);
       const fallbackUrl = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80';
       return NextResponse.json({ imageUrl: fallbackUrl, fallback: true });
     }

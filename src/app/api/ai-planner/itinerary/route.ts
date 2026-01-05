@@ -12,6 +12,57 @@ Now you must generate a COMPLETE, DETAILED itinerary.
 **Your Mission:**
 Generate a full trip plan with day-by-day activities, transportation, accommodation, and map data.
 
+**Activity Quality Standards (CRITICAL):**
+Each day should have 3-4 well-planned activities. Quality over quantity!
+
+**Activity Count Guidelines:**
+- Full day in a city: 3-4 activities (Morning, Afternoon, Evening)
+- Arrival day: 2-3 activities (light schedule)
+- Departure day: 1-2 activities (allow time for travel)
+
+**MANDATORY Requirements for EVERY Activity:**
+1. **Specific Names** - NO generic descriptions!
+   ❌ BAD: "Explore the city", "Free time", "Sightseeing"
+   ✅ GOOD: "Sky Tower + SkyWalk Experience", "Auckland Art Gallery", "Wynyard Quarter Waterfront"
+
+2. **Detailed Description** - Make it appealing!
+   - What makes it special/unique?
+   - Key highlights or experiences
+   - Why travelers should visit
+   Example: "360° panoramic views of Auckland, optional SkyWalk for thrill-seekers, revolving restaurant"
+
+3. **Duration** - How long to spend there
+   - Include estimated time: "2-3 hours", "1 hour", "Full afternoon"
+   - Helps travelers plan their day realistically
+
+4. **Practical Info** - Real details travelers need
+   - Approximate cost: "$32 per person", "Free entry", "$15-30"
+   - Opening hours if relevant: "Open 9am-10pm", "Best visited in morning"
+   - Booking tips: "Book online to skip queue", "Walk-ins welcome"
+
+5. **Precise Location** - Be specific!
+   ❌ BAD: "Auckland CBD", "Tokyo"
+   ✅ GOOD: "Victoria Street West, Auckland CBD", "Asakusa, Taito City"
+
+**Activity Diversity Each Day:**
+- 1 major attraction/experience (museum, landmark, nature, etc.)
+- 1-2 dining experiences (local cuisine, cafes, food markets)
+- Optional: culture (temples, art), shopping, nightlife, relaxation
+
+**Example of HIGH-QUALITY activities:**
+{
+  "time": "Morning", 
+  "title": "Sky Tower + SkyWalk Experience", 
+  "type": "attraction", 
+  "duration": "2.5 hours",
+  "price": "From $32",
+  "desc": "Visit Auckland's iconic 328m tower for 360° panoramic views. Optional SkyWalk for thrill-seekers - walk around the exterior platform at 192m high. Includes observation decks on multiple levels. Cost: $32 standard, $150 SkyWalk. Book online to skip queues.", 
+  "location": "Victoria Street West, Auckland CBD", 
+  "coords": { "lat": -36.8485, "lng": 174.7633 }, 
+  "rating": 4.6, 
+  "reviewCount": 1580 
+}
+
 **CRITICAL Requirements:**
 1. **mapPoints**: MUST include ALL UNIQUE cities in the journey, INCLUDING the departure city.
    - Example: If trip is Auckland → Tokyo → Shanghai → Auckland (round trip), include:
@@ -28,19 +79,31 @@ Generate a full trip plan with day-by-day activities, transportation, accommodat
    - This ensures the map displays the complete round-trip route with return flight
 
 3. **dayPlans**: For EVERY day of the trip, create detailed activities.
+   - Each day MUST have:
+     * **city**: REQUIRED - The main city where this day's activities take place (e.g., "Tokyo", "Auckland"). This is CRITICAL for filtering. Even if the day starts with "Arrive in Tokyo", the city should be "Tokyo".
    - Each activity MUST have:
      * Precise coordinates (lat, lng)
      * Type: "attraction", "food", or "hotel" (REQUIRED)
        - Use "food" for: restaurants, cafes, dining, meals (breakfast/lunch/dinner), food markets, bars
        - Use "hotel" for: hotels, accommodations, check-in/check-out
        - Use "attraction" for: sightseeing spots, museums, temples, parks, shopping, activities
+     * **duration**: string (e.g., "2-3 hours", "1.5 hours") - ESTIMATE the time spent here.
+     * **price**: string (e.g., "From $30", "Free entry", "$15-25") - ESTIMATE the cost.
      * Time, title, description, location
 
-4. **transportation**: List all major transport legs (flights, trains, buses)
+4. **transportation**: REQUIRED. List ALL major transport legs between cities (flights, trains, buses, ferries)
    - Include mode, from, to, time, price estimate
    - For flights, include coords array with departure and arrival coordinates
 
-5. **accommodation**: List all hotels/stays with name, location, price, nights, coords
+5. **accommodation**: REQUIRED for multi-day trips. You MUST provide hotels for EVERY city where the traveler stays overnight.
+   - Calculation: For an N-day trip, typically provide (N-1) accommodation entries (one for each night).
+   - For EACH hotel, you MUST include:
+     * name: Actual hotel name (e.g., "Park Hyatt Tokyo", "Hilton Auckland")
+     * location: City and neighborhood (e.g., "Shinjuku, Tokyo")
+     * pricePerNight: Estimated price in USD (e.g., 250)
+     * nights: Number of nights staying (e.g., 3)
+     * coords: Precise latitude and longitude with accurate location
+   - Example: For a 7-day trip visiting Tokyo (3 nights) and Auckland (3 nights), provide 2 accommodation entries
 
 6. **summary**: Calculate and provide:
    - days: total trip duration
@@ -50,6 +113,11 @@ Generate a full trip plan with day-by-day activities, transportation, accommodat
    - transportsCount: number of transportation legs
 
 7. **tripTitle**: A catchy title for the trip (e.g., "10-Day Culinary Adventure in Japan")
+
+**CRITICAL Reminders:**
+- For multi-day trips, ALWAYS provide accommodation entries. Travelers need a place to sleep every night!
+- NEVER use [...] placeholders. Provide complete, realistic data for every field.
+- Calculate accommodation correctly: N-day trip = (N-1) nights = appropriate number of hotel entries based on cities visited.
 
 **Output Format (Strict JSON):**
 {
@@ -68,6 +136,7 @@ Generate a full trip plan with day-by-day activities, transportation, accommodat
       "day": number,
       "date": "YYYY-MM-DD",
       "title": "string",
+      "city": "Tokyo",
       "summary": "string",
       "weather": { "text": "string" },
       "activities": [
@@ -86,21 +155,31 @@ Generate a full trip plan with day-by-day activities, transportation, accommodat
   ],
   "transportation": [
     {
-      "mode": "flight|train|bus|car",
-      "from": "string",
-      "to": "string",
-      "time": "string",
-      "priceEstimate": "string",
-      "coords": [{ "lat": number, "lng": number }]
+      "mode": "flight",
+      "from": "Auckland",
+      "to": "Tokyo",
+      "time": "10:30 AM",
+      "priceEstimate": "$800 per person",
+      "coords": [
+        { "lat": -36.8485, "lng": 174.7633 },
+        { "lat": 35.6762, "lng": 139.6503 }
+      ]
     }
   ],
   "accommodation": [
     {
-      "name": "string",
-      "location": "string",
-      "pricePerNight": number,
-      "nights": number,
-      "coords": { "lat": number, "lng": number }
+      "name": "Park Hyatt Tokyo",
+      "location": "Shinjuku, Tokyo",
+      "pricePerNight": 350,
+      "nights": 3,
+      "coords": { "lat": 35.6850, "lng": 139.6917 }
+    },
+    {
+      "name": "Hilton Auckland",
+      "location": "Auckland CBD, Auckland",
+      "pricePerNight": 200,
+      "nights": 3,
+      "coords": { "lat": -36.8485, "lng": 174.7633 }
     }
   ],
   "media": {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   Send,
@@ -16,6 +16,10 @@ import {
   Star,
   Train,
   ArrowRight,
+  ArrowLeft,
+  Clock,
+  ChevronRight,
+  Loader2,
 } from 'lucide-react';
 import CharizardOrb from '@/components/CharizardOrb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import TripMap from '@/components/TripMap';
+import PlaceDetailPanel from '@/components/PlaceDetailPanel';
 
 type Coordinates = { lat: number; lng: number };
 type DayPlan = {
@@ -32,12 +37,18 @@ type DayPlan = {
   title: string;
   summary?: string;
   weather?: { text?: string; tempC?: number };
+  city?: string; // Added for city filtering
   activities: Array<{
     time?: string;
     title: string;
     desc?: string;
     location?: string;
     coords?: Coordinates;
+    type?: 'attraction' | 'food' | 'hotel';
+    rating?: number;
+    reviewCount?: number;
+    duration?: string;
+    price?: string;
     costEstimate?: string;
   }>;
 };
@@ -117,6 +128,123 @@ const isInternationalTravel = (cityA: string, cityB: string): boolean => {
   return countryA !== countryB;
 };
 
+// Activity Card Component for visual list
+const ActivityCard = ({ activity, onClick }: { activity: any, onClick: () => void }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isLoadingImage, setIsLoadingImage] = useState(true);
+
+  useEffect(() => {
+    const fetchImage = async () => {
+      try {
+        // Extract core keywords from title (remove prefixes like "Dinner at", "Visit", etc.)
+        let query = activity.title;
+        const prefixPatterns = [
+          /^(Dinner|Lunch|Breakfast|Brunch)\s+at\s+/i,
+          /^(Visit|Explore|Tour|See|Discover|Experience)\s+/i,
+          /\+.*$/,  // Remove everything after "+" (e.g., "Sky Tower + SkyWalk" -> "Sky Tower")
+          /\s*\(.*\)$/,  // Remove content in parentheses
+        ];
+        
+        for (const pattern of prefixPatterns) {
+          query = query.replace(pattern, '');
+        }
+        
+        // Only use the first part if there's a dash or comma
+        query = query.split(/[-,]/)[0].trim();
+        
+        // Limit to first 3-4 words for better matching
+        const words = query.split(' ').slice(0, 4).join(' ');
+        
+        console.log('[ActivityCard] Searching image for:', words, '(original:', activity.title + ')');
+        
+        const res = await fetch(`/api/unsplash/search?city=${encodeURIComponent(words)}`);
+        const data = await res.json();
+        if (data.imageUrl) {
+          setImageUrl(data.imageUrl);
+        }
+      } catch (err) {
+        console.error('Error fetching activity image:', err);
+      } finally {
+        setIsLoadingImage(false);
+      }
+    };
+    fetchImage();
+  }, [activity.title, activity.location]);
+
+  return (
+    <div 
+      onClick={onClick}
+      className="group flex cursor-pointer overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md"
+    >
+      {/* Left: Image */}
+      <div className="relative h-28 w-32 shrink-0 overflow-hidden bg-slate-100 sm:h-32 sm:w-40">
+        {imageUrl ? (
+          <img 
+            src={imageUrl} 
+            alt={activity.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-slate-50 text-slate-300">
+            {activity.type === 'food' ? <Info className="h-8 w-8 opacity-20" /> : <MapPin className="h-8 w-8 opacity-20" />}
+          </div>
+        )}
+        {isLoadingImage && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-100/50">
+            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+          </div>
+        )}
+      </div>
+
+      {/* Right: Info */}
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        <div className="mb-1 flex items-start justify-between gap-2">
+          <h4 className="line-clamp-1 text-sm font-bold text-slate-900 sm:text-base">
+            {activity.title}
+          </h4>
+          <MoreHorizontal className="h-4 w-4 shrink-0 text-slate-300" />
+        </div>
+
+        <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+          {activity.rating && (
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-bold text-green-600">{activity.rating}</span>
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star 
+                    key={i} 
+                    className={`h-2.5 w-2.5 ${i < Math.floor(activity.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-200'}`} 
+                  />
+                ))}
+              </div>
+              <span className="text-[10px] text-slate-400">({activity.reviewCount})</span>
+            </div>
+          )}
+          {activity.duration && (
+            <div className="flex items-center gap-1 text-[10px] text-slate-500">
+              <Clock className="h-3 w-3" />
+              <span>{activity.duration}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-auto flex items-end justify-between">
+          <div className="flex items-center gap-1 text-[10px] text-slate-500">
+            <MapPin className="h-3 w-3" />
+            <span className="line-clamp-1">{activity.location}</span>
+          </div>
+          {activity.price && (
+            <div className="text-right">
+              <span className="text-[10px] text-slate-400">From </span>
+              <span className="text-sm font-bold text-slate-900">{activity.price}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function AIPlanner() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -130,8 +258,82 @@ export default function AIPlanner() {
   const [isChatting, setIsChatting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null); // City filter state
+  const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<any>(null);
+  const dayPlansRef = useRef<HTMLDivElement>(null);
 
   const activeState = useMemo(() => itinerary || plannerState, [itinerary, plannerState]);
+
+  // Filter day plans by selected city
+  const filteredDayPlans = useMemo(() => {
+    if (!selectedCity || !activeState.dayPlans) return activeState.dayPlans;
+    
+    return activeState.dayPlans.filter(dayPlan => {
+      // Priority 1: Check if the day plan has a 'city' field (AI explicitly assigned)
+      if (dayPlan.city) {
+        return dayPlan.city.toLowerCase().includes(selectedCity.toLowerCase());
+      }
+      
+      // Priority 2: Fallback to checking activity locations (for backward compatibility)
+      return dayPlan.activities.some(activity => {
+        const location = activity.location || '';
+        return location.toLowerCase().includes(selectedCity.toLowerCase());
+      });
+    });
+  }, [activeState.dayPlans, selectedCity]);
+
+  // Filter transportation by selected city
+  const filteredTransportation = useMemo(() => {
+    if (!selectedCity || !activeState.transportation) return activeState.transportation;
+    
+    return activeState.transportation.filter(transport => {
+      const from = transport.from || '';
+      const to = transport.to || '';
+      return (
+        from.toLowerCase().includes(selectedCity.toLowerCase()) ||
+        to.toLowerCase().includes(selectedCity.toLowerCase())
+      );
+    });
+  }, [activeState.transportation, selectedCity]);
+
+  // Filter accommodation by selected city
+  const filteredAccommodation = useMemo(() => {
+    if (!selectedCity || !activeState.accommodation) return activeState.accommodation;
+    
+    return activeState.accommodation.filter(hotel => {
+      const location = hotel.location || '';
+      return location.toLowerCase().includes(selectedCity.toLowerCase());
+    });
+  }, [activeState.accommodation, selectedCity]);
+
+  // Find the next city in the route flow for navigation buttons
+  const nextCity = useMemo(() => {
+    if (!selectedCity || !activeState.routeFlow) return null;
+    
+    // Only "stops" (cities in the middle of the routeFlow) are clickable/filterable
+    const stops = activeState.routeFlow.filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+    const currentIndex = stops.indexOf(selectedCity);
+    
+    if (currentIndex !== -1 && currentIndex < stops.length - 1) {
+      return stops[currentIndex + 1];
+    }
+    return null;
+  }, [selectedCity, activeState.routeFlow]);
+
+  // Find the previous city in the route flow for navigation buttons
+  const previousCity = useMemo(() => {
+    if (!selectedCity || !activeState.routeFlow) return null;
+    
+    // Only "stops" (cities in the middle of the routeFlow) are clickable/filterable
+    const stops = activeState.routeFlow.filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+    const currentIndex = stops.indexOf(selectedCity);
+    
+    if (currentIndex !== -1 && currentIndex > 0) {
+      return stops[currentIndex - 1];
+    }
+    return null;
+  }, [selectedCity, activeState.routeFlow]);
 
   // Extract all attraction points from dayPlans for 3D Globe
   const attractionPoints = useMemo(() => {
@@ -354,39 +556,57 @@ export default function AIPlanner() {
     }
   };
 
+  const handleActivityClick = (activity: any) => {
+    console.log('[AIPlanner] Activity clicked:', activity.title);
+    setSelectedPlace(activity);
+    setIsDetailPanelOpen(true);
+  };
+
   const renderDayPlans = (plans?: DayPlan[]) => {
-    if (!plans?.length) return <p className="text-sm text-gray-500">No day plan yet.</p>;
+    if (!plans?.length) {
+      if (selectedCity) {
+        return (
+          <div className="text-center py-8">
+            <p className="text-sm text-gray-500 mb-2">No activities found in {selectedCity}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedCity(null)}
+              className="text-xs"
+            >
+              Show all cities
+            </Button>
+          </div>
+        );
+      }
+      return <p className="text-sm text-gray-500">No day plan yet.</p>;
+    }
     return (
-      <div className="space-y-3">
+      <div className="space-y-6">
         {plans.map((day) => (
-          <Card key={day.day} className="border-slate-200">
-            <CardHeader>
-              <CardTitle className="text-base">
-                Day {day.day}: {day.title}{' '}
-                {day.weather?.text ? (
-                  <span className="text-xs font-normal text-gray-500">• {day.weather.text}</span>
-                ) : null}
-              </CardTitle>
-              {day.summary ? <p className="text-sm text-gray-600">{day.summary}</p> : null}
-            </CardHeader>
-            <CardContent className="space-y-2">
+          <div key={day.day} className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-slate-100"></div>
+              <h3 className="text-base font-bold text-slate-800">
+                Day {day.day}: {day.title}
+              </h3>
+              <div className="h-px flex-1 bg-slate-100"></div>
+            </div>
+            
+            {day.summary && (
+              <p className="px-2 text-xs text-slate-500 italic">{day.summary}</p>
+            )}
+
+            <div className="grid gap-3">
               {(day.activities ?? []).map((act, idx) => (
-                <div key={idx} className="rounded-md bg-slate-50 p-2">
-                  <p className="text-sm font-semibold">
-                    {act.time ? `${act.time} • ` : ''}
-                    {act.title}
-                  </p>
-                  {act.desc ? <p className="text-xs text-gray-600">{act.desc}</p> : null}
-                  {act.location ? (
-                    <p className="text-xs text-gray-500">
-                      <MapPin className="mr-1 inline h-3 w-3" />
-                      {act.location}
-                    </p>
-                  ) : null}
-                </div>
+                <ActivityCard 
+                  key={`${day.day}-${idx}`} 
+                  activity={act} 
+                  onClick={() => handleActivityClick(act)}
+                />
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -543,24 +763,43 @@ export default function AIPlanner() {
                           {(activeState.routeFlow || [
                             activeState.departureCity || 'Departure',
                             destinationLabel,
-                          ]).map((city, idx, arr) => (
-                            <div key={`${city}-${idx}`} className="flex items-center">
-                              <div className="shrink-0">
-                                <div
-                                  className={`flex h-12 items-center justify-center rounded-2xl px-6 shadow-sm transition-all ${
-                                    idx === 0 || idx === arr.length - 1
-                                      ? 'border border-slate-200 bg-white'
-                                      : 'border border-indigo-200 bg-indigo-100 text-indigo-900'
-                                  }`}
-                                >
-                                  <div className="flex flex-col items-center gap-0.5">
-                                    <span className="whitespace-nowrap text-xs font-bold">{city}</span>
-                                    {idx > 0 && idx < arr.length - 1 ? (
-                                      <span className="text-[10px] opacity-70">Stop</span>
-                                    ) : null}
-                                  </div>
+                          ]).map((city, idx, arr) => {
+                            const isDeparture = idx === 0;
+                            const isArrival = idx === arr.length - 1;
+                            const isStop = idx > 0 && idx < arr.length - 1;
+                            const isSelected = selectedCity === city;
+                            const isClickable = isStop; // Only stops are clickable
+
+                            return (
+                              <div key={`${city}-${idx}`} className="flex items-center">
+                                <div className="shrink-0">
+                                  <button
+                                    onClick={() => {
+                                      if (isClickable) {
+                                        setSelectedCity(isSelected ? null : city);
+                                      }
+                                    }}
+                                    disabled={!isClickable}
+                                    className={`flex h-12 items-center justify-center rounded-2xl px-6 shadow-sm transition-all ${
+                                      isClickable ? 'cursor-pointer hover:shadow-md' : 'cursor-default'
+                                    } ${
+                                      isDeparture || isArrival
+                                        ? 'border border-slate-200 bg-white'
+                                        : isSelected
+                                        ? 'border-2 border-blue-500 bg-blue-500 text-white'
+                                        : 'border border-indigo-200 bg-white text-slate-900 hover:border-blue-400'
+                                    }`}
+                                  >
+                                    <div className="flex flex-col items-center gap-0.5">
+                                      <span className="whitespace-nowrap text-xs font-bold">{city}</span>
+                                      {isStop ? (
+                                        <span className={`text-[10px] ${isSelected ? 'opacity-90' : 'opacity-70'}`}>
+                                          Stop
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  </button>
                                 </div>
-                              </div>
 
                               {idx < arr.length - 1 ? (
                                 <div className="flex shrink-0 items-center px-0.5">
@@ -575,15 +814,11 @@ export default function AIPlanner() {
                                   <div className="dashed-line h-[2px] w-4 shrink-0 bg-slate-200"></div>
                                 </div>
                               ) : null}
-                            </div>
-                          ))}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-
-                      {/* Fade hint */}
-                      {(activeState.routeFlow?.length ?? 0) > 3 ? (
-                        <div className="pointer-events-none absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-white/90 to-transparent" />
-                      ) : null}
                     </div>
                   </div>
 
@@ -618,6 +853,10 @@ export default function AIPlanner() {
                             <TripMap 
                               cityPoints={mapCityPoints} 
                               attractionPoints={attractionPoints}
+                              isDetailPanelOpen={isDetailPanelOpen}
+                              setIsDetailPanelOpen={setIsDetailPanelOpen}
+                              selectedPlace={selectedPlace}
+                              setSelectedPlace={setSelectedPlace}
                             />
                           ) : (
                             <div className="flex h-full w-full flex-col items-center justify-center text-white space-y-4">
@@ -633,23 +872,58 @@ export default function AIPlanner() {
               </CardContent>
             </Card>
 
-            <Card className="border border-slate-200 bg-white/90 shadow">
-              <CardHeader>
-                <CardTitle className="text-lg">Day Plans</CardTitle>
+            <Card id="day-plans-section" className="border border-slate-200 bg-white/90 shadow transition-all duration-500">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">
+                  Day Plans
+                  {selectedCity && (
+                    <span className="ml-2 text-sm font-normal text-blue-600">
+                      • {selectedCity}
+                    </span>
+                  )}
+                </CardTitle>
+                {selectedCity && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedCity(null)}
+                    className="text-xs text-slate-600 hover:text-slate-900"
+                  >
+                    Show All
+                  </Button>
+                )}
               </CardHeader>
-              <CardContent>{renderDayPlans(activeState.dayPlans)}</CardContent>
+              <CardContent>
+                {renderDayPlans(filteredDayPlans)}
+              </CardContent>
             </Card>
 
-            {/* ... Rest of the cards (Transportation, Accommodation, Media) remain same ... */}
             <Card className="border border-slate-200 bg-white/90 shadow">
               <CardHeader className="flex flex-row items-center justify-between p-0 px-4 pt-2 pb-1">
                 <div className="flex items-center gap-2">
                   <Plane className="h-5 w-5 text-slate-700" />
-                  <CardTitle className="text-lg">Transportation</CardTitle>
+                  <CardTitle className="text-lg">
+                    Transportation
+                    {selectedCity && (
+                      <span className="ml-2 text-sm font-normal text-blue-600">
+                        • {selectedCity}
+                      </span>
+                    )}
+                  </CardTitle>
                 </div>
+                {selectedCity && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedCity(null)}
+                    className="text-xs text-slate-600 hover:text-slate-900"
+                  >
+                    Show All
+                  </Button>
+                )}
               </CardHeader>
               <CardContent className="space-y-4 p-0 px-4 pt-2 pb-3">
-                {(activeState.transportation ?? []).map((leg, idx) => (
+                {(filteredTransportation ?? []).map((leg, idx) => (
                   <div
                     key={`trans-${idx}`}
                     className="relative rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
@@ -692,10 +966,24 @@ export default function AIPlanner() {
                     </div>
                   </div>
                 ))}
-                {!(activeState.transportation?.length) && (
+                {!(filteredTransportation?.length) && (
                   <div className="flex flex-col items-center justify-center py-4 text-center">
                     <Plane className="mb-2 h-8 w-8 text-slate-200" />
-                    <p className="text-sm text-gray-500">No transportation yet.</p>
+                    {selectedCity ? (
+                      <>
+                        <p className="text-sm text-gray-500 mb-2">No transportation found for {selectedCity}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedCity(null)}
+                          className="text-xs"
+                        >
+                          Show all cities
+                        </Button>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-500">No transportation yet.</p>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -705,11 +993,28 @@ export default function AIPlanner() {
               <CardHeader className="flex flex-row items-center justify-between p-0 px-4 pt-2 pb-1">
                 <div className="flex items-center gap-2">
                   <Hotel className="h-5 w-5 text-slate-700" />
-                  <CardTitle className="text-lg">Accommodation</CardTitle>
+                  <CardTitle className="text-lg">
+                    Accommodation
+                    {selectedCity && (
+                      <span className="ml-2 text-sm font-normal text-blue-600">
+                        • {selectedCity}
+                      </span>
+                    )}
+                  </CardTitle>
                 </div>
+                {selectedCity && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedCity(null)}
+                    className="text-xs text-slate-600 hover:text-slate-900"
+                  >
+                    Show All
+                  </Button>
+                )}
               </CardHeader>
               <CardContent className="space-y-4 p-0 px-4 pt-2 pb-3">
-                {(activeState.accommodation ?? []).map((stay, idx) => (
+                {(filteredAccommodation ?? []).map((stay, idx) => (
                   <div key={`stay-${idx}`} className="group relative overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md">
                     <div className="flex flex-col sm:flex-row">
                       <div className="h-32 w-full bg-slate-100 sm:h-auto sm:w-32 flex items-center justify-center">
@@ -744,10 +1049,69 @@ export default function AIPlanner() {
                     </div>
                   </div>
                 ))}
-                {!(activeState.accommodation?.length) && (
+                {!(filteredAccommodation?.length) && (
                   <div className="flex flex-col items-center justify-center py-4 text-center">
                     <Hotel className="mb-2 h-8 w-8 text-slate-200" />
-                    <p className="text-sm text-gray-500">No accommodation yet.</p>
+                    {selectedCity ? (
+                      <>
+                        <p className="text-sm text-gray-500 mb-2">No accommodation found in {selectedCity}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedCity(null)}
+                          className="text-xs"
+                        >
+                          Show all cities
+                        </Button>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-500">No accommodation yet.</p>
+                    )}
+                  </div>
+                )}
+                
+                {/* Navigation Buttons */}
+                {(previousCity || nextCity) && (
+                  <div className="mt-2 flex justify-center gap-3 border-t border-slate-100 pt-2 -mb-2">
+                    {/* Previous City Button */}
+                    {previousCity && (
+                      <Button 
+                        onClick={() => {
+                          setSelectedCity(previousCity);
+                          // Smooth scroll back to top of section
+                          document.getElementById('day-plans-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                        className="group flex items-center gap-2.5 bg-slate-600 px-5 py-4 text-white hover:bg-slate-700 rounded-xl shadow-md hover:shadow-lg transition-all"
+                      >
+                        <div className="rounded-full bg-white/20 p-1.5 group-hover:-translate-x-1 transition-transform">
+                          <ArrowLeft className="h-4 w-4" />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-[9px] uppercase tracking-wide opacity-70">Previous Destination</p>
+                          <p className="text-base font-bold">View {previousCity} Plan</p>
+                        </div>
+                      </Button>
+                    )}
+                    
+                    {/* Next City Button */}
+                    {nextCity && (
+                      <Button 
+                        onClick={() => {
+                          setSelectedCity(nextCity);
+                          // Smooth scroll back to top of section
+                          document.getElementById('day-plans-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                        className="group flex items-center gap-2.5 bg-blue-600 px-5 py-4 text-white hover:bg-blue-700 rounded-xl shadow-md hover:shadow-lg transition-all"
+                      >
+                        <div className="text-left">
+                          <p className="text-[9px] uppercase tracking-wide opacity-70">Next Destination</p>
+                          <p className="text-base font-bold">View {nextCity} Plan</p>
+                        </div>
+                        <div className="rounded-full bg-white/20 p-1.5 group-hover:translate-x-1 transition-transform">
+                          <ArrowRight className="h-4 w-4" />
+                        </div>
+                      </Button>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -783,6 +1147,13 @@ export default function AIPlanner() {
           </div>
         </div>
       </div>
+
+      {/* Shared Detail Panel */}
+      <PlaceDetailPanel
+        isOpen={isDetailPanelOpen}
+        onClose={() => setIsDetailPanelOpen(false)}
+        placeData={selectedPlace}
+      />
     </div>
   );
 }
