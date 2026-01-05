@@ -28,6 +28,8 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { VideoCall } from '@/components/VideoCall';
 import { GuideBookingDialog } from '@/components/GuideBookingDialog';
 import { VideoCallModal } from '@/components/VideoCallModal';
 
@@ -56,6 +58,7 @@ interface Message {
 }
 
 export default function Guides() {
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGuide, setSelectedGuide] = useState<Guide | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -405,6 +408,16 @@ export default function Guides() {
     setVideoCallOpen(false);
     setCurrentBooking(null);
   };
+
+  const roomIDFromQuery = searchParams.get('roomID');
+
+  if (roomIDFromQuery) {
+    return (
+      <div className="min-h-screen bg-black">
+        <VideoCall roomID={roomIDFromQuery} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
