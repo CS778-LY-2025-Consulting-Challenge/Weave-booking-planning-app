@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   Sparkles,
   Send,
@@ -87,6 +87,36 @@ type TripState = {
 
 type ChatMessage = { type: 'ai' | 'user'; text: string };
 
+// Helper: City to Country mapping for smart transport icon detection
+const CITY_COUNTRY_MAP: Record<string, string> = {
+  // New Zealand
+  'Auckland': 'NZ', 'Wellington': 'NZ', 'Christchurch': 'NZ', 'Queenstown': 'NZ',
+  // Japan
+  'Tokyo': 'JP', 'Kyoto': 'JP', 'Osaka': 'JP', 'Hiroshima': 'JP', 'Nagoya': 'JP', 'Fukuoka': 'JP', 'Sapporo': 'JP', 'Nara': 'JP',
+  // China
+  'Shanghai': 'CN', 'Beijing': 'CN', 'Guangzhou': 'CN', 'Shenzhen': 'CN', 'Chengdu': 'CN', 'Hangzhou': 'CN', 'Xi\'an': 'CN', 'Suzhou': 'CN',
+  // Australia
+  'Sydney': 'AU', 'Melbourne': 'AU', 'Brisbane': 'AU', 'Perth': 'AU', 'Adelaide': 'AU',
+  // USA
+  'New York': 'US', 'Los Angeles': 'US', 'San Francisco': 'US', 'Chicago': 'US', 'Las Vegas': 'US', 'Seattle': 'US', 'Boston': 'US',
+  // Europe
+  'London': 'GB', 'Paris': 'FR', 'Rome': 'IT', 'Barcelona': 'ES', 'Madrid': 'ES', 'Berlin': 'DE', 'Amsterdam': 'NL', 'Vienna': 'AT',
+  // Asia
+  'Singapore': 'SG', 'Bangkok': 'TH', 'Seoul': 'KR', 'Hong Kong': 'HK', 'Dubai': 'AE', 'Kuala Lumpur': 'MY',
+};
+
+// Helper: Determine if travel between two cities is international (plane) or domestic (train)
+const isInternationalTravel = (cityA: string, cityB: string): boolean => {
+  const countryA = CITY_COUNTRY_MAP[cityA] || CITY_COUNTRY_MAP[cityA.trim()];
+  const countryB = CITY_COUNTRY_MAP[cityB] || CITY_COUNTRY_MAP[cityB.trim()];
+  
+  // If we can't find country info, assume international for safety if it's a long distance
+  if (!countryA || !countryB) return true;
+  
+  // Different countries = international = plane
+  return countryA !== countryB;
+};
+
 export default function AIPlanner() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -99,6 +129,7 @@ export default function AIPlanner() {
   const [itinerary, setItinerary] = useState<TripState | null>(null);
   const [isChatting, setIsChatting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null);
 
   const activeState = useMemo(() => itinerary || plannerState, [itinerary, plannerState]);
 
@@ -134,7 +165,9 @@ export default function AIPlanner() {
             lat: act.coords.lat,
             lng: act.coords.lng,
             type: detectedType,
-            day: day.day
+            day: day.day,
+            rating: act.rating,
+            reviewCount: act.reviewCount
           });
           console.log(`[attractionPoints] Day ${day.day}: ${act.title} (type: ${detectedType}) at [${act.coords.lng}, ${act.coords.lat}]`);
         }
@@ -202,6 +235,74 @@ export default function AIPlanner() {
     if (Array.isArray(dest)) return dest.join(', ');
     return dest ?? '—';
   }, [activeState.destination]);
+
+  const heroCity = useMemo(() => {
+    const route = activeState.routeFlow ?? [];
+    const departure = activeState.departureCity;
+
+    console.log('[heroCity] Calculating...', {
+      routeFlow: route,
+      departure,
+      destination: activeState.destination,
+    });
+
+    // Prefer the first city after departure that isn't the departure city (e.g., Auckland -> Tokyo -> ...)
+    const firstStop =
+      route.find((c, idx) => idx > 0 && (!departure || c.toLowerCase() !== departure.toLowerCase())) ?? null;
+
+    if (firstStop) {
+      console.log('[heroCity] Using first stop after departure:', firstStop);
+      return firstStop;
+    }
+
+    // Fallback to destination field
+    const dest = activeState.destination;
+    if (Array.isArray(dest) && dest.length > 0) {
+      console.log('[heroCity] Using first destination from array:', dest[0]);
+      return dest[0];
+    }
+    if (typeof dest === 'string' && dest.trim()) {
+      console.log('[heroCity] Using destination string:', dest);
+      return dest;
+    }
+
+    // Last fallback: destinationLabel (may be "—")
+    const result = destinationLabel !== '—' ? destinationLabel : null;
+    console.log('[heroCity] Final result:', result);
+    return result;
+  }, [activeState.routeFlow, activeState.departureCity, activeState.destination, destinationLabel]);
+
+  // Fetch hero image from Unsplash API
+  useEffect(() => {
+    if (!heroCity) {
+      console.log('[Unsplash] No hero city, clearing image');
+      setHeroImageUrl(null);
+      return;
+    }
+
+    console.log('[Unsplash] Fetching image for:', heroCity);
+    
+    const fetchImage = async () => {
+      try {
+        const res = await fetch(`/api/unsplash/search?city=${encodeURIComponent(heroCity)}`);
+        const data = await res.json();
+        
+        if (data.imageUrl) {
+          console.log('[Unsplash] Image URL received:', data.imageUrl);
+          setHeroImageUrl(data.imageUrl);
+        } else {
+          console.warn('[Unsplash] No image URL in response');
+          setHeroImageUrl(null);
+        }
+      } catch (err) {
+        console.error('[Unsplash] Error fetching image:', err);
+        // Use fallback image on error
+        setHeroImageUrl('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80');
+      }
+    };
+
+    fetchImage();
+  }, [heroCity]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -386,40 +487,53 @@ export default function AIPlanner() {
           {/* Right: Visualization */}
           <div className="mt-4 min-w-0 space-y-4 lg:mt-8">
             {/* Trip Overview Refactored */}
-            <Card className="min-w-0 border border-slate-200 bg-white/90 shadow-lg">
-              <CardHeader className="space-y-3 pb-6">
+            <Card className="relative min-w-0 overflow-hidden border border-slate-200 bg-white/90 shadow-lg">
+              {/* Background photo + gradient (only after we have a trip) */}
+              {heroImageUrl ? (
+                <>
+                  <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${heroImageUrl})` }}
+                  />
+                  {/* Darker gradient overlay for better visibility */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-slate-900/30 to-slate-900/20" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/40 to-transparent" />
+                </>
+              ) : null}
+
+              <CardHeader className="relative space-y-3 pb-6">
                 <CardTitle className="text-3xl font-extrabold tracking-tight text-slate-900">
                   {activeState.tripTitle || 'Your Dream Journey'}
                 </CardTitle>
                 
                 {/* Icons & Counts Summary */}
                 <div className="min-w-0 lg:w-[56%] lg:min-w-[520px]">
-                  <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-slate-600">
+                  <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-slate-900">
                     <div className="flex items-center gap-1.5">
-                      <Calendar className="h-4 w-4 text-slate-400" />
+                      <Calendar className="h-4 w-4 text-slate-900" />
                       <span>{activeState.summary?.days || plannerState.dates?.durationDays || '—'} days</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <MapPin className="h-4 w-4 text-slate-400" />
+                      <MapPin className="h-4 w-4 text-slate-900" />
                       <span>{activeState.summary?.cities || 1} cities</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Star className="h-4 w-4 text-slate-400" />
+                      <Star className="h-4 w-4 text-slate-900" />
                       <span>{activeState.summary?.activitiesCount || '—'} activities</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Hotel className="h-4 w-4 text-slate-400" />
+                      <Hotel className="h-4 w-4 text-slate-900" />
                       <span>{activeState.summary?.hotelsCount || '—'} hotels</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Plane className="h-4 w-4 text-slate-400" />
+                      <Plane className="h-4 w-4 text-slate-900" />
                       <span>{activeState.summary?.transportsCount || '—'} transports</span>
                     </div>
                   </div>
                 </div>
               </CardHeader>
               
-              <CardContent className="min-w-0 overflow-hidden bg-white/90 px-6 py-6">
+              <CardContent className="relative min-w-0 overflow-hidden px-6 py-6">
                 <div className="flex min-w-0 flex-col gap-6 lg:flex-row">
                   {/* Left: Route Flow */}
                   <div className="min-w-0 lg:w-[56%] lg:min-w-[520px] lg:pr-6">
@@ -452,7 +566,7 @@ export default function AIPlanner() {
                                 <div className="flex shrink-0 items-center px-0.5">
                                   <div className="dashed-line h-[2px] w-4 shrink-0 bg-slate-200"></div>
                                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 shadow-inner">
-                                    {idx === 0 ? (
+                                    {isInternationalTravel(city, arr[idx + 1]) ? (
                                       <Plane className="h-3.5 w-3.5 text-slate-400" />
                                     ) : (
                                       <Train className="h-3.5 w-3.5 text-slate-400" />

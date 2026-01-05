@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { Star, MapPin, Phone, Globe, Clock, Loader2 } from 'lucide-react';
 
 mapboxgl.accessToken =
   process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ??
@@ -10,7 +12,7 @@ mapboxgl.accessToken =
 
 interface TripMapProps {
   cityPoints?: Array<{ name: string; lat: number; lng: number }>;
-  attractionPoints?: Array<{ name: string; lat: number; lng: number; type?: string; day?: number }>;
+  attractionPoints?: Array<{ name: string; lat: number; lng: number; type?: string; day?: number; rating?: number; reviewCount?: number }>;
 }
 
 const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [] }) => {
@@ -18,7 +20,11 @@ const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const globalBoundsRef = useRef<mapboxgl.LngLatBounds | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [hoveredData, setHoveredData] = useState<any>(null);
+  const [isHoverLoading, setIsHoverLoading] = useState(false);
+  const [previewPos, setPreviewPos] = useState({ x: 0, y: 0 });
 
   // Safe resize to avoid "Cannot set properties of undefined (width)"
   const safeResize = (map?: mapboxgl.Map | null) => {
@@ -87,6 +93,13 @@ const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [
     return () => {
       console.log('[TripMap Init] Cleanup - resetting state');
       setIsMapReady(false); // Reset ready state on unmount
+      
+      // Clear hover timeout
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+      
       resizeObserver.disconnect();
       try {
         map.remove();
@@ -121,6 +134,57 @@ const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [
       }
 
       console.log('[TripMap Sync] Starting sync...');
+
+      // Handler for hover effects
+      const handleMarkerHover = async (p: any, e: MouseEvent) => {
+        console.log('[TripMap] Marker hover triggered for:', p.name, 'at position:', e.clientX, e.clientY);
+        
+        // Clear any pending hide timeout
+        if (hoverTimeoutRef.current) {
+          clearTimeout(hoverTimeoutRef.current);
+          hoverTimeoutRef.current = null;
+        }
+        
+        const isCity = cities.some(cp => cp.name === p.name);
+        if (isCity) {
+          console.log('[TripMap] Skipping city hover (cities use popup)');
+          return; // Skip cities for now, focus on attractions/food/hotels
+        }
+
+        setPreviewPos({ x: e.clientX, y: e.clientY });
+        setHoveredData({ ...p, isLoading: true });
+        setIsHoverLoading(true);
+
+        try {
+          console.log('[TripMap] Fetching place details from API...');
+          const res = await fetch(`/api/places/search?name=${encodeURIComponent(p.name)}&lat=${p.lat}&lng=${p.lng}`);
+          const data = await res.json();
+          console.log('[TripMap] Place details received:', data);
+          setHoveredData({ ...p, ...data, isLoading: false });
+        } catch (err) {
+          console.error('[TripMap] Hover fetch error:', err);
+          setHoveredData({ ...p, isLoading: false });
+        } finally {
+          setIsHoverLoading(false);
+        }
+      };
+
+      const handleMarkerLeave = () => {
+        console.log('[TripMap] Marker hover ended, scheduling preview hide in 800ms...');
+        
+        // Clear any existing timeout
+        if (hoverTimeoutRef.current) {
+          clearTimeout(hoverTimeoutRef.current);
+        }
+        
+        // Delay hiding the preview card by 800ms
+        hoverTimeoutRef.current = setTimeout(() => {
+          console.log('[TripMap] Preview card hidden');
+          setHoveredData(null);
+          setIsHoverLoading(false);
+          hoverTimeoutRef.current = null;
+        }, 800);
+      };
 
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
@@ -301,13 +365,15 @@ const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [
           el.innerHTML = iconSvg;
           
           // Add hover effect for attractions - no transform, only shadow and border
-          el.addEventListener('mouseenter', () => {
+          el.addEventListener('mouseenter', (e) => {
             el.style.boxShadow = '0 0 20px rgba(0,0,0,0.9)';
             el.style.borderWidth = '3px';
+            handleMarkerHover(p, e);
           });
           el.addEventListener('mouseleave', () => {
             el.style.boxShadow = '0 0 8px rgba(0,0,0,0.6)';
             el.style.borderWidth = '2px';
+            handleMarkerLeave();
           });
         }
 
@@ -366,20 +432,25 @@ const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [
         }
 
         const markerSize = isNumberedDestination ? 32 : (isCity ? 24 : 28);
-        const m = new mapboxgl.Marker({
+        const marker = new mapboxgl.Marker({
           element: el,
           anchor: 'center' // Ensure marker is centered on coordinates
         })
-          .setLngLat([p.lng, p.lat])
-          .setPopup(
+          .setLngLat([p.lng, p.lat]);
+        
+        // Only add popup for cities, attractions use hover preview card
+        if (isCity) {
+          marker.setPopup(
             new mapboxgl.Popup({ 
               closeButton: false, 
               offset: markerSize/2,
               className: 'custom-popup'
             }).setHTML(popupContent)
-          )
-          .addTo(map);
-        markersRef.current.push(m);
+          );
+        }
+        
+        marker.addTo(map);
+        markersRef.current.push(marker);
         console.log(`[TripMap Sync] Marker added at [${p.lng}, ${p.lat}]`);
       });
 
@@ -402,6 +473,7 @@ const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [
             type: 'geojson',
             data: {
               type: 'Feature',
+              properties: {},
               geometry: {
                 type: 'LineString',
                 coordinates: cities.map(p => [p.lng, p.lat])
@@ -613,6 +685,105 @@ const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [
           <span>Hotel</span>
         </div>
       </div>
+
+      {/* Hover Preview Card - Rendered via Portal to escape Dialog stacking context */}
+      {hoveredData && typeof window !== 'undefined' && createPortal(
+        <div 
+          className="pointer-events-auto fixed z-[9999] w-64 overflow-hidden rounded-xl bg-white shadow-2xl transition-all duration-200"
+          style={{
+            left: `${previewPos.x + 20}px`,
+            top: `${previewPos.y - 120}px`,
+          }}
+          onMouseEnter={() => {
+            console.log('[TripMap] Mouse entered preview card, canceling hide');
+            if (hoverTimeoutRef.current) {
+              clearTimeout(hoverTimeoutRef.current);
+              hoverTimeoutRef.current = null;
+            }
+          }}
+          onMouseLeave={() => {
+            console.log('[TripMap] Mouse left preview card, scheduling hide in 500ms');
+            hoverTimeoutRef.current = setTimeout(() => {
+              console.log('[TripMap] Preview card hidden');
+              setHoveredData(null);
+              setIsHoverLoading(false);
+              hoverTimeoutRef.current = null;
+            }, 500);
+          }}
+        >
+          {/* Main Image */}
+          <div className="relative h-32 w-full bg-slate-200">
+            {hoveredData.isLoading ? (
+              <div className="flex h-full w-full items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+              </div>
+            ) : (
+              <img 
+                src={hoveredData.photoUrl} 
+                alt={hoveredData.name}
+                className="h-full w-full object-cover"
+              />
+            )}
+            <div className="absolute top-2 left-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+              {hoveredData.category || 'Sightseeing'}
+            </div>
+          </div>
+
+          <div className="p-3">
+            <h3 className="mb-1 text-sm font-bold text-slate-900 line-clamp-1">{hoveredData.name}</h3>
+            
+            <div className="mb-2 flex items-center gap-1">
+              <div className="flex text-orange-400">
+                {[...Array(5)].map((_, i) => (
+                  <Star 
+                    key={i} 
+                    className={`h-3 w-3 ${i < Math.floor(hoveredData.rating || 4.5) ? 'fill-current' : 'text-slate-200'}`} 
+                  />
+                ))}
+              </div>
+              <span className="text-[11px] font-bold text-slate-700">{hoveredData.rating || '4.5'}</span>
+              <span className="text-[10px] text-slate-400">({hoveredData.reviewCount || '1.2k'} reviews)</span>
+            </div>
+
+            <div className="space-y-1.5 border-t border-slate-100 pt-2">
+              <div className="flex items-start gap-1.5 text-[10px] text-slate-600">
+                <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-slate-400" />
+                <span className="line-clamp-2">{hoveredData.address || 'Loading address...'}</span>
+              </div>
+              
+              {!hoveredData.isLoading && (
+                <>
+                  {hoveredData.hours && (
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-600">
+                      <Clock className="h-3 w-3 shrink-0 text-slate-400" />
+                      <span className="line-clamp-1">{hoveredData.hours}</span>
+                    </div>
+                  )}
+                  {hoveredData.phone && (
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-600">
+                      <Phone className="h-3 w-3 shrink-0 text-slate-400" />
+                      <span>{hoveredData.phone}</span>
+                    </div>
+                  )}
+                  {hoveredData.website && (
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-600">
+                      <Globe className="h-3 w-3 shrink-0 text-slate-400" />
+                      <span className="line-clamp-1 text-blue-500">{hoveredData.website.replace(/^https?:\/\//, '')}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <button className="flex-1 rounded-lg bg-blue-600 py-1.5 text-[10px] font-bold text-white shadow-sm transition-colors hover:bg-blue-700">
+                View Details
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

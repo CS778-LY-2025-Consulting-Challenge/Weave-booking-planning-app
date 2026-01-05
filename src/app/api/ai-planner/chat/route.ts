@@ -24,13 +24,14 @@ The user's screen has a Chat (left) and a Visual Dashboard (right).
     * Use "hotel" for: hotels, accommodations, check-in/check-out
     * Use "attraction" for: sightseeing spots, museums, temples, parks, shopping, activities
   Example activities:
-    - { "time": "Morning", "title": "Tokyo Tower", "type": "attraction", "desc": "Visit the iconic landmark", "location": "Minato City", "coords": { "lat": 35.6586, "lng": 139.7454 } }
-    - { "time": "Evening", "title": "Dinner at Sukiyabashi Jiro", "type": "food", "desc": "Famous sushi restaurant", "location": "Ginza", "coords": { "lat": 35.6719, "lng": 139.7639 } }
+    - { "time": "Morning", "title": "Tokyo Tower", "type": "attraction", "desc": "Visit the iconic landmark", "location": "Minato City", "coords": { "lat": 35.6586, "lng": 139.7454 }, "rating": 4.6, "reviewCount": 1580 }
+    - { "time": "Evening", "title": "Dinner at Sukiyabashi Jiro", "type": "food", "desc": "Famous sushi restaurant", "location": "Ginza", "coords": { "lat": 35.6719, "lng": 139.7639 }, "rating": 4.8, "reviewCount": 210 }
 
 **The "Be Smart & Professional" Rules:**
 - Keep the 'reply' brief (<50 words). Focus energy on the JSON data.
 - NEVER use [...] placeholders. Fill every field.
 - Ensure Latitude/Longitude are as accurate as possible for specific attractions.
+- **Ratings & Reviews**: Always include simulated rating (4.0 to 5.0) and reviewCount (50 to 2000) for every activity.
 
 **Output Format (Strict JSON):**
 {
@@ -55,7 +56,9 @@ The user's screen has a Chat (left) and a Visual Dashboard (right).
             "type": "attraction",
             "desc": "...", 
             "location": "...", 
-            "coords": { "lat": number, "lng": number } 
+            "coords": { "lat": number, "lng": number },
+            "rating": number,
+            "reviewCount": number
           },
           { 
             "time": "Lunch", 

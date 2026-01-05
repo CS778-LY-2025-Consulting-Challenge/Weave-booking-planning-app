@@ -77,7 +77,9 @@ Generate a full trip plan with day-by-day activities, transportation, accommodat
           "desc": "string",
           "location": "string",
           "coords": { "lat": number, "lng": number },
-          "type": "attraction|food|hotel"
+          "type": "attraction|food|hotel",
+          "rating": number,
+          "reviewCount": number
         }
       ]
     }
@@ -109,6 +111,7 @@ Generate a full trip plan with day-by-day activities, transportation, accommodat
 
 **Important:**
 - Be specific with coordinates - use real locations
+- **Ratings & Reviews**: Always include simulated rating (4.0 to 5.0) and reviewCount (50 to 2000) for every activity.
 - NEVER use placeholders like [...] or "more activities"
 - Make the itinerary realistic and detailed
 - Adapt to the user's preferences and purpose
