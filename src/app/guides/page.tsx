@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { GuideBookingDialog } from '@/components/GuideBookingDialog';
-import { VideoCallPopout } from '@/components/VideoCallPopout';
+import { VideoCallModal } from '@/components/VideoCallModal';
 
 interface Guide {
   id: number;
@@ -395,8 +395,10 @@ export default function Guides() {
   const handleBookingConfirmed = (booking: any) => {
     setCurrentBooking(booking);
     setBookingDialogOpen(false);
-    // WEB_UIKITS.html is now opened directly from GuideBookingDialog
-    // No need to open video call here
+    // Open video call modal after a brief delay to ensure dialog closes smoothly
+    setTimeout(() => {
+      setVideoCallOpen(true);
+    }, 500);
   };
 
   const handleVideoCallClose = () => {
@@ -1121,16 +1123,12 @@ export default function Guides() {
         onBookingConfirmed={handleBookingConfirmed}
       />
 
-      {/* Video Call Popout */}
-      {currentBooking && (
-        <VideoCallPopout
-          open={videoCallOpen}
-          onClose={handleVideoCallClose}
-          guide={currentBooking.guide}
-          appointmentDate={currentBooking.date}
-          appointmentTime={currentBooking.timeSlot}
-        />
-      )}
+      {/* Video Call Modal - Embedded in Guides Page */}
+      <VideoCallModal
+        open={videoCallOpen}
+        onClose={handleVideoCallClose}
+        roomID={currentBooking?.guide.id.toString()}
+      />
     </div>
   );
 }
