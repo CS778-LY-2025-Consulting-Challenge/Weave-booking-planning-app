@@ -395,10 +395,8 @@ export default function Guides() {
   const handleBookingConfirmed = (booking: any) => {
     setCurrentBooking(booking);
     setBookingDialogOpen(false);
-    // Open video call after a short delay
-    setTimeout(() => {
-      setVideoCallOpen(true);
-    }, 100);
+    // WEB_UIKITS.html is now opened directly from GuideBookingDialog
+    // No need to open video call here
   };
 
   const handleVideoCallClose = () => {
