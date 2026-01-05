@@ -402,6 +402,7 @@ const TripMap: React.FC<TripMapProps> = ({ cityPoints = [], attractionPoints = [
             type: 'geojson',
             data: {
               type: 'Feature',
+              properties: {},
               geometry: {
                 type: 'LineString',
                 coordinates: cities.map(p => [p.lng, p.lat])
