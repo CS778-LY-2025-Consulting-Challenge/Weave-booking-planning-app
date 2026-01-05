@@ -688,7 +688,7 @@ function LoginPage() {
                 {loginMode === 'guide' ? (
                   <>
                     Not a guide yet?{" "}
-                    <a href="#" className="text-foreground font-medium hover:underline">
+                    <a href="/apply-guide" className="text-foreground font-medium hover:underline">
                       Apply Here
                     </a>
                   </>
