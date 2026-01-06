@@ -15,7 +15,9 @@ interface PlaceDetailPanelProps {
     type?: string;
     rating?: number;
     reviewCount?: number;
-    desc?: string;
+    highlights?: string;
+    duration?: string;
+    price?: string;
   } | null;
 }
 
@@ -36,7 +38,13 @@ const PlaceDetailPanel: React.FC<PlaceDetailPanelProps> = ({ isOpen, onClose, pl
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   // Helper: Extract real place name from activity description
-  const extractPlaceName = (activityName: string): string => {
+  const extractPlaceName = (activityName: string | undefined | null): string => {
+    // Safety check: return empty string if activityName is undefined or null
+    if (!activityName || typeof activityName !== 'string') {
+      console.log('[PlaceDetailPanel] Invalid activity name:', activityName);
+      return '';
+    }
+    
     // Remove common activity prefixes like "Dinner at", "Lunch at", "Visit", etc.
     const patterns = [
       /^(Dinner|Lunch|Breakfast|Brunch|Snack|Coffee|Tea|Drinks)\s+at\s+/i,
@@ -68,13 +76,40 @@ const PlaceDetailPanel: React.FC<PlaceDetailPanelProps> = ({ isOpen, onClose, pl
       // Extract real place name for better API results
       const realPlaceName = extractPlaceName(placeData.name);
       
+      // Use original name as fallback if extraction fails
+      const queryName = realPlaceName || placeData.name || 'Unknown Place';
+      
       const res = await fetch(
-        `/api/places/details?name=${encodeURIComponent(realPlaceName)}&lat=${placeData.lat}&lng=${placeData.lng}`
+        `/api/places/details?name=${encodeURIComponent(queryName)}&lat=${placeData.lat}&lng=${placeData.lng}`
       );
       const data = await res.json();
+      
+      // 智能混合描述：AI highlights + Foursquare details
+      let combinedDescription = '';
+      
+      // 1. AI highlights (concise selling points)
+      if (placeData.highlights) {
+        combinedDescription += `${placeData.highlights}`;
+      }
+      
+      // 2. Add Foursquare's detailed description if available
+      if (data.description) {
+        // Add separator if we already have highlights
+        if (combinedDescription) {
+          combinedDescription += `\n\n${data.description}`;
+        } else {
+          combinedDescription += data.description;
+        }
+      }
+      
+      // Fallback
+      if (!combinedDescription.trim()) {
+        combinedDescription = 'No description available.';
+      }
+      
       setDetails({
         ...data,
-        description: placeData.desc || data.description || 'No description available.',
+        description: combinedDescription.trim(),
       });
     } catch (err) {
       console.error('[PlaceDetailPanel] Error fetching details:', err);
@@ -190,8 +225,35 @@ const PlaceDetailPanel: React.FC<PlaceDetailPanelProps> = ({ isOpen, onClose, pl
 
               {/* Description */}
               <div className="mb-6">
-                <h3 className="mb-2 text-sm font-bold text-slate-700">Overview</h3>
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">Overview</h3>
                 <p className="text-sm leading-relaxed text-slate-600">{details.description}</p>
+              </div>
+
+              {/* Duration & Price - Beautiful Cards */}
+              <div className="mb-6 grid gap-3 sm:grid-cols-2">
+                {/* Duration Card */}
+                {placeData?.duration && (
+                  <div className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 shadow-sm">
+                    <div className="mb-1 flex items-center gap-2">
+                      <Clock className="h-5 w-5 text-blue-600" />
+                      <span className="text-xs font-bold uppercase tracking-wide text-blue-700">Duration</span>
+                    </div>
+                    <p className="text-lg font-bold text-slate-900">{placeData.duration}</p>
+                  </div>
+                )}
+
+                {/* Price Card */}
+                {placeData?.price && (
+                  <div className="rounded-xl border border-green-100 bg-gradient-to-br from-green-50 to-emerald-50 p-4 shadow-sm">
+                    <div className="mb-1 flex items-center gap-2">
+                      <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-xs font-bold uppercase tracking-wide text-green-700">Price</span>
+                    </div>
+                    <p className="text-lg font-bold text-slate-900">{placeData.price}</p>
+                  </div>
+                )}
               </div>
 
               {/* Contact Information */}

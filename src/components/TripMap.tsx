@@ -7,9 +7,11 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Star, MapPin, Phone, Globe, Clock, Loader2 } from 'lucide-react';
 import PlaceDetailPanel from './PlaceDetailPanel';
 
+// IMPORTANT: Keep this token consistent across ALL Mapbox maps in the app.
+// We intentionally do NOT read from env here because an incorrect `.env.local`
+// value would override and break all maps in dev.
 mapboxgl.accessToken =
-  process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ??
-  'pk.eyJ1IjoibW9vdmFsIiwiYSI6ImNtanlhejZvbzZpNXMzZHB1Y3NmODA4eXQifQ.zRCSDUXg9OT2rpdA8tMOYQ';
+  'pk.eyJ1IjoibW9vdmFsIiwiYSI6ImNtazJzYmJ1YzA2aDIzcW9xbWlhMGIxencifQ.HicBjVINhGc-IAZVBnsnwg';
 
 interface TripMapProps {
   cityPoints?: Array<{ name: string; lat: number; lng: number }>;
@@ -41,7 +43,13 @@ const TripMap: React.FC<TripMapProps> = ({
   const [previewPos, setPreviewPos] = useState({ x: 0, y: 0 });
 
   // Helper: Extract real place name from activity description
-  const extractPlaceName = (activityName: string): string => {
+  const extractPlaceName = (activityName: string | undefined | null): string => {
+    // Safety check: return empty string if activityName is undefined or null
+    if (!activityName || typeof activityName !== 'string') {
+      console.log('[TripMap] Invalid activity name:', activityName);
+      return '';
+    }
+    
     // Remove common activity prefixes like "Dinner at", "Lunch at", "Visit", etc.
     const patterns = [
       /^(Dinner|Lunch|Breakfast|Brunch|Snack|Coffee|Tea|Drinks)\s+at\s+/i,
@@ -81,10 +89,15 @@ const TripMap: React.FC<TripMapProps> = ({
     });
     resizeObserver.observe(mapContainerRef.current);
 
+    const startCenter: [number, number] = 
+      cityPoints[0] && !isNaN(cityPoints[0].lng) && !isNaN(cityPoints[0].lat)
+        ? [cityPoints[0].lng, cityPoints[0].lat]
+        : [139.75, 35.68];
+
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: 'mapbox://styles/mapbox/satellite-streets-v12',
-      center: cityPoints[0] ? [cityPoints[0].lng, cityPoints[0].lat] : [139.75, 35.68],
+      center: startCenter,
       zoom: cityPoints[0] ? 3 : 1.5,
       projection: { name: 'globe' },
       antialias: true,
@@ -220,8 +233,11 @@ const TripMap: React.FC<TripMapProps> = ({
           // Extract real place name for better API results
           const realPlaceName = extractPlaceName(p.name);
           
+          // Use original name as fallback if extraction fails
+          const queryName = realPlaceName || p.name || 'Unknown Place';
+          
           const res = await fetch(
-            `/api/places/search?name=${encodeURIComponent(realPlaceName)}&lat=${p.lat}&lng=${p.lng}`,
+            `/api/places/search?name=${encodeURIComponent(queryName)}&lat=${p.lat}&lng=${p.lng}`,
             { signal: controller.signal }
           );
           
