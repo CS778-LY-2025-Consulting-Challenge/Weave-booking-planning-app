@@ -20,6 +20,9 @@ import {
   Clock,
   ChevronRight,
   Loader2,
+  Trash2,
+  Edit3,
+  X,
 } from 'lucide-react';
 import CharizardOrb from '@/components/CharizardOrb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,8 +30,16 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import TripMap from '@/components/TripMap';
 import PlaceDetailPanel from '@/components/PlaceDetailPanel';
+import ActivityChangePanel from '@/components/ActivityChangePanel';
 
 type Coordinates = { lat: number; lng: number };
 type DayPlan = {
@@ -41,14 +52,14 @@ type DayPlan = {
   activities: Array<{
     time?: string;
     title: string;
-    desc?: string;
+    highlights?: string;
     location?: string;
     coords?: Coordinates;
     type?: 'attraction' | 'food' | 'hotel';
-    rating?: number;
-    reviewCount?: number;
     duration?: string;
     price?: string;
+    rating?: number;
+    reviewCount?: number;
     costEstimate?: string;
   }>;
 };
@@ -129,13 +140,30 @@ const isInternationalTravel = (cityA: string, cityB: string): boolean => {
 };
 
 // Activity Card Component for visual list
-const ActivityCard = ({ activity, onClick }: { activity: any, onClick: () => void }) => {
+const ActivityCard = ({ 
+  activity, 
+  onClick, 
+  onRemove, 
+  onChange 
+}: { 
+  activity: any, 
+  onClick: () => void,
+  onRemove: () => void,
+  onChange: () => void,
+}) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoadingImage, setIsLoadingImage] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const fetchImage = async () => {
       try {
+        // Safety check: ensure activity.title exists
+        if (!activity.title || typeof activity.title !== 'string') {
+          setIsLoadingImage(false);
+          return;
+        }
+
         // Extract core keywords from title (remove prefixes like "Dinner at", "Visit", etc.)
         let query = activity.title;
         const prefixPatterns = [
@@ -173,11 +201,15 @@ const ActivityCard = ({ activity, onClick }: { activity: any, onClick: () => voi
 
   return (
     <div 
-      onClick={onClick}
-      className="group flex cursor-pointer overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group relative flex overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md hover:border-slate-200"
     >
       {/* Left: Image */}
-      <div className="relative h-28 w-32 shrink-0 overflow-hidden bg-slate-100 sm:h-32 sm:w-40">
+      <div 
+        onClick={onClick}
+        className="relative h-28 w-32 shrink-0 cursor-pointer overflow-hidden bg-slate-100 sm:h-32 sm:w-40"
+      >
         {imageUrl ? (
           <img 
             src={imageUrl} 
@@ -197,12 +229,55 @@ const ActivityCard = ({ activity, onClick }: { activity: any, onClick: () => voi
       </div>
 
       {/* Right: Info */}
-      <div className="flex flex-1 flex-col p-3 sm:p-4">
+      <div 
+        onClick={onClick}
+        className="flex flex-1 cursor-pointer flex-col p-3 sm:p-4"
+      >
         <div className="mb-1 flex items-start justify-between gap-2">
           <h4 className="line-clamp-1 text-sm font-bold text-slate-900 sm:text-base">
             {activity.title}
           </h4>
-          <MoreHorizontal className="h-4 w-4 shrink-0 text-slate-300" />
+          
+          {/* Action Buttons - Right Top Corner */}
+          <div className="flex shrink-0 items-center gap-1">
+            {/* Change Button - Shows on hover */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange();
+              }}
+              className={`flex items-center gap-1 rounded-lg bg-blue-500 px-2 py-1 text-xs font-medium text-white transition-all hover:bg-blue-600 ${
+                isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              }`}
+            >
+              <Edit3 className="h-3 w-3" />
+              <span>Change</span>
+            </button>
+            
+            {/* Dropdown Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove();
+                  }}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  <span>Remove</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -261,6 +336,12 @@ export default function AIPlanner() {
   const [selectedCity, setSelectedCity] = useState<string | null>(null); // City filter state
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<any>(null);
+  const [isChangePanelOpen, setIsChangePanelOpen] = useState(false);
+  const [changingActivity, setChangingActivity] = useState<{
+    dayNumber: number;
+    activityIndex: number;
+    activity: any;
+  } | null>(null);
   const dayPlansRef = useRef<HTMLDivElement>(null);
 
   const activeState = useMemo(() => itinerary || plannerState, [itinerary, plannerState]);
@@ -276,6 +357,11 @@ export default function AIPlanner() {
       }
       
       // Priority 2: Fallback to checking activity locations (for backward compatibility)
+      // Add safety check for activities array
+      if (!dayPlan.activities || !Array.isArray(dayPlan.activities)) {
+        return false;
+      }
+      
       return dayPlan.activities.some(activity => {
         const location = activity.location || '';
         return location.toLowerCase().includes(selectedCity.toLowerCase());
@@ -347,8 +433,8 @@ export default function AIPlanner() {
           if (!act.type) {
             const title = act.title.toLowerCase();
             const location = (act.location || '').toLowerCase();
-            const desc = (act.desc || '').toLowerCase();
-            const combined = `${title} ${location} ${desc}`;
+            const highlights = (act.highlights || '').toLowerCase();
+            const combined = `${title} ${location} ${highlights}`;
             
             // Food/Restaurant keywords
             const foodKeywords = ['food', 'restaurant', 'dinner', 'lunch', 'breakfast', 'brunch', 'cafe', 'coffee', 'dining', 'eat', 'meal', 'sushi', 'ramen', 'cuisine', 'kitchen', 'bar', 'izakaya', 'market', 'snack'];
@@ -539,12 +625,63 @@ export default function AIPlanner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plannerState }),
       });
-      const data = await res.json();
-      console.log('[handleGenerate] Received itinerary:', data);
-      if (data.error) {
-        throw new Error(data.error);
+
+      if (!res.ok) {
+        throw new Error('Failed to generate itinerary');
       }
-      setItinerary(data?.data ?? null);
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      
+      if (!reader) {
+        throw new Error('No response stream available');
+      }
+
+      let buffer = '';
+      let overview: any = null;
+      const dayPlans: any[] = [];
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.slice(6);
+            try {
+              const message = JSON.parse(jsonStr);
+              
+              if (message.type === 'overview') {
+                overview = message.data;
+                // Update itinerary with overview first
+                setItinerary({
+                  ...overview,
+                  dayPlans: [],
+                });
+                console.log('[handleGenerate] Received overview');
+              } else if (message.type === 'day') {
+                dayPlans.push(message.data);
+                // Update itinerary progressively with each day
+                if (overview) {
+                  setItinerary({
+                    ...overview,
+                    dayPlans: [...dayPlans],
+                  });
+                  console.log(`[handleGenerate] Received day ${dayPlans.length}`);
+                }
+              } else if (message.type === 'complete') {
+                console.log('[handleGenerate] Itinerary complete');
+              }
+            } catch (e) {
+              console.error('[handleGenerate] Failed to parse SSE message:', e);
+            }
+          }
+        }
+      }
     } catch (err: any) {
       console.error('[handleGenerate] Error:', err);
       setMessages((prev) => [
@@ -557,12 +694,260 @@ export default function AIPlanner() {
   };
 
   const handleActivityClick = (activity: any) => {
-    console.log('[AIPlanner] Activity clicked:', activity.title);
-    setSelectedPlace(activity);
+    console.log('[AIPlanner] Activity clicked:', activity);
+    
+    // Transform activity data to match PlaceDetailPanel's expected format
+    const placeData = {
+      name: activity.title || 'Unknown Place',
+      lat: activity.coords?.lat || 0,
+      lng: activity.coords?.lng || 0,
+      type: activity.type || 'attraction',
+      rating: activity.rating,
+      reviewCount: activity.reviewCount,
+      highlights: activity.highlights || activity.desc, // Use highlights first, fallback to desc
+      duration: activity.duration,
+      price: activity.price,
+    };
+    
+    console.log('[AIPlanner] Transformed place data:', placeData);
+    setSelectedPlace(placeData);
     setIsDetailPanelOpen(true);
   };
 
+  const handleRemoveActivity = (dayNumber: number, activityIndex: number) => {
+    console.log('[AIPlanner] Removing activity:', { dayNumber, activityIndex });
+    
+    // Update itinerary if it exists, otherwise update plannerState
+    if (itinerary?.dayPlans) {
+      const updatedDayPlans = itinerary.dayPlans.map((day) => {
+        if (day.day === dayNumber) {
+          return {
+            ...day,
+            activities: day.activities.filter((_, idx) => idx !== activityIndex),
+          };
+        }
+        return day;
+      });
+      setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
+    } else if (plannerState.dayPlans) {
+      const updatedDayPlans = plannerState.dayPlans.map((day) => {
+        if (day.day === dayNumber) {
+          return {
+            ...day,
+            activities: day.activities.filter((_, idx) => idx !== activityIndex),
+          };
+        }
+        return day;
+      });
+      setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
+    }
+  };
+
+  const handleChangeActivity = (dayNumber: number, activityIndex: number) => {
+    console.log('[AIPlanner] Change activity requested:', { dayNumber, activityIndex });
+    
+    // Find the activity to change
+    const dayPlan = activeState.dayPlans?.find((d) => d.day === dayNumber);
+    const activity = dayPlan?.activities?.[activityIndex];
+    
+    if (!activity) {
+      console.error('[AIPlanner] Activity not found:', { dayNumber, activityIndex });
+      return;
+    }
+    
+    setChangingActivity({
+      dayNumber,
+      activityIndex,
+      activity,
+    });
+    setIsChangePanelOpen(true);
+  };
+
+  const handleReplaceActivity = (dayNumber: number, activityIndex: number, newActivity: any) => {
+    console.log('[AIPlanner] Replacing activity:', { dayNumber, activityIndex, newActivity });
+    
+    // Update itinerary if it exists, otherwise update plannerState
+    if (itinerary?.dayPlans) {
+      const updatedDayPlans = itinerary.dayPlans.map((day) => {
+        if (day.day === dayNumber) {
+          const updatedActivities = [...day.activities];
+          updatedActivities[activityIndex] = {
+            ...updatedActivities[activityIndex],
+            ...newActivity,
+          };
+          return {
+            ...day,
+            activities: updatedActivities,
+          };
+        }
+        return day;
+      });
+      setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
+    } else if (plannerState.dayPlans) {
+      const updatedDayPlans = plannerState.dayPlans.map((day) => {
+        if (day.day === dayNumber) {
+          const updatedActivities = [...day.activities];
+          updatedActivities[activityIndex] = {
+            ...updatedActivities[activityIndex],
+            ...newActivity,
+          };
+          return {
+            ...day,
+            activities: updatedActivities,
+          };
+        }
+        return day;
+      });
+      setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
+    }
+    
+    // Show success message
+    setMessages((prev) => [
+      ...prev,
+      { 
+        type: 'ai', 
+        text: `Great! I've replaced the activity with "${newActivity.title}". Your itinerary has been updated!` 
+      },
+    ]);
+  };
+
+  // Helper: Robust date parsing (supports ISO + "10 Jan"/"10 January"/"Jan 10")
+  const parseDateLoose = (raw?: string | null): Date | null => {
+    if (!raw || typeof raw !== 'string') return null;
+    const s = raw.trim();
+    if (!s) return null;
+
+    // ISO: 2026-01-10
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const d = new Date(`${s}T00:00:00`);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+
+    // Try native parse first
+    const native = new Date(s);
+    if (!Number.isNaN(native.getTime())) return native;
+
+    const monthMap: Record<string, number> = {
+      jan: 0, january: 0,
+      feb: 1, february: 1,
+      mar: 2, march: 2,
+      apr: 3, april: 3,
+      may: 4,
+      jun: 5, june: 5,
+      jul: 6, july: 6,
+      aug: 7, august: 7,
+      sep: 8, sept: 8, september: 8,
+      oct: 9, october: 9,
+      nov: 10, november: 10,
+      dec: 11, december: 11,
+    };
+
+    // "10 January" / "10 Jan" / "10 January 2026"
+    let m = s.match(/^(\d{1,2})\s+([A-Za-z]+)(?:\s*,?\s*(\d{4}))?$/);
+    if (m) {
+      const day = Number(m[1]);
+      const monKey = m[2].toLowerCase();
+      const year = m[3] ? Number(m[3]) : new Date().getFullYear();
+      const mon = monthMap[monKey];
+      if (mon !== undefined && day >= 1 && day <= 31) {
+        const d = new Date(year, mon, day);
+        return Number.isNaN(d.getTime()) ? null : d;
+      }
+    }
+
+    // "January 10" / "Jan 10" / "January 10, 2026"
+    m = s.match(/^([A-Za-z]+)\s+(\d{1,2})(?:\s*,?\s*(\d{4}))?$/);
+    if (m) {
+      const monKey = m[1].toLowerCase();
+      const day = Number(m[2]);
+      const year = m[3] ? Number(m[3]) : new Date().getFullYear();
+      const mon = monthMap[monKey];
+      if (mon !== undefined && day >= 1 && day <= 31) {
+        const d = new Date(year, mon, day);
+        return Number.isNaN(d.getTime()) ? null : d;
+      }
+    }
+
+    return null;
+  };
+
+  const getTripStartDate = (): Date | null => {
+    const startStr = plannerState.dates?.start || (activeState as any)?.dates?.start;
+    return parseDateLoose(startStr);
+  };
+
+  const getTripEndDate = (): Date | null => {
+    const endStr = plannerState.dates?.end || (activeState as any)?.dates?.end;
+    const parsedEnd = parseDateLoose(endStr);
+    if (parsedEnd) return parsedEnd;
+
+    // If end date missing, infer from durationDays
+    const start = getTripStartDate();
+    const duration =
+      plannerState.dates?.durationDays ??
+      (activeState as any)?.dates?.durationDays ??
+      (activeState as any)?.summary?.days;
+    if (!start || !duration || typeof duration !== 'number') return null;
+
+    const d = new Date(start);
+    d.setDate(start.getDate() + (duration - 1));
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+
+  // Helper: Calculate date for each day based on start date
+  const getDateForDay = (dayNumber: number): { date: string; weekday: string } | null => {
+    const startDate = getTripStartDate();
+    if (!startDate) return null;
+
+    const targetDate = new Date(startDate);
+    targetDate.setDate(startDate.getDate() + (dayNumber - 1));
+    if (Number.isNaN(targetDate.getTime())) return null;
+
+    const dateStr = targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const weekdayStr = targetDate.toLocaleDateString('en-US', { weekday: 'long' });
+    return { date: dateStr, weekday: weekdayStr };
+  };
+
+  // Helper: Format date range for Day Plans header
+  const getDateRange = (): string => {
+    const startDate = getTripStartDate();
+    const endDate = getTripEndDate();
+    if (!startDate || !endDate) return '';
+
+    const startFormatted = startDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    const endFormatted = endDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    return `${startFormatted} – ${endFormatted}`;
+  };
+
   const renderDayPlans = (plans?: DayPlan[]) => {
+    // Show skeleton loading during streaming
+    if (isGenerating && !plans?.length) {
+      return (
+        <div className="space-y-6 animate-pulse">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="space-y-3">
+              {/* Day header skeleton */}
+              <div className="flex items-baseline gap-3 border-b border-slate-100 pb-1">
+                <div className="h-6 w-32 bg-slate-200 rounded"></div>
+                <div className="h-4 w-24 bg-slate-100 rounded"></div>
+              </div>
+              {/* Activity card skeletons */}
+              {[1, 2, 3].map((j) => (
+                <div key={j} className="flex overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
+                  <div className="h-28 w-32 sm:h-32 sm:w-40 bg-slate-100"></div>
+                  <div className="flex-1 p-3 sm:p-4 space-y-2">
+                    <div className="h-4 w-3/4 bg-slate-100 rounded"></div>
+                    <div className="h-3 w-1/2 bg-slate-100 rounded"></div>
+                    <div className="h-3 w-2/3 bg-slate-100 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
     if (!plans?.length) {
       if (selectedCity) {
         return (
@@ -583,14 +968,22 @@ export default function AIPlanner() {
     }
     return (
       <div className="space-y-6">
-        {plans.map((day) => (
-          <div key={day.day} className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="h-px flex-1 bg-slate-100"></div>
-              <h3 className="text-base font-bold text-slate-800">
-                Day {day.day}: {day.title}
+        {plans.map((day, dayIdx) => {
+          const dayNumber = typeof day.day === 'number' ? day.day : dayIdx + 1;
+          const dateInfo = getDateForDay(dayNumber);
+          
+          return (
+          <div key={`${dayNumber}-${day.title ?? 'untitled'}-${dayIdx}`} className="space-y-3">
+            <div className="flex items-baseline gap-3 border-b border-slate-100 pb-1">
+              <h3 className="text-lg font-bold text-slate-800">
+                Day {dayNumber}: {day.title}
               </h3>
-              <div className="h-px flex-1 bg-slate-100"></div>
+              {dateInfo && (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm font-bold text-slate-900">{dateInfo.date}</span>
+                  <span className="text-xs font-medium text-slate-500">{dateInfo.weekday}</span>
+                </div>
+              )}
             </div>
             
             {day.summary && (
@@ -603,17 +996,20 @@ export default function AIPlanner() {
                   key={`${day.day}-${idx}`} 
                   activity={act} 
                   onClick={() => handleActivityClick(act)}
+                  onRemove={() => handleRemoveActivity(day.day, idx)}
+                  onChange={() => handleChangeActivity(day.day, idx)}
                 />
               ))}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pt-10 text-black">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pt-24 text-black">
       <style jsx>{`
         .route-scroll {
           scrollbar-width: thin;
@@ -633,7 +1029,7 @@ export default function AIPlanner() {
           background-color: #94a3b8; /* slate-400 */
         }
       `}</style>
-      <div className="mx-auto max-w-screen-xl px-4 py-6 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-screen-xl px-4 pb-6 sm:px-6 lg:px-10">
         <div className="grid gap-8 lg:grid-cols-[360px_1fr]">
           {/* Left: Chat */}
           <Card className="sticky top-24 flex flex-col self-start border border-orange-200/60 bg-white/90 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
@@ -705,9 +1101,79 @@ export default function AIPlanner() {
           </Card>
 
           {/* Right: Visualization */}
-          <div className="mt-4 min-w-0 space-y-4 lg:mt-8">
-            {/* Trip Overview Refactored */}
-            <Card className="relative min-w-0 overflow-hidden border border-slate-200 bg-white/90 shadow-lg">
+          <div className="min-w-0 space-y-4 self-start">
+            {/* State 1: Idle - Show Static Charizard */}
+            {!activeState.tripTitle && !isChatting && !isGenerating && (
+              <Card className="sticky top-24 flex flex-col self-start border border-slate-200 bg-gradient-to-br from-slate-50 to-gray-50 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
+                <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-8 text-center">
+                  {/* Static Charizard Image */}
+                  <div className="relative mb-6 flex h-48 w-48 items-center justify-center overflow-hidden">
+                    <img 
+                      src="/charizard/charizard-static.png" 
+                      alt="Charizard" 
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                  
+                  {/* Welcome Text */}
+                  <h2 className="mb-2 text-2xl font-bold text-slate-900">
+                    Ready to Plan Your Adventure?
+                  </h2>
+                  <p className="mb-4 max-w-md text-base text-slate-600">
+                    Chat with Charizard on the left to start creating your dream itinerary!
+                  </p>
+                  
+                  {/* Example Prompts */}
+                  <div className="space-y-2 text-sm text-slate-500">
+                    <p className="italic">"Plan a 5-day trip to Tokyo"</p>
+                    <p className="italic">"I want to visit Paris and Rome"</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* State 2: Thinking - Show Animated Charizard */}
+            {(isChatting || isGenerating) && !activeState.tripTitle && (
+              <Card className="sticky top-24 flex flex-col self-start border border-slate-200 bg-gradient-to-br from-slate-50 to-gray-50 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
+                <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-8 text-center">
+                  {/* Animated Charizard */}
+                  <div className="relative mb-6 flex h-48 w-48 items-center justify-center overflow-hidden">
+                    <img 
+                      src="/charizard/charizard-animated.gif" 
+                      alt="Charizard thinking" 
+                      className="h-full w-full object-contain"
+                    />
+                    {/* Fire effect */}
+                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
+                      <div className="flex gap-1">
+                        <span className="animate-bounce text-2xl" style={{ animationDelay: '0ms' }}>🔥</span>
+                        <span className="animate-bounce text-2xl" style={{ animationDelay: '150ms' }}>🔥</span>
+                        <span className="animate-bounce text-2xl" style={{ animationDelay: '300ms' }}>🔥</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Thinking Text */}
+                  <h2 className="mb-3 text-2xl font-bold text-slate-900">
+                    Charizard is crafting your perfect journey...
+                  </h2>
+                  <p className="max-w-md text-base text-slate-600">
+                    Analyzing destinations, finding the best activities, and creating your personalized itinerary ✨
+                  </p>
+                  
+                  {/* Loading dots */}
+                  <div className="mt-6 flex gap-2">
+                    <div className="h-3 w-3 animate-bounce rounded-full bg-slate-300" style={{ animationDelay: '0ms' }}></div>
+                    <div className="h-3 w-3 animate-bounce rounded-full bg-slate-300" style={{ animationDelay: '150ms' }}></div>
+                    <div className="h-3 w-3 animate-bounce rounded-full bg-slate-300" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* State 3: Trip Generated - Show Visualization Cards */}
+            {activeState.tripTitle && (
+              <Card className="relative min-w-0 overflow-hidden border border-slate-200 bg-white/90 shadow-lg">
               {/* Background photo + gradient (only after we have a trip) */}
               {heroImageUrl ? (
                 <>
@@ -871,26 +1337,40 @@ export default function AIPlanner() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
+            {/* Day Plans, Transportation, Accommodation - Only show when trip is generated */}
+            {activeState.tripTitle && (
+            <>
             <Card id="day-plans-section" className="border border-slate-200 bg-white/90 shadow transition-all duration-500">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">
-                  Day Plans
+              <CardHeader className="space-y-2 pb-4">
+                <div className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">
+                    Day Plans
+                    {selectedCity && (
+                      <span className="ml-2 text-sm font-normal text-blue-600">
+                        • {selectedCity}
+                      </span>
+                    )}
+                  </CardTitle>
                   {selectedCity && (
-                    <span className="ml-2 text-sm font-normal text-blue-600">
-                      • {selectedCity}
-                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedCity(null)}
+                      className="text-xs text-slate-600 hover:text-slate-900"
+                    >
+                      Show All
+                    </Button>
                   )}
-                </CardTitle>
-                {selectedCity && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedCity(null)}
-                    className="text-xs text-slate-600 hover:text-slate-900"
-                  >
-                    Show All
-                  </Button>
+                </div>
+                
+                {/* Date Range */}
+                {getDateRange() && (
+                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <Calendar className="h-4 w-4" />
+                    <span>{getDateRange()}</span>
+                  </div>
                 )}
               </CardHeader>
               <CardContent>
@@ -1144,6 +1624,8 @@ export default function AIPlanner() {
                 )}
               </CardContent>
             </Card>
+            </>
+            )}
           </div>
         </div>
       </div>
@@ -1154,6 +1636,21 @@ export default function AIPlanner() {
         onClose={() => setIsDetailPanelOpen(false)}
         placeData={selectedPlace}
       />
+
+      {/* Activity Change Panel */}
+      {changingActivity && (
+        <ActivityChangePanel
+          isOpen={isChangePanelOpen}
+          onClose={() => {
+            setIsChangePanelOpen(false);
+            setChangingActivity(null);
+          }}
+          currentActivity={changingActivity.activity}
+          dayNumber={changingActivity.dayNumber}
+          activityIndex={changingActivity.activityIndex}
+          onReplace={handleReplaceActivity}
+        />
+      )}
     </div>
   );
 }

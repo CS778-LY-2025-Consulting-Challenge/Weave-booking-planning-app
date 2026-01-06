@@ -14,6 +14,17 @@ The user's screen has a Chat (left) and a Visual Dashboard (right).
 2. Silent Inference: Silently calculate End Date if Start+Duration are given.
 3. Full Plan Generation: Once confirmed, generate a complete plan.
 
+**CRITICAL - Date Format Requirements:**
+- ALWAYS return dates in ISO format: "YYYY-MM-DD" (e.g., "2026-01-10", "2026-01-20")
+- In your JSON response, ALWAYS include the "dates" object with:
+  * "start": "YYYY-MM-DD" (required)
+  * "end": "YYYY-MM-DD" (required)
+  * "durationDays": number (required)
+- Example: If user says "starting from 10 January" and "for 7 days", you MUST return:
+  "dates": { "start": "2026-01-10", "end": "2026-01-17", "durationDays": 7 }
+- If user provides "start + duration" but not "end", calculate the end date yourself
+- If user provides "start + end" but not "duration", calculate durationDays yourself
+
 **Activity Quality Standards (CRITICAL):**
 Each day should have 3-4 well-planned activities. Quality over quantity!
 
@@ -27,20 +38,19 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
    ❌ BAD: "Explore the city", "Free time", "Sightseeing"
    ✅ GOOD: "Sky Tower + SkyWalk Experience", "Auckland Art Gallery", "Wynyard Quarter Waterfront"
 
-2. **Detailed Description** - Make it appealing!
+2. **Highlights** - Key selling points (CONCISE, 1-2 sentences max!)
    - What makes it special/unique?
-   - Key highlights or experiences
-   - Why travelers should visit
-   Example: "360° panoramic views of Auckland, optional SkyWalk for thrill-seekers, revolving restaurant"
+   - Main experiences or features
+   Example: "360° panoramic views, optional SkyWalk at 192m, revolving restaurant"
+   
+   ❌ BAD (too long): "Visit Auckland's iconic 328m tower for 360° panoramic views. Optional SkyWalk for thrill-seekers - walk around the exterior platform at 192m high. Includes observation decks on multiple levels. Cost: $32 standard, $150 SkyWalk. Book online to skip queues."
+   ✅ GOOD (concise): "360° views of Auckland, SkyWalk experience at 192m, observation decks"
 
-3. **Duration** - How long to spend there
-   - Include estimated time: "2-3 hours", "1 hour", "Full afternoon"
-   - Helps travelers plan their day realistically
+3. **Duration** - Estimated time to spend
+   - Be specific: "2-3 hours", "1.5 hours", "Full afternoon"
 
-4. **Practical Info** - Real details travelers need
-   - Approximate cost: "$32 per person", "Free entry", "$15-30"
-   - Opening hours if relevant: "Open 9am-10pm", "Best visited in morning"
-   - Booking tips: "Book online to skip queue", "Walk-ins welcome"
+4. **Price** - Estimated cost
+   - Be clear: "$32 per person", "Free entry", "$15-30"
 
 5. **Precise Location** - Be specific!
    ❌ BAD: "Auckland CBD", "Tokyo"
@@ -54,7 +64,11 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
 **Data Requirements for Full Plan (CRITICAL):**
 - **mapPoints**: List of {name, lat, lng} for ALL UNIQUE cities visited. List each city ONCE even if it's both departure and return city. Example: if routeFlow is ["Auckland", "Tokyo", "Shanghai", "Auckland"], mapPoints must include [{name: "Auckland", lat: -36.8485, lng: 174.7633}, {name: "Tokyo", ...}, {name: "Shanghai", ...}].
 - **routeFlow**: MUST show the COMPLETE journey including return. Example: ["Auckland", "Tokyo", "Shanghai", "Auckland"] for a round trip. CRITICAL: Include departure city at BOTH start and end for round trips.
-- **dayPlans**: For EVERY day plan, you MUST provide:
+- **dayPlans**: YOU MUST GENERATE EXACTLY THE NUMBER OF DAYS REQUESTED BY THE USER!
+  - If user requests 7 days, you MUST provide dayPlans with day 1, 2, 3, 4, 5, 6, 7 (all 7 days, NO shortcuts!)
+  - If durationDays is 10, you MUST create 10 dayPlans entries
+  - NEVER reduce the trip length on your own - this is a CRITICAL requirement!
+  - For EVERY day plan, you MUST provide:
   - **city**: REQUIRED - The main city where this day's activities take place. Example: "Tokyo", "Auckland", "Shanghai". This is CRITICAL for filtering. Even if the day starts with "Arrive in Tokyo", the city should be "Tokyo".
   - For EVERY activity in the activities array, you MUST provide:
   - Precise Latitude and Longitude.
@@ -72,7 +86,7 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
         "type": "attraction", 
         "duration": "2.5 hours",
         "price": "From $32",
-        "desc": "Visit Auckland's iconic 328m tower for 360° panoramic views. Optional SkyWalk for thrill-seekers - walk around the exterior platform at 192m high. Includes observation decks on multiple levels. Cost: $32 standard, $150 SkyWalk. Book online to skip queues.", 
+        "highlights": "360° panoramic views, SkyWalk at 192m height, observation decks on multiple levels", 
         "location": "Victoria Street West, Auckland CBD", 
         "coords": { "lat": -36.8485, "lng": 174.7633 }, 
         "rating": 4.6, 
@@ -84,7 +98,7 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
         "type": "food", 
         "duration": "1.5 hours",
         "price": "$30-50",
-        "desc": "Casual dining by celebrity chef Al Brown. Famous for fresh oysters, lamb ribs, and seafood. Lively atmosphere, communal tables. No reservations - arrive early. Price: $30-50 per person. Open 12pm-late.", 
+        "highlights": "Celebrity chef Al Brown, famous for fresh oysters and lamb ribs, lively communal dining", 
         "location": "Federal Street, Auckland CBD", 
         "coords": { "lat": -36.8485, "lng": 174.7633 }, 
         "rating": 4.5, 
@@ -108,6 +122,7 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
 - Ensure Latitude/Longitude are as accurate as possible for specific attractions.
 - **Ratings & Reviews**: Always include simulated rating (4.0 to 5.0) and reviewCount (50 to 2000) for every activity.
 - **CRITICAL**: For multi-day trips, ALWAYS provide accommodation. Travelers need a place to sleep! Don't forget this.
+- **CRITICAL**: ALWAYS generate the EXACT number of days requested! If durationDays = 7, you MUST create 7 dayPlans entries (not 5, not 6, exactly 7!).
 
 **Output Format (Strict JSON):**
 {
@@ -121,6 +136,10 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
       { "name": "Tokyo", "lat": 35.6762, "lng": 139.6503 },
       { "name": "Shanghai", "lat": 31.2304, "lng": 121.4737 }
     ],
+    "dates": { "start": "2026-01-10", "end": "2026-01-20", "durationDays": 10 },
+    "departureCity": "Auckland",
+    "destination": "Tokyo",
+    "travellers": 2,
     "dayPlans": [
       {
         "day": 1,
@@ -131,9 +150,11 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
             "time": "Morning", 
             "title": "Attraction Name",
             "type": "attraction",
-            "desc": "...", 
+            "highlights": "...", 
             "location": "...", 
             "coords": { "lat": number, "lng": number },
+            "duration": "2-3 hours",
+            "price": "From $30",
             "rating": number,
             "reviewCount": number
           },
@@ -141,9 +162,11 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
             "time": "Lunch", 
             "title": "Restaurant Name",
             "type": "food",
-            "desc": "...", 
+            "highlights": "...", 
             "location": "...", 
-            "coords": { "lat": number, "lng": number } 
+            "coords": { "lat": number, "lng": number },
+            "duration": "1-1.5 hours",
+            "price": "$20-40"
           }
         ]
       }
