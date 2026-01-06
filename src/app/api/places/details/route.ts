@@ -95,7 +95,7 @@ export async function GET(request: Request) {
         ].filter(Boolean).join(', ');
         
         // Format opening hours
-        let hoursText = null;
+        let hoursText: string | null = null;
         if (place.hours?.display) {
           hoursText = place.hours.display;
         } else if (place.hours?.regular) {
