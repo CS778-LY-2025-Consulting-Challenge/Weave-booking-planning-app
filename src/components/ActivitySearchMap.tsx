@@ -3,13 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { MapPin, Star, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Star } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import AttractionDetailPanel from './AttractionDetailPanel';
 
 // IMPORTANT: Keep this token consistent across ALL Mapbox maps in the app.
-// We intentionally do NOT read from env here because an incorrect `.env.local`
-// value would override and break all maps in dev.
 mapboxgl.accessToken =
   'pk.eyJ1IjoibW9vdmFsIiwiYSI6ImNtazJzYmJ1YzA2aDIzcW9xbWlhMGIxencifQ.HicBjVINhGc-IAZVBnsnwg';
 
@@ -24,6 +22,7 @@ interface SearchResult {
   highlights?: string;
   address?: string;
   distance?: string;
+  imageUrl?: string;
 }
 
 interface ActivitySearchMapProps {
@@ -45,6 +44,8 @@ export default function ActivitySearchMap({
   const [isMapReady, setIsMapReady] = useState(false);
   const [hoveredPlace, setHoveredPlace] = useState<SearchResult | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
+  const [detailPanelOpen, setDetailPanelOpen] = useState(false);
+  const [selectedAttraction, setSelectedAttraction] = useState<SearchResult | null>(null);
 
   // Safe resize helper
   const safeResize = (map?: mapboxgl.Map | null) => {
@@ -141,13 +142,24 @@ export default function ActivitySearchMap({
       markersRef.current.forEach(marker => marker.remove());
       markersRef.current = [];
 
-      // Add new markers
+      // Add new markers with name labels
       results.forEach((result, idx) => {
+        // Create marker container
+        const container = document.createElement('div');
+        container.className = 'activity-marker-container';
+        container.style.cssText = `
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          cursor: pointer;
+        `;
+
+        // Create circular marker
         const el = document.createElement('div');
         el.className = 'activity-search-marker';
         el.style.cssText = `
-          width: 32px;
-          height: 32px;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
           background-color: ${selectedResult?.name === result.name ? '#3b82f6' : '#ffffff'};
           border: 3px solid ${selectedResult?.name === result.name ? '#1e40af' : '#3b82f6'};
@@ -156,35 +168,64 @@ export default function ActivitySearchMap({
           justify-content: center;
           cursor: pointer;
           font-weight: bold;
-          font-size: 14px;
+          font-size: 16px;
           color: ${selectedResult?.name === result.name ? '#ffffff' : '#3b82f6'};
           box-shadow: 0 2px 8px rgba(0,0,0,0.2);
           transition: all 0.2s;
-          z-index: ${selectedResult?.name === result.name ? '100' : '10'};
+          margin-bottom: 4px;
         `;
         el.textContent = String(idx + 1);
 
+        // Create name label
+        const label = document.createElement('div');
+        label.className = 'marker-label';
+        label.style.cssText = `
+          background-color: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(4px);
+          padding: 4px 8px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+          color: #1e293b;
+          white-space: nowrap;
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+          text-align: center;
+        `;
+        label.textContent = result.name;
+
+        container.appendChild(el);
+        container.appendChild(label);
+
         // Hover effects
-        el.addEventListener('mouseenter', (e) => {
+        container.addEventListener('mouseenter', (e) => {
           el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
           el.style.borderWidth = '4px';
+          el.style.transform = 'scale(1.1)';
+          label.style.transform = 'scale(1.05)';
           setHoveredPlace(result);
           setHoverPosition({ x: e.clientX, y: e.clientY });
         });
 
-        el.addEventListener('mouseleave', () => {
+        container.addEventListener('mouseleave', () => {
           el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
           el.style.borderWidth = '3px';
+          el.style.transform = 'scale(1)';
+          label.style.transform = 'scale(1)';
           setHoveredPlace(null);
           setHoverPosition(null);
         });
 
-        el.addEventListener('click', (e) => {
+        container.addEventListener('click', (e) => {
           e.stopPropagation();
-          onSelectPlace(result);
+          // Open detail panel instead of selecting
+          setSelectedAttraction(result);
+          setDetailPanelOpen(true);
         });
 
-        const marker = new mapboxgl.Marker({ element: el })
+        const marker = new mapboxgl.Marker({ element: container, anchor: 'bottom' })
           .setLngLat([result.coords.lng, result.coords.lat])
           .addTo(map);
 
@@ -202,105 +243,86 @@ export default function ActivitySearchMap({
     };
 
     syncMarkers();
-  }, [results, selectedResult, isMapReady, onSelectPlace]);
+  }, [results, selectedResult, isMapReady]);
 
   return (
     <div className="relative h-full w-full">
+      <style dangerouslySetInnerHTML={{__html: `
+        .mapboxgl-ctrl-logo {
+          display: none !important;
+        }
+        .mapboxgl-ctrl-attrib {
+          display: none !important;
+        }
+        .marker-label {
+          transition: transform 0.2s ease;
+        }
+        .activity-search-marker {
+          transition: all 0.2s ease;
+        }
+      `}} />
       <div ref={mapContainerRef} className="h-full w-full" />
 
-      {/* Hover Preview Card */}
+      {/* Enhanced Hover Preview Card with Image */}
       {hoveredPlace && hoverPosition && (
         <div
           className="pointer-events-none fixed z-50"
           style={{
             left: `${hoverPosition.x + 15}px`,
-            top: `${hoverPosition.y - 50}px`,
+            top: `${hoverPosition.y - 80}px`,
           }}
         >
-          <Card className="w-64 shadow-xl">
+          <Card className="w-72 shadow-2xl overflow-hidden">
+            {/* Image */}
+            {hoveredPlace.imageUrl && (
+              <div className="relative h-32 w-full bg-slate-200">
+                <img
+                  src={hoveredPlace.imageUrl}
+                  alt={hoveredPlace.name}
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              </div>
+            )}
+            
             <CardContent className="p-3">
-              <h4 className="font-bold text-sm text-slate-900 mb-1">
+              <h4 className="font-bold text-sm text-slate-900 mb-2 line-clamp-1">
                 {hoveredPlace.name}
               </h4>
               {hoveredPlace.rating && (
-                <div className="flex items-center gap-1 text-xs mb-1">
-                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                  <span className="font-semibold">{hoveredPlace.rating}</span>
+                <div className="flex items-center gap-1 text-xs mb-2">
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-3 w-3 ${
+                          i < Math.floor(hoveredPlace.rating!)
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'fill-slate-200 text-slate-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="font-semibold text-slate-900">{hoveredPlace.rating}</span>
                   <span className="text-slate-400">({hoveredPlace.reviewCount})</span>
                 </div>
               )}
-              <div className="flex items-center gap-2 text-xs text-slate-600">
+              <div className="flex items-center gap-3 text-xs text-slate-600">
                 {hoveredPlace.duration && <span>⏱️ {hoveredPlace.duration}</span>}
-                {hoveredPlace.price && <span>💰 {hoveredPlace.price}</span>}
+                {hoveredPlace.price && <span className="font-semibold text-green-700">💰 {hoveredPlace.price}</span>}
               </div>
+              <p className="text-xs text-slate-500 mt-2 italic">Click to view details</p>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Selected Place Detail Card */}
-      {selectedResult && (
-        <div className="absolute bottom-6 left-6 right-6 z-10">
-          <Card className="bg-white shadow-2xl">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="h-4 w-4 text-blue-600 shrink-0" />
-                    <h3 className="font-bold text-base text-slate-900 truncate">
-                      {selectedResult.name}
-                    </h3>
-                  </div>
-                  
-                  {selectedResult.rating && (
-                    <div className="flex items-center gap-1 mb-2">
-                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-semibold text-slate-900">
-                        {selectedResult.rating}
-                      </span>
-                      <span className="text-xs text-slate-500">
-                        ({selectedResult.reviewCount} reviews)
-                      </span>
-                    </div>
-                  )}
-
-                  <p className="text-xs text-slate-600 mb-2 line-clamp-2">
-                    {selectedResult.highlights}
-                  </p>
-
-                  <div className="flex flex-wrap gap-3 text-xs text-slate-600">
-                    {selectedResult.duration && (
-                      <span className="flex items-center gap-1">
-                        ⏱️ {selectedResult.duration}
-                      </span>
-                    )}
-                    {selectedResult.price && (
-                      <span className="flex items-center gap-1">
-                        💰 {selectedResult.price}
-                      </span>
-                    )}
-                    {selectedResult.distance && (
-                      <span className="flex items-center gap-1">
-                        📍 {selectedResult.distance}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onSelectPlace(null as any)}
-                  className="shrink-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Attraction Detail Panel */}
+      <AttractionDetailPanel
+        isOpen={detailPanelOpen}
+        onClose={() => setDetailPanelOpen(false)}
+        attraction={selectedAttraction}
+      />
     </div>
   );
 }
-

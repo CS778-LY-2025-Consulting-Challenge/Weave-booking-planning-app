@@ -99,6 +99,7 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
    - For EVERY day of the trip, create detailed activities.
    - Each day MUST have:
      * **city**: REQUIRED - The main city where this day's activities take place (e.g., "Tokyo", "Auckland"). This is CRITICAL for filtering. Even if the day starts with "Arrive in Tokyo", the city should be "Tokyo".
+     * **daySummary**: REQUIRED - A SHORT, catchy 3-5 word summary of the day's theme. Examples: "Imperial History and Fine Dining", "Temple of Heaven and Hutong Foodie Tour", "Modern Art and Waterfront Dining", "Mountain Hikes and Local Cuisine". Keep it brief and descriptive!
    - Each activity MUST have:
      * Precise coordinates (lat, lng)
      * Type: "attraction", "food", or "hotel" (REQUIRED)
@@ -160,9 +161,13 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
       "day": 1,
       "date": "2026-01-10",
       "title": "Arrival in Tokyo",
+      "daySummary": "Modern Tokyo and Ramen Culture",
       "city": "Tokyo",
       "summary": "Arrive in Tokyo and explore Shibuya",
-      "weather": { "text": "Partly cloudy, 12°C" },
+      "weather": { 
+        "condition": "cloudy", 
+        "tempRange": "8°C - 14°C" 
+      },
       "activities": [
         {
           "time": "Afternoon",

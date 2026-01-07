@@ -70,6 +70,7 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
   - NEVER reduce the trip length on your own - this is a CRITICAL requirement!
   - For EVERY day plan, you MUST provide:
   - **city**: REQUIRED - The main city where this day's activities take place. Example: "Tokyo", "Auckland", "Shanghai". This is CRITICAL for filtering. Even if the day starts with "Arrive in Tokyo", the city should be "Tokyo".
+  - **daySummary**: REQUIRED - A SHORT, catchy 3-5 word summary of the day's theme. Examples: "Imperial History and Fine Dining", "Temple of Heaven and Hutong Foodie Tour", "Modern Art and Waterfront Dining", "Mountain Hikes and Local Cuisine". Keep it brief and descriptive!
   - For EVERY activity in the activities array, you MUST provide:
   - Precise Latitude and Longitude.
   - A 'type' field: REQUIRED, one of ["attraction", "food", "hotel"].
@@ -144,7 +145,12 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
       {
         "day": 1,
         "title": "...",
+        "daySummary": "Imperial History and Fine Dining",
         "city": "Tokyo",
+        "weather": {
+          "condition": "cloudy", 
+          "tempRange": "2°C - 8°C"
+        },
         "activities": [
           { 
             "time": "Morning", 

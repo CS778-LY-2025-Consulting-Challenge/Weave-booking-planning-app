@@ -38,6 +38,7 @@ interface ActivityChangePanelProps {
   dayNumber: number;
   activityIndex: number;
   onReplace: (dayNumber: number, activityIndex: number, newActivity: any) => void;
+  cachedAlternatives?: SearchResult[]; // Preloaded alternatives
 }
 
 export default function ActivityChangePanel({
@@ -47,6 +48,7 @@ export default function ActivityChangePanel({
   dayNumber,
   activityIndex,
   onReplace,
+  cachedAlternatives,
 }: ActivityChangePanelProps) {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
@@ -103,7 +105,7 @@ export default function ActivityChangePanel({
     <Sheet open={isOpen} onOpenChange={handleClose}>
       <SheetContent 
         side="right" 
-        className="p-0 sm:max-w-6xl w-full"
+        className="p-0 sm:max-w-4xl w-full"
       >
         <div className="flex h-full flex-col">
           {/* Header */}
@@ -111,33 +113,36 @@ export default function ActivityChangePanel({
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <SheetTitle className="text-xl">Find Alternative Activity</SheetTitle>
-                <SheetDescription className="mt-1 text-sm">
-                  Current: <span className="font-semibold text-slate-700">{currentActivity.title}</span>
-                </SheetDescription>
-                {city && (
-                  <div className="mt-1 text-xs text-slate-500">
-                    📍 {city}
-                  </div>
-                )}
+                <div className="mt-1 flex items-center gap-2">
+                  <SheetDescription className="text-sm">
+                    Current: <span className="font-semibold text-slate-700">{currentActivity.title}</span>
+                  </SheetDescription>
+                  {city && (
+                    <div className="text-xs text-slate-500">
+                      📍 {city}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </SheetHeader>
 
           {/* Main Content: Chat + Map */}
           <div className="flex flex-1 overflow-hidden">
-            {/* Left: Chat Panel (40%) */}
-            <div className="flex w-2/5 flex-col border-r border-slate-200 bg-white">
+            {/* Left: Chat Panel (55%) */}
+            <div className="flex w-[55%] flex-col border-r border-slate-200 bg-white">
               <ActivitySearchChat
                 city={city}
                 coords={currentActivity.coords}
                 onResultsUpdate={handleResultsUpdate}
                 onSelectResult={handleSelectResult}
                 selectedResult={selectedResult}
+                cachedAlternatives={cachedAlternatives}
               />
             </div>
 
-            {/* Right: Map Panel (60%) */}
-            <div className="w-3/5 bg-slate-50">
+            {/* Right: Map Panel (45%) */}
+            <div className="flex-1 bg-slate-50">
               <ActivitySearchMap
                 results={searchResults}
                 centerCoords={currentActivity.coords}
