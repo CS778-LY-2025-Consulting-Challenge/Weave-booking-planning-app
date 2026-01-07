@@ -1,5 +1,9 @@
 'use client';
 
+import { Character } from '@/components/character';
+import { GalleryFloor, GalleryWall } from '@/components/gallery-background';
+import { GalleryItems } from '@/components/gallery-items';
+import { InfiniteRunner } from '@/components/infinite-runner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,7 +31,7 @@ import {
 } from 'lucide-react';
 import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export default function Journeys() {
   const router = useRouter();
@@ -37,6 +41,7 @@ export default function Journeys() {
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
   const [selectedDurations, setSelectedDurations] = useState<Set<string>>(new Set());
   const [wishlistAnimating, setWishlistAnimating] = useState<number | null>(null);
+  const [activeJourney, setActiveJourney] = useState<number | null>(null);
 
   const journeys = [
     {
@@ -262,6 +267,11 @@ export default function Journeys() {
         })}
       </div>
     </div>
+  );
+
+  const filteredJourneys = useMemo(
+    () => journeys.filter(matchesFilters),
+    [selectedSeasons, selectedWeather, selectedTypes, selectedDurations]
   );
 
   return (
@@ -696,6 +706,53 @@ export default function Journeys() {
           </div>
         </div>
       </section>
+
+       <main className="h-screen w-full">
+        <InfiniteRunner
+          itemsData={filteredJourneys}
+          backgroundSpeed={2}
+          itemsSpeed={2}
+          itemsWidth={filteredJourneys.length * 320}
+          itemCount={filteredJourneys.length}
+          itemWidth={320}
+          character={<Character />}
+          backgroundLayers={[
+            {
+              id: 'wall',
+              content: <GalleryWall />,
+              speedMultiplier: 1.0,
+            },
+            {
+              id: 'floor',
+              content: <GalleryFloor />,
+              speedMultiplier: 1.0,
+            },
+          ]}
+          items={(copyIndex, activeCopy) => (
+            <GalleryItems
+              items={filteredJourneys}
+              activeItemId={activeJourney}
+              copyIndex={copyIndex}
+              activeCopy={activeCopy}
+            />
+          )}
+          onActiveItemChange={(itemId) => setActiveJourney(itemId)}
+          onInteract={(itemId: number) => {
+            router.push(`/journeys/${itemId}`);
+          }}
+        />
+
+        {/* Instructions - desktop only */}
+        <div className="fixed bottom-8 left-1/2 hidden -translate-x-1/2 rounded-full bg-black/60 px-6 py-3 text-white backdrop-blur-sm md:block">
+          <p className="text-sm font-medium">
+            Press <kbd className="mx-1 rounded bg-white/20 px-2 py-1">←</kbd> or{' '}
+            <kbd className="mx-1 rounded bg-white/20 px-2 py-1">→</kbd> to
+            scroll,
+            <kbd className="mx-1 rounded bg-white/20 px-2 py-1">Enter</kbd> to
+            explore destination
+          </p>
+        </div>
+      </main>
     </div>
   );
 }
