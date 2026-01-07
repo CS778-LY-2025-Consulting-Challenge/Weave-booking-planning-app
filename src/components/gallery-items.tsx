@@ -1,7 +1,6 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { CornerDownLeft } from 'lucide-react';
 
 /* -----------------------------------------------------------------------------
  * Gallery Items Component
@@ -79,8 +78,7 @@ function GalleryItems({
               {/* Interaction hint when active */}
               {isActiveCopy && activeItemId === artwork.id && (
                 <div className="animate-in fade-in absolute -top-12 left-1/2 flex -translate-x-1/2 items-center gap-2 text-lg font-bold whitespace-nowrap text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] duration-700">
-                  <span>Explore Destination</span>
-                  <CornerDownLeft size={16} strokeWidth={2.5} />
+                  <span>{artwork.title}</span>
                 </div>
               )}
 

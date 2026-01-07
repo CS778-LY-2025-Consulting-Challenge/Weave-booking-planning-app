@@ -44,6 +44,7 @@
     "framer-motion": "^12.23.25",
     "gsap": "^3.14.2",
     "input-otp": "^1.4.2",
+    "libpag": "^4.5.16",
     "lucide-react": "^0.556.0",
     "mapbox-gl": "^3.17.0",
     "maplibre-gl": "^4.7.0",

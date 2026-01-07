@@ -4,6 +4,7 @@ import { Character } from '@/components/character';
 import { GalleryFloor, GalleryWall } from '@/components/gallery-background';
 import { GalleryItems } from '@/components/gallery-items';
 import { InfiniteRunner } from '@/components/infinite-runner';
+import { PagCharacter } from '@/components/pag-character';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -710,12 +711,12 @@ export default function Journeys() {
        <main className="h-screen w-full">
         <InfiniteRunner
           itemsData={filteredJourneys}
-          backgroundSpeed={2}
-          itemsSpeed={2}
+          backgroundSpeed={3}
+          itemsSpeed={3}
           itemsWidth={filteredJourneys.length * 320}
           itemCount={filteredJourneys.length}
           itemWidth={320}
-          character={<Character />}
+          character={<PagCharacter />}
           backgroundLayers={[
             {
               id: 'wall',
