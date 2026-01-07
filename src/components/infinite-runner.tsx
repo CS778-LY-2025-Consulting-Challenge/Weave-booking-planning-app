@@ -626,7 +626,7 @@ function InfiniteRunner({
         {/* Character Layer */}
         {character && (
           <div
-            className="absolute bottom-20 -translate-x-1/2"
+            className="absolute bottom-16 -translate-x-1/2"
             style={{ left: `${characterPosition * 100}%` }}
           >
             {character}
