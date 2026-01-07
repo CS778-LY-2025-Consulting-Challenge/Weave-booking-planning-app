@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import {
   Sparkles,
   Send,
@@ -23,6 +23,12 @@ import {
   Trash2,
   Edit3,
   X,
+  Sun,
+  Cloud,
+  CloudRain,
+  CloudSnow,
+  CloudLightning,
+  Wind,
 } from 'lucide-react';
 import CharizardOrb from '@/components/CharizardOrb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,14 +46,21 @@ import {
 import TripMap from '@/components/TripMap';
 import PlaceDetailPanel from '@/components/PlaceDetailPanel';
 import ActivityChangePanel from '@/components/ActivityChangePanel';
+import AttractionDetailPanel from '@/components/AttractionDetailPanel';
 
 type Coordinates = { lat: number; lng: number };
 type DayPlan = {
   day: number;
   date?: string;
   title: string;
+  daySummary?: string; // Short catchy summary of the day (e.g., "Imperial History and Fine Dining")
   summary?: string;
-  weather?: { text?: string; tempC?: number };
+  weather?: { 
+    condition?: string; 
+    tempRange?: string;
+    text?: string; // fallback
+    tempC?: number; // fallback
+  };
   city?: string; // Added for city filtering
   activities: Array<{
     time?: string;
@@ -342,7 +355,13 @@ export default function AIPlanner() {
     activityIndex: number;
     activity: any;
   } | null>(null);
+  const [isAttractionDetailOpen, setIsAttractionDetailOpen] = useState(false);
+  const [selectedAttraction, setSelectedAttraction] = useState<any>(null);
   const dayPlansRef = useRef<HTMLDivElement>(null);
+
+  // Alternatives cache: { "dayNumber-activityIndex": [...alternatives] }
+  const [alternativesCache, setAlternativesCache] = useState<Record<string, any[]>>({});
+  const [isCaching, setIsCaching] = useState(false);
 
   const activeState = useMemo(() => itinerary || plannerState, [itinerary, plannerState]);
 
@@ -693,25 +712,149 @@ export default function AIPlanner() {
     }
   };
 
+  // Preload alternatives cache for all activities
+  const preloadAlternativesCache = useCallback(async (dayPlans: DayPlan[]) => {
+    if (!dayPlans || dayPlans.length === 0) return;
+    
+    console.log('[AIPlanner] Starting to preload alternatives cache...');
+    setIsCaching(true);
+
+    const cachePromises: Promise<void>[] = [];
+
+    dayPlans.forEach((day) => {
+      day.activities?.forEach((activity, activityIndex) => {
+        const cacheKey = `${day.day}-${activityIndex}`;
+        
+        // Extract city from location
+        const extractCity = (location?: string): string => {
+          if (!location) return '';
+          const parts = location.split(',').map(s => s.trim());
+          return parts[parts.length - 1] || parts[0] || '';
+        };
+
+        const city = day.city || extractCity(activity.location);
+        
+        console.log(`[AIPlanner] Preloading cache for ${cacheKey}: ${activity.title} in ${city}`);
+        
+        const promise = fetch('/api/ai-planner/search-activities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: 'Popular attractions and activities',
+            city,
+            coords: activity.coords,
+            context: {},
+          }),
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.results && data.results.length > 0) {
+              setAlternativesCache(prev => {
+                // Check if already cached in the latest state
+                if (prev[cacheKey]) {
+                  console.log(`[AIPlanner] Cache already exists for ${cacheKey}, skipping update`);
+                  return prev;
+                }
+                console.log(`[AIPlanner] Cached ${data.results.length} alternatives for ${cacheKey}`);
+                return {
+                  ...prev,
+                  [cacheKey]: data.results,
+                };
+              });
+            }
+          })
+          .catch(err => {
+            console.warn(`[AIPlanner] Failed to cache alternatives for ${cacheKey}:`, err);
+          });
+
+        cachePromises.push(promise);
+      });
+    });
+
+    try {
+      await Promise.all(cachePromises);
+      console.log('[AIPlanner] Alternatives cache preloading complete');
+    } catch (err) {
+      console.error('[AIPlanner] Error during cache preloading:', err);
+    } finally {
+      setIsCaching(false);
+    }
+  }, []); // Empty deps since we use functional setState
+
+  // Trigger preload when itinerary is fully generated
+  const hasPreloadedRef = useRef(false);
+  
+  useEffect(() => {
+    // Use activeState to check both itinerary and plannerState
+    const dayPlans = activeState?.dayPlans;
+    
+    console.log('[AIPlanner] Preload effect triggered:', {
+      hasDayPlans: !!dayPlans,
+      dayPlansLength: dayPlans?.length || 0,
+      isCaching,
+      hasPreloaded: hasPreloadedRef.current,
+      hasItinerary: !!itinerary?.dayPlans,
+      hasPlannerState: !!plannerState?.dayPlans,
+      willPreload: dayPlans && 
+                   dayPlans.length > 0 && 
+                   !isCaching && 
+                   !hasPreloadedRef.current
+    });
+    
+    if (
+      dayPlans && 
+      dayPlans.length > 0 && 
+      !isCaching && 
+      !hasPreloadedRef.current
+    ) {
+      console.log('[AIPlanner] Trip ready, scheduling cache preload for', dayPlans.length, 'days');
+      hasPreloadedRef.current = true;
+      
+      // Delay preloading slightly to avoid blocking UI
+      const timer = setTimeout(() => {
+        preloadAlternativesCache(dayPlans);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [activeState?.dayPlans, isCaching, preloadAlternativesCache, itinerary?.dayPlans, plannerState?.dayPlans]);
+  
+  // Reset preload flag when trip changes or cleared
+  useEffect(() => {
+    const dayPlansLength = activeState?.dayPlans?.length || 0;
+    
+    console.log('[AIPlanner] Trip change detected:', {
+      hasDayPlans: !!activeState?.dayPlans,
+      length: dayPlansLength
+    });
+    
+    if (dayPlansLength === 0) {
+      console.log('[AIPlanner] Resetting cache and preload flag');
+      hasPreloadedRef.current = false;
+      setAlternativesCache({}); // Clear cache when starting new trip
+    }
+  }, [activeState?.dayPlans?.length]);
+
   const handleActivityClick = (activity: any) => {
     console.log('[AIPlanner] Activity clicked:', activity);
     
-    // Transform activity data to match PlaceDetailPanel's expected format
-    const placeData = {
+    // Transform activity data to match AttractionDetailPanel's expected format
+    const attractionData = {
       name: activity.title || 'Unknown Place',
-      lat: activity.coords?.lat || 0,
-      lng: activity.coords?.lng || 0,
+      coords: activity.coords || { lat: 0, lng: 0 },
       type: activity.type || 'attraction',
       rating: activity.rating,
       reviewCount: activity.reviewCount,
-      highlights: activity.highlights || activity.desc, // Use highlights first, fallback to desc
+      highlights: activity.highlights || activity.desc,
       duration: activity.duration,
       price: activity.price,
+      address: activity.location,
+      imageUrl: activity.imageUrl,
     };
     
-    console.log('[AIPlanner] Transformed place data:', placeData);
-    setSelectedPlace(placeData);
-    setIsDetailPanelOpen(true);
+    console.log('[AIPlanner] Opening attraction detail:', attractionData);
+    setSelectedAttraction(attractionData);
+    setIsAttractionDetailOpen(true);
   };
 
   const handleRemoveActivity = (dayNumber: number, activityIndex: number) => {
@@ -919,6 +1062,19 @@ export default function AIPlanner() {
     return `${startFormatted} – ${endFormatted}`;
   };
 
+  // Helper: Get weather icon based on condition string
+  const getWeatherIcon = (condition?: string) => {
+    const iconClass = "h-4 w-4 stroke-[2.5px]";
+    if (!condition) return <Cloud className={`${iconClass} text-slate-400`} />;
+    const cond = condition.toLowerCase();
+    if (cond.includes('sun') || cond.includes('clear')) return <Sun className={`${iconClass} text-amber-500`} />;
+    if (cond.includes('rain') || cond.includes('drizzle')) return <CloudRain className={`${iconClass} text-blue-500`} />;
+    if (cond.includes('snow') || cond.includes('ice')) return <CloudSnow className={`${iconClass} text-sky-300`} />;
+    if (cond.includes('storm') || cond.includes('lightning')) return <CloudLightning className={`${iconClass} text-indigo-500`} />;
+    if (cond.includes('wind')) return <Wind className={`${iconClass} text-slate-400`} />;
+    return <Cloud className={`${iconClass} text-slate-400`} />;
+  };
+
   const renderDayPlans = (plans?: DayPlan[]) => {
     // Show skeleton loading during streaming
     if (isGenerating && !plans?.length) {
@@ -974,21 +1130,44 @@ export default function AIPlanner() {
           
           return (
           <div key={`${dayNumber}-${day.title ?? 'untitled'}-${dayIdx}`} className="space-y-3">
-            <div className="flex items-baseline gap-3 border-b border-slate-100 pb-1">
-              <h3 className="text-lg font-bold text-slate-800">
-                Day {dayNumber}: {day.title}
-              </h3>
-              {dateInfo && (
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-bold text-slate-900">{dateInfo.date}</span>
-                  <span className="text-xs font-medium text-slate-500">{dateInfo.weekday}</span>
+            {/* Day Header */}
+            <div className="space-y-1">
+              <div className="border-b border-slate-100 pb-1">
+                <h3 className="text-lg font-bold text-slate-800">
+                  Day {dayNumber}: {day.title}
+                </h3>
+              </div>
+              
+              {/* Date, Weekday and Weather */}
+              <div className="flex items-center gap-2 px-1">
+                {dateInfo && (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-sm font-bold text-slate-900">{dateInfo.date}</span>
+                    <span className="text-xs font-medium text-slate-500">{dateInfo.weekday}</span>
+                  </div>
+                )}
+                
+                {day.weather && (
+                  <div className="flex items-center gap-1.5 ml-1">
+                    <span className="text-slate-300">·</span>
+                    {getWeatherIcon(day.weather.condition)}
+                    <span className="text-sm font-semibold text-slate-700">
+                      {day.weather.tempRange || (day.weather.tempC ? `${day.weather.tempC}°C` : '')}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Activity Count (Moved below date) */}
+              {day.activities && day.activities.length > 0 && (
+                <div className="flex items-center gap-1.5 px-1 text-xs text-slate-500">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200">
+                    <span className="text-[10px] font-bold text-slate-600">{day.activities.length}</span>
+                  </div>
+                  <span>{day.activities.length === 1 ? 'activity' : 'activities'}</span>
                 </div>
               )}
             </div>
-            
-            {day.summary && (
-              <p className="px-2 text-xs text-slate-500 italic">{day.summary}</p>
-            )}
 
             <div className="grid gap-3">
               {(day.activities ?? []).map((act, idx) => (
@@ -1637,6 +1816,13 @@ export default function AIPlanner() {
         placeData={selectedPlace}
       />
 
+      {/* Attraction Detail Panel (from Day Plans) */}
+      <AttractionDetailPanel
+        isOpen={isAttractionDetailOpen}
+        onClose={() => setIsAttractionDetailOpen(false)}
+        attraction={selectedAttraction}
+      />
+
       {/* Activity Change Panel */}
       {changingActivity && (
         <ActivityChangePanel
@@ -1649,6 +1835,16 @@ export default function AIPlanner() {
           dayNumber={changingActivity.dayNumber}
           activityIndex={changingActivity.activityIndex}
           onReplace={handleReplaceActivity}
+          cachedAlternatives={(() => {
+            const cacheKey = `${changingActivity.dayNumber}-${changingActivity.activityIndex}`;
+            const cached = alternativesCache[cacheKey];
+            console.log('[AIPlanner] Passing cached alternatives:', {
+              cacheKey,
+              cached: cached?.length || 0,
+              allCacheKeys: Object.keys(alternativesCache),
+            });
+            return cached;
+          })()}
         />
       )}
     </div>
