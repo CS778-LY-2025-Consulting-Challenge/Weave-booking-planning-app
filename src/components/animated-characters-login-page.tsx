@@ -671,34 +671,19 @@ function LoginPage() {
             </Button>
           </form>
 
-          {/* Social Login */}
-          <div className="mt-6">
-            <Button 
-              variant="outline" 
-              className="w-full h-12 bg-background border-border/60 hover:bg-accent"
-              type="button"
-            >
-              <Mail className="mr-2 size-5" />
-              {loginMode === 'guide' ? 'Sign up as a Guide' : 'Log in with Google'}
-            </Button>
-          </div>
-
               {/* Sign Up Link */}
-              <div className="text-center text-sm text-muted-foreground mt-8">
+              <div className="text-center mt-8">
                 {loginMode === 'guide' ? (
-                  <>
-                    Not a guide yet?{" "}
-                    <a href="/apply-guide" className="text-foreground font-medium hover:underline">
-                      Apply Here
-                    </a>
-                  </>
+                  <a href="/apply-guide" className="text-foreground text-xl font-bold hover:underline hover:text-primary transition-colors block">
+                    Not a guide yet? Apply Here
+                  </a>
                 ) : (
-                  <>
+                  <div className="text-sm text-muted-foreground">
                     Don't have an account?{" "}
                     <a href="/signup" className="text-foreground font-medium hover:underline">
                       Sign Up
                     </a>
-                  </>
+                  </div>
                 )}
               </div>
             </div>

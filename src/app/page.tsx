@@ -713,78 +713,101 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trending User Journeys */}
-      <section className="bg-gray-50 py-16">
+      {/* Featured Destinations - Editorial Video Mosaic */}
+      <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
-            <h2 className="font-[Abril_Fatface] text-[40px]">
-              Featured destinations
-            </h2>
-            <div className="flex items-center gap-4">
+          {/* Two-Column Layout */}
+          <div className="grid gap-12 lg:grid-cols-2 items-start">
+            {/* Left: Title Section */}
+            <div className="sticky top-20">
+              <p className="mb-2 text-sm font-bold tracking-[0.2em] uppercase text-gray-600">
+                FEATURED EXPERIENCES
+              </p>
+              <h2 className="mb-6 text-5xl font-black uppercase tracking-tight md:text-6xl lg:text-7xl leading-none">
+                The 25 Best Destinations
+              </h2>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                These are the cities, islands and countries you absolutely must see to believe. Handpicked locations from around the globe.
+              </p>
               <button
                 onClick={() => router.push('/destinations')}
-                className="text-sm tracking-wider uppercase hover:underline"
+                className="mt-8 inline-flex items-center gap-2 rounded-lg bg-black px-8 py-4 text-sm tracking-wider text-white uppercase transition-all duration-300 hover:bg-gray-800"
               >
-                VIEW ALL
+                VIEW ALL DESTINATIONS
+                <ArrowRight className="size-4" />
               </button>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 rounded-sm"
-                  onClick={prevFeaturedDestSlide}
-                  disabled={featuredDestScroll === 0}
-                >
-                  <ChevronLeft className="size-4" />
-                </Button>
-                <Button
-                  variant="default"
-                  size="icon"
-                  className="h-10 w-10 rounded-sm bg-black hover:bg-gray-800"
-                  onClick={nextFeaturedDestSlide}
-                  disabled={featuredDestScroll >= destinations.length - 5}
-                >
-                  <ChevronRight className="size-4" />
-                </Button>
-              </div>
             </div>
-          </div>
 
-          {/* Horizontal Scrolling Cards */}
-          <div className="overflow-hidden">
-            <div
-              className="flex gap-4 transition-transform duration-500 ease-in-out"
-              style={{
-                transform: `translateX(-${featuredDestScroll * (100 / 5)}%)`,
-              }}
-            >
-              {destinations.map((destination) => (
-                <div
-                  key={destination.id}
-                  className="group w-[calc(20%-12.8px)] min-w-[240px] flex-shrink-0 cursor-pointer"
-                  onClick={() => router.push('/destinations')}
+            {/* Right: Video Grid Mosaic */}
+            <div className="grid gap-0 grid-cols-2 auto-rows-[280px]">
+              {/* Reunion - Top Left */}
+              <div className="relative overflow-hidden bg-black group cursor-pointer" onClick={() => router.push('/destinations')}>
+                <video
+                  className="h-full w-full object-cover"
+                  muted
+                  loop
+                  autoPlay
+                  playsInline
                 >
-                  {/* Image */}
-                  <div className="relative mb-4 aspect-[3/4] overflow-hidden">
-                    <img
-                      src={destination.image}
-                      alt={destination.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-
-                  {/* Region */}
-                  <p className="mb-1 text-xs tracking-wider text-gray-600 uppercase">
-                    {destination.region.replace('_', ' ')}
+                  <source
+                    src="https://videos.pexels.com/video-files/2832269/2832269-hd_1920_1080_30fps.mp4"
+                    type="video/mp4"
+                  />
+                </video>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <p className="text-sm font-semibold uppercase tracking-wider text-white/70">
+                    Africa
                   </p>
-
-                  {/* Name */}
-                  <h3 className="text-lg" style={{ fontWeight: '700' }}>
-                    {destination.name}
-                  </h3>
+                  <h3 className="text-xl font-bold text-white">Reunion</h3>
                 </div>
-              ))}
+              </div>
+
+              {/* Maine - Top Right (Tall) */}
+              <div className="relative overflow-hidden bg-black group cursor-pointer row-span-2" onClick={() => router.push('/destinations')}>
+                <video
+                  className="h-full w-full object-cover"
+                  muted
+                  loop
+                  autoPlay
+                  playsInline
+                >
+                  <source
+                    src="https://videos.pexels.com/video-files/3717370/3717370-hd_1920_1080_25fps.mp4"
+                    type="video/mp4"
+                  />
+                </video>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <p className="text-sm font-semibold uppercase tracking-wider text-white/70">
+                    USA
+                  </p>
+                  <h3 className="text-xl font-bold text-white">Maine</h3>
+                </div>
+              </div>
+
+              {/* Botswana - Bottom Left */}
+              <div className="relative overflow-hidden bg-black group cursor-pointer" onClick={() => router.push('/destinations')}>
+                <video
+                  className="h-full w-full object-cover"
+                  muted
+                  loop
+                  autoPlay
+                  playsInline
+                >
+                  <source
+                    src="https://videos.pexels.com/video-files/5717184/5717184-hd_1920_1080_24fps.mp4"
+                    type="video/mp4"
+                  />
+                </video>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <p className="text-sm font-semibold uppercase tracking-wider text-white/70">
+                    Africa
+                  </p>
+                  <h3 className="text-xl font-bold text-white">Botswana</h3>
+                </div>
+              </div>
             </div>
           </div>
         </div>
