@@ -37,8 +37,9 @@ interface ActivityChangePanelProps {
   };
   dayNumber: number;
   activityIndex: number;
-  onReplace: (dayNumber: number, activityIndex: number, newActivity: any) => void;
+  onReplace: (dayNumber: number, activityIndex: number, newActivity: any, isAdding?: boolean) => void;
   cachedAlternatives?: SearchResult[]; // Preloaded alternatives
+  isAdding?: boolean; // true for add mode, false/undefined for replace mode
 }
 
 export default function ActivityChangePanel({
@@ -49,6 +50,7 @@ export default function ActivityChangePanel({
   activityIndex,
   onReplace,
   cachedAlternatives,
+  isAdding = false,
 }: ActivityChangePanelProps) {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
@@ -87,7 +89,7 @@ export default function ActivityChangePanel({
       highlights: selectedResult.highlights,
     };
 
-    onReplace(dayNumber, activityIndex, newActivity);
+    onReplace(dayNumber, activityIndex, newActivity, isAdding);
     
     // Reset and close
     setSearchResults([]);
@@ -112,11 +114,15 @@ export default function ActivityChangePanel({
           <SheetHeader className="border-b border-slate-200 px-6 py-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <SheetTitle className="text-xl">Find Alternative Activity</SheetTitle>
+                <SheetTitle className="text-xl">
+                  {isAdding ? 'Add New Activity' : 'Find Alternative Activity'}
+                </SheetTitle>
                 <div className="mt-1 flex items-center gap-2">
-                  <SheetDescription className="text-sm">
-                    Current: <span className="font-semibold text-slate-700">{currentActivity.title}</span>
-                  </SheetDescription>
+                  {!isAdding && (
+                    <SheetDescription className="text-sm">
+                      Current: <span className="font-semibold text-slate-700">{currentActivity.title}</span>
+                    </SheetDescription>
+                  )}
                   {city && (
                     <div className="text-xs text-slate-500">
                       📍 {city}

@@ -29,6 +29,7 @@ import {
   CloudSnow,
   CloudLightning,
   Wind,
+  Plus,
 } from 'lucide-react';
 import CharizardOrb from '@/components/CharizardOrb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,6 +48,8 @@ import TripMap from '@/components/TripMap';
 import PlaceDetailPanel from '@/components/PlaceDetailPanel';
 import ActivityChangePanel from '@/components/ActivityChangePanel';
 import AttractionDetailPanel from '@/components/AttractionDetailPanel';
+import AccommodationCard from '@/components/AccommodationCard';
+import AccommodationChangePanel from '@/components/AccommodationChangePanel';
 
 type Coordinates = { lat: number; lng: number };
 type DayPlan = {
@@ -112,9 +115,19 @@ type TripState = {
   accommodation?: Array<{
     name: string;
     location: string;
-    pricePerNight?: number;
+    city?: string;
+    checkIn?: string;
+    checkOut?: string;
     nights?: number;
+    pricePerNight?: string; // Changed to string to match "NZ$350" format
+    totalPrice?: string;
+    rating?: number;
+    reviewCount?: number;
+    hotelType?: string;
+    amenities?: string[];
     coords?: Coordinates;
+    imageQuery?: string;
+    imageUrl?: string;
   }>;
   media?: { photos?: string[]; videos?: string[] };
   mapRoute?: { points: Array<{ name: string; coords: Coordinates }> };
@@ -234,6 +247,16 @@ const ActivityCard = ({
             {activity.type === 'food' ? <Info className="h-8 w-8 opacity-20" /> : <MapPin className="h-8 w-8 opacity-20" />}
           </div>
         )}
+        
+        {/* Restaurant Badge on Image */}
+        {activity.type === 'food' && (
+          <div className="absolute top-2 left-2">
+            <Badge className="text-[10px] px-1.5 py-0.5 bg-orange-500/90 text-white border-0 shadow-sm backdrop-blur-sm">
+              Restaurant
+            </Badge>
+          </div>
+        )}
+        
         {isLoadingImage && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-100/50">
             <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
@@ -354,14 +377,24 @@ export default function AIPlanner() {
     dayNumber: number;
     activityIndex: number;
     activity: any;
+    isAdding?: boolean; // true for add mode, false/undefined for replace mode
   } | null>(null);
   const [isAttractionDetailOpen, setIsAttractionDetailOpen] = useState(false);
   const [selectedAttraction, setSelectedAttraction] = useState<any>(null);
+  const [isAccommodationChangePanelOpen, setIsAccommodationChangePanelOpen] = useState(false);
+  const [changingAccommodation, setChangingAccommodation] = useState<{
+    accommodationIndex: number;
+    accommodation: any;
+  } | null>(null);
   const dayPlansRef = useRef<HTMLDivElement>(null);
 
   // Alternatives cache: { "dayNumber-activityIndex": [...alternatives] }
   const [alternativesCache, setAlternativesCache] = useState<Record<string, any[]>>({});
   const [isCaching, setIsCaching] = useState(false);
+  
+  // Accommodation alternatives cache: { "accommodationIndex": [...alternatives] }
+  const [accommodationAlternativesCache, setAccommodationAlternativesCache] = useState<Record<string, any[]>>({});
+  const [isCachingAccommodation, setIsCachingAccommodation] = useState(false);
 
   const activeState = useMemo(() => itinerary || plannerState, [itinerary, plannerState]);
 
@@ -819,6 +852,108 @@ export default function AIPlanner() {
     }
   }, [activeState?.dayPlans, isCaching, preloadAlternativesCache, itinerary?.dayPlans, plannerState?.dayPlans]);
   
+  // Preload accommodation alternatives cache
+  const preloadAccommodationCache = useCallback(async (accommodation: TripState['accommodation']) => {
+    if (!accommodation || accommodation.length === 0) return;
+    
+    console.log('[AIPlanner] Starting to preload accommodation alternatives cache...');
+    setIsCachingAccommodation(true);
+
+    const cachePromises: Promise<void>[] = [];
+
+    accommodation.forEach((stay, index) => {
+      const cacheKey = String(index);
+      
+      console.log(`[AIPlanner] Preloading accommodation cache for ${cacheKey}: ${stay.name} in ${stay.city}`);
+      
+      const promise = fetch('/api/ai-planner/search-accommodations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: 'Popular hotels and accommodations',
+          city: stay.city || stay.location,
+          checkIn: stay.checkIn || '',
+          checkOut: stay.checkOut || '',
+          nights: stay.nights || 1,
+          context: {},
+        }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.results && data.results.length > 0) {
+            setAccommodationAlternativesCache(prev => {
+              // Check if already cached
+              if (prev[cacheKey]) {
+                console.log(`[AIPlanner] Accommodation cache already exists for ${cacheKey}, skipping update`);
+                return prev;
+              }
+              console.log(`[AIPlanner] Cached ${data.results.length} accommodation alternatives for ${cacheKey}`);
+              return {
+                ...prev,
+                [cacheKey]: data.results,
+              };
+            });
+          }
+        })
+        .catch(err => {
+          console.warn(`[AIPlanner] Failed to cache accommodation alternatives for ${cacheKey}:`, err);
+        });
+
+      cachePromises.push(promise);
+    });
+
+    try {
+      await Promise.all(cachePromises);
+      console.log('[AIPlanner] Accommodation cache preloading complete');
+    } catch (err) {
+      console.error('[AIPlanner] Error during accommodation cache preloading:', err);
+    } finally {
+      setIsCachingAccommodation(false);
+    }
+  }, []); // Empty deps since we use functional setState
+
+  // Trigger accommodation preload when itinerary is fully generated
+  const hasPreloadedAccommodationRef = useRef(false);
+  
+  useEffect(() => {
+    const accommodation = activeState?.accommodation;
+    
+    console.log('[AIPlanner] Accommodation preload effect triggered:', {
+      hasAccommodation: !!accommodation,
+      accommodationLength: accommodation?.length || 0,
+      isCachingAccommodation,
+      hasPreloaded: hasPreloadedAccommodationRef.current,
+    });
+    
+    if (
+      accommodation && 
+      accommodation.length > 0 && 
+      !isCachingAccommodation && 
+      !hasPreloadedAccommodationRef.current
+    ) {
+      console.log('[AIPlanner] Trip ready, scheduling accommodation cache preload for', accommodation.length, 'stays');
+      hasPreloadedAccommodationRef.current = true;
+      
+      // Delay preloading slightly to avoid blocking UI, and start after activity cache
+      const timer = setTimeout(() => {
+        preloadAccommodationCache(accommodation);
+      }, 2000); // Start 1s after activity cache
+      
+      return () => clearTimeout(timer);
+    }
+  }, [activeState?.accommodation, isCachingAccommodation, preloadAccommodationCache, itinerary?.accommodation, plannerState?.accommodation]);
+  
+  // Reset accommodation preload flag when trip changes or cleared
+  useEffect(() => {
+    const accommodationLength = activeState?.accommodation?.length || 0;
+    
+    if (accommodationLength === 0 && hasPreloadedAccommodationRef.current) {
+      console.log('[AIPlanner] Accommodation cleared, resetting preload flag and cache.');
+      hasPreloadedAccommodationRef.current = false;
+      setAccommodationAlternativesCache({});
+    }
+  }, [activeState?.accommodation]);
+
   // Reset preload flag when trip changes or cleared
   useEffect(() => {
     const dayPlansLength = activeState?.dayPlans?.length || 0;
@@ -902,22 +1037,57 @@ export default function AIPlanner() {
       dayNumber,
       activityIndex,
       activity,
+      isAdding: false, // Replace mode
     });
     setIsChangePanelOpen(true);
   };
 
-  const handleReplaceActivity = (dayNumber: number, activityIndex: number, newActivity: any) => {
-    console.log('[AIPlanner] Replacing activity:', { dayNumber, activityIndex, newActivity });
+  const handleAddActivity = (dayNumber: number) => {
+    console.log('[AIPlanner] Add activity requested for day:', dayNumber);
+    
+    // Find the day plan to get city and coords for context
+    const dayPlan = activeState.dayPlans?.find((d) => d.day === dayNumber);
+    
+    if (!dayPlan) {
+      console.error('[AIPlanner] Day plan not found:', dayNumber);
+      return;
+    }
+    
+    // Use the last activity's location as reference, or day's city
+    const lastActivity = dayPlan.activities?.[dayPlan.activities.length - 1];
+    const referenceActivity = lastActivity || {
+      title: 'New Activity',
+      coords: { lat: 0, lng: 0 },
+      location: dayPlan.city || '',
+    };
+    
+    setChangingActivity({
+      dayNumber,
+      activityIndex: -1, // -1 indicates add mode
+      activity: referenceActivity,
+      isAdding: true, // Add mode
+    });
+    setIsChangePanelOpen(true);
+  };
+
+  const handleReplaceActivity = (dayNumber: number, activityIndex: number, newActivity: any, isAdding: boolean = false) => {
+    console.log('[AIPlanner]', isAdding ? 'Adding' : 'Replacing', 'activity:', { dayNumber, activityIndex, newActivity });
     
     // Update itinerary if it exists, otherwise update plannerState
     if (itinerary?.dayPlans) {
       const updatedDayPlans = itinerary.dayPlans.map((day) => {
         if (day.day === dayNumber) {
-          const updatedActivities = [...day.activities];
-          updatedActivities[activityIndex] = {
-            ...updatedActivities[activityIndex],
-            ...newActivity,
-          };
+          const updatedActivities = [...(day.activities || [])];
+          if (isAdding) {
+            // Add new activity at the end
+            updatedActivities.push(newActivity);
+          } else {
+            // Replace existing activity
+            updatedActivities[activityIndex] = {
+              ...updatedActivities[activityIndex],
+              ...newActivity,
+            };
+          }
           return {
             ...day,
             activities: updatedActivities,
@@ -929,11 +1099,17 @@ export default function AIPlanner() {
     } else if (plannerState.dayPlans) {
       const updatedDayPlans = plannerState.dayPlans.map((day) => {
         if (day.day === dayNumber) {
-          const updatedActivities = [...day.activities];
-          updatedActivities[activityIndex] = {
-            ...updatedActivities[activityIndex],
-            ...newActivity,
-          };
+          const updatedActivities = [...(day.activities || [])];
+          if (isAdding) {
+            // Add new activity at the end
+            updatedActivities.push(newActivity);
+          } else {
+            // Replace existing activity
+            updatedActivities[activityIndex] = {
+              ...updatedActivities[activityIndex],
+              ...newActivity,
+            };
+          }
           return {
             ...day,
             activities: updatedActivities,
@@ -949,8 +1125,75 @@ export default function AIPlanner() {
       ...prev,
       { 
         type: 'ai', 
-        text: `Great! I've replaced the activity with "${newActivity.title}". Your itinerary has been updated!` 
+        text: isAdding 
+          ? `Great! I've added "${newActivity.title}" to your itinerary!` 
+          : `Great! I've replaced the activity with "${newActivity.title}". Your itinerary has been updated!` 
       },
+    ]);
+  };
+
+  // Handle accommodation change
+  const handleChangeAccommodation = (accommodationIndex: number) => {
+    const accommodation = activeState.accommodation?.[accommodationIndex];
+    if (!accommodation) return;
+
+    setChangingAccommodation({
+      accommodationIndex,
+      accommodation,
+    });
+    setIsAccommodationChangePanelOpen(true);
+  };
+
+  const handleReplaceAccommodation = (newAccommodation: any) => {
+    if (changingAccommodation === null) return;
+
+    console.log('[AIPlanner] Replacing accommodation:', { 
+      index: changingAccommodation.accommodationIndex, 
+      newAccommodation,
+      currentAccommodation: changingAccommodation.accommodation
+    });
+
+    // Update itinerary if it exists, otherwise update plannerState
+    if (itinerary?.accommodation) {
+      const updatedAccommodation = [...itinerary.accommodation];
+      // Completely replace the accommodation at this index
+      updatedAccommodation[changingAccommodation.accommodationIndex] = newAccommodation;
+      console.log('[AIPlanner] Updated itinerary accommodation:', updatedAccommodation);
+      setItinerary({ ...itinerary, accommodation: updatedAccommodation });
+    } else if (plannerState.accommodation) {
+      const updatedAccommodation = [...plannerState.accommodation];
+      // Completely replace the accommodation at this index
+      updatedAccommodation[changingAccommodation.accommodationIndex] = newAccommodation;
+      console.log('[AIPlanner] Updated plannerState accommodation:', updatedAccommodation);
+      setPlannerState({ ...plannerState, accommodation: updatedAccommodation });
+    }
+
+    // Show success message
+    setMessages((prev) => [
+      ...prev,
+      { 
+        type: 'ai', 
+        text: `Great! I've updated your accommodation to "${newAccommodation.name}". Your trip has been updated!` 
+      },
+    ]);
+
+    setChangingAccommodation(null);
+  };
+
+  const handleRemoveAccommodation = (accommodationIndex: number) => {
+    console.log('[AIPlanner] Removing accommodation:', accommodationIndex);
+
+    if (itinerary?.accommodation) {
+      const updatedAccommodation = itinerary.accommodation.filter((_, idx) => idx !== accommodationIndex);
+      setItinerary({ ...itinerary, accommodation: updatedAccommodation });
+    } else if (plannerState.accommodation) {
+      const updatedAccommodation = plannerState.accommodation.filter((_, idx) => idx !== accommodationIndex);
+      setPlannerState({ ...plannerState, accommodation: updatedAccommodation });
+    }
+
+    setMessages((prev) => [
+      ...prev,
+      { type: 'ai', text: `The accommodation has been removed from your trip.` },
     ]);
   };
 
@@ -1179,6 +1422,19 @@ export default function AIPlanner() {
                   onChange={() => handleChangeActivity(day.day, idx)}
                 />
               ))}
+              
+              {/* Add Activity Button */}
+              <button
+                onClick={() => handleAddActivity(day.day)}
+                className="group flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white p-6 transition-all hover:border-blue-400 hover:bg-blue-50"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 transition-colors group-hover:bg-blue-500">
+                  <Plus className="h-5 w-5 text-blue-600 transition-colors group-hover:text-white" />
+                </div>
+                <span className="text-sm font-semibold text-slate-600 transition-colors group-hover:text-blue-600">
+                  Add Activity
+                </span>
+              </button>
             </div>
           </div>
           );
@@ -1673,41 +1929,39 @@ export default function AIPlanner() {
                 )}
               </CardHeader>
               <CardContent className="space-y-4 p-0 px-4 pt-2 pb-3">
-                {(filteredAccommodation ?? []).map((stay, idx) => (
-                  <div key={`stay-${idx}`} className="group relative overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md">
-                    <div className="flex flex-col sm:flex-row">
-                      <div className="h-32 w-full bg-slate-100 sm:h-auto sm:w-32 flex items-center justify-center">
-                        <Hotel className="h-8 w-8 text-slate-300" />
-                      </div>
-                      
-                      <div className="flex flex-1 flex-col p-4">
-                        <div className="mb-1 flex items-start justify-between">
-                          <h4 className="text-sm font-bold text-slate-900">{stay.name}</h4>
-                          <MoreHorizontal className="h-4 w-4 text-slate-400" />
-                        </div>
-                        
-                        <div className="mb-3 flex items-center gap-1 text-xs text-slate-500">
-                          <MapPin className="h-3 w-3" />
-                          <span>{stay.location}</span>
-                        </div>
-
-                        <div className="mt-auto flex items-end justify-between">
-                          <div className="flex items-center gap-1 text-[11px] font-medium text-green-600">
-                            <span className="rounded bg-green-50 px-1.5 py-0.5">9.2 Wonderful</span>
-                            <span className="text-slate-400 font-normal underline">1,240 reviews</span>
-                          </div>
-                          
-                          <div className="text-right">
-                            <p className="text-sm font-bold text-slate-900">
-                              {stay.pricePerNight ? `NZ$${stay.pricePerNight}` : '—'}
-                            </p>
-                            <p className="text-[10px] text-slate-400">/per night</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                {(filteredAccommodation ?? []).map((stay, idx) => {
+                  // Find the original index in the full accommodation array (for proper caching/updating)
+                  const originalIndex = activeState.accommodation?.findIndex(a => a.name === stay.name && a.location === stay.location) ?? idx;
+                  
+                  return (
+                    <AccommodationCard
+                      key={`stay-${originalIndex}`}
+                      accommodation={{
+                        name: stay.name,
+                        location: stay.location,
+                        city: stay.city || '',
+                        checkIn: stay.checkIn || '',
+                        checkOut: stay.checkOut || '',
+                        nights: stay.nights || 1,
+                        pricePerNight: stay.pricePerNight || 'NZ$0',
+                        totalPrice: stay.totalPrice || 'NZ$0',
+                        rating: stay.rating,
+                        reviewCount: stay.reviewCount,
+                        hotelType: stay.hotelType,
+                        amenities: stay.amenities,
+                        coords: stay.coords || { lat: 0, lng: 0 },
+                        imageQuery: stay.imageQuery,
+                        imageUrl: stay.imageUrl,
+                      }}
+                      onView={() => {
+                        // TODO: Could open a detail panel similar to AttractionDetailPanel
+                        console.log('[AIPlanner] View accommodation:', stay.name);
+                      }}
+                      onChange={() => handleChangeAccommodation(originalIndex)}
+                      onRemove={() => handleRemoveAccommodation(originalIndex)}
+                    />
+                  );
+                })}
                 {!(filteredAccommodation?.length) && (
                   <div className="flex flex-col items-center justify-center py-4 text-center">
                     <Hotel className="mb-2 h-8 w-8 text-slate-200" />
@@ -1835,6 +2089,7 @@ export default function AIPlanner() {
           dayNumber={changingActivity.dayNumber}
           activityIndex={changingActivity.activityIndex}
           onReplace={handleReplaceActivity}
+          isAdding={changingActivity.isAdding || false}
           cachedAlternatives={(() => {
             const cacheKey = `${changingActivity.dayNumber}-${changingActivity.activityIndex}`;
             const cached = alternativesCache[cacheKey];
@@ -1842,6 +2097,36 @@ export default function AIPlanner() {
               cacheKey,
               cached: cached?.length || 0,
               allCacheKeys: Object.keys(alternativesCache),
+            });
+            return cached;
+          })()}
+        />
+      )}
+
+      {/* Accommodation Change Panel */}
+      {changingAccommodation && (
+        <AccommodationChangePanel
+          isOpen={isAccommodationChangePanelOpen}
+          onClose={() => {
+            setIsAccommodationChangePanelOpen(false);
+            setChangingAccommodation(null);
+          }}
+          currentAccommodation={{
+            name: changingAccommodation.accommodation.name,
+            location: changingAccommodation.accommodation.location,
+            city: changingAccommodation.accommodation.city || '',
+            coords: changingAccommodation.accommodation.coords || { lat: 0, lng: 0 },
+            checkIn: changingAccommodation.accommodation.checkIn || '',
+            checkOut: changingAccommodation.accommodation.checkOut || '',
+            nights: changingAccommodation.accommodation.nights || 1,
+          }}
+          onReplace={handleReplaceAccommodation}
+          cachedAlternatives={(() => {
+            const cacheKey = String(changingAccommodation.accommodationIndex);
+            const cached = accommodationAlternativesCache[cacheKey];
+            console.log('[AIPlanner] Passing cached accommodation alternatives:', {
+              cacheKey,
+              cached: cached?.length || 0,
             });
             return cached;
           })()}
