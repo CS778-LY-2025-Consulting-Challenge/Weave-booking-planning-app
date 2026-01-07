@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils';
 import { PAGInit } from 'libpag';
 import { useEffect, useRef, useState } from 'react';
+import { Character } from './character';
 import { useInfiniteRunner } from './infinite-runner';
 
 export function PagCharacter() {
@@ -70,17 +71,24 @@ export function PagCharacter() {
   return (
     <div
       className={cn(
-        'relative h-64 w-64 transition-transform duration-100',
+        'relative flex items-end transition-transform duration-100',
         direction === 'left' && 'scale-x-[-1]'
       )}
     >
-      <canvas
-        ref={canvasRef}
-        className={cn(
-          'h-full w-full object-contain transition-opacity duration-300',
-          isLoaded ? 'opacity-100' : 'opacity-0'
-        )}
-      />
+      {/* Follower behind */}
+      <div className="-mr-24">
+        <Character />
+      </div>
+      {/* Main PAG character */}
+      <div className="h-64 w-64">
+        <canvas
+          ref={canvasRef}
+          className={cn(
+            'h-full w-full object-contain transition-opacity duration-300',
+            isLoaded ? 'opacity-100' : 'opacity-0'
+          )}
+        />
+      </div>
     </div>
   );
 }

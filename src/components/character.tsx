@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { useInfiniteRunner } from './infinite-runner';
 
@@ -25,12 +24,7 @@ function Character() {
   }, [isWalking]);
 
   return (
-    <div
-      className={cn(
-        'relative h-48 w-48 transition-transform duration-100',
-        direction === 'left' && 'scale-x-[-1]'
-      )}
-    >
+    <div className="relative h-32 w-32 transition-transform duration-100">
       <img
         src={`/character/${frame}.png`}
         alt="Character"

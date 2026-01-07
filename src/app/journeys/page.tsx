@@ -711,8 +711,8 @@ export default function Journeys() {
        <main className="h-screen w-full">
         <InfiniteRunner
           itemsData={filteredJourneys}
-          backgroundSpeed={2}
-          itemsSpeed={2}
+          backgroundSpeed={3}
+          itemsSpeed={3}
           itemsWidth={filteredJourneys.length * 320}
           itemCount={filteredJourneys.length}
           itemWidth={320}
