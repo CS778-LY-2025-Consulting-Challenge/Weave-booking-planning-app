@@ -148,7 +148,7 @@ export async function GET(request: Request) {
     }) || [];
 
     // Price level to string
-    let priceString = null;
+    let priceString: string | null = null;
     if (details.priceLevel) {
       const priceMap: { [key: string]: string } = {
         'PRICE_LEVEL_FREE': 'Free',
