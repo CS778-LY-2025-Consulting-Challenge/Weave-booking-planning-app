@@ -31,6 +31,11 @@ export function PagCharacter() {
 
         if (!pagView) return;
 
+        // Speed up animation (2x faster)
+        const originalDuration = pagFile.duration();
+        pagFile.setTimeStretchMode(1);
+        pagFile.setDuration(originalDuration / 2);
+
         pagView.setRepeatCount(0); // Infinite loop
         playerRef.current = pagView;
         setIsLoaded(true);

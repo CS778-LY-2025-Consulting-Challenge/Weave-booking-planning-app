@@ -1,6 +1,5 @@
 'use client';
 
-import { Character } from '@/components/character';
 import { GalleryFloor, GalleryWall } from '@/components/gallery-background';
 import { GalleryItems } from '@/components/gallery-items';
 import { InfiniteRunner } from '@/components/infinite-runner';
@@ -8,15 +7,14 @@ import { PagCharacter } from '@/components/pag-character';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 import {
   Calendar,
   Camera,
@@ -27,8 +25,7 @@ import {
   Heart,
   Map,
   MapPin,
-  Sun,
-  X,
+  Sun
 } from 'lucide-react';
 import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
 import { useRouter } from 'next/navigation';
@@ -87,7 +84,7 @@ export default function Journeys() {
       image:
         'https://images.unsplash.com/photo-1431274172761-fca41d930114?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXJpcyUyMGVpZmZlbCUyMHRvd2VyfGVufDF8fHx8MTc2NDQ3MTg2NHww&ixlib=rb-4.1.0&q=80&w=1080',
       description:
-        'A scholarly pilgrimage through Europe\'s cultural heart. From Renaissance masterpieces in Florence to Gothic grandeur in Paris, experience centuries of art, architecture, and storytelling in seven countries.',
+        "A scholarly pilgrimage through Europe's cultural heart. From Renaissance masterpieces in Florence to Gothic grandeur in Paris, experience centuries of art, architecture, and storytelling in seven countries.",
       likes: 456,
     },
     {
@@ -102,7 +99,7 @@ export default function Journeys() {
       image:
         'https://images.unsplash.com/photo-1669986480140-2c90b8edb443?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb3VudGFpbiUyMGFkdmVudHVyZSUyMHRyYXZlbHxlbnwxfHx8fDE3NjQ1MTI0ODB8MA&ixlib=rb-4.1.0&q=80&w=1080',
       description:
-        'Summit your inner peak amid the world\'s highest mountains. Through alpine meadows and prayer flag-adorned passes, witness crystalline skies and find profound silence that only the Himalayas can offer.',
+        "Summit your inner peak amid the world's highest mountains. Through alpine meadows and prayer flag-adorned passes, witness crystalline skies and find profound silence that only the Himalayas can offer.",
       likes: 189,
     },
     {
@@ -117,7 +114,7 @@ export default function Journeys() {
       image:
         'https://images.unsplash.com/photo-1591194233688-dca69d406068?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0b2t5byUyMGphcGFuJTIwY2l0eXxlbnwxfHx8fDE3NjQ1MjYyNjR8MA&ixlib=rb-4.1.0&q=80&w=1080',
       description:
-        "Taste the soul of Japan through Michelin-starred precision and street-corner perfection. From omakase temples to midnight ramen sanctuaries, discover how Tokyo elevates every meal into ritual.",
+        'Taste the soul of Japan through Michelin-starred precision and street-corner perfection. From omakase temples to midnight ramen sanctuaries, discover how Tokyo elevates every meal into ritual.',
       likes: 312,
     },
     {
@@ -147,7 +144,7 @@ export default function Journeys() {
       image:
         'https://images.unsplash.com/photo-1543716091-a840c05249ec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuZXclMjB5b3JrJTIwY2l0eXxlbnwxfHx8fDE3NjQ1MjUyMTh8MA&ixlib=rb-4.1.0&q=80&w=1080',
       description:
-        'Immerse in the electric choreography of the city that never sleeps. From Broadway\'s golden lights to Central Park\'s autumn foliage, experience the pulse of ambition and culture.',
+        "Immerse in the electric choreography of the city that never sleeps. From Broadway's golden lights to Central Park's autumn foliage, experience the pulse of ambition and culture.",
       likes: 201,
     },
   ];
@@ -160,7 +157,12 @@ export default function Journeys() {
     );
   };
 
-  const toggleInSet = (setter: (s: Set<string>) => void, setVal: Set<string>, value: string, checked: boolean) => {
+  const toggleInSet = (
+    setter: (s: Set<string>) => void,
+    setVal: Set<string>,
+    value: string,
+    checked: boolean
+  ) => {
     const next = new Set(Array.from(setVal));
     if (checked) {
       next.add(value);
@@ -182,12 +184,15 @@ export default function Journeys() {
     return '> 3 weeks';
   };
 
-  const matchesFilters = (j: typeof journeys[number]) => {
-    const seasonOk = selectedSeasons.size === 0 || selectedSeasons.has(j.season);
-    const weatherOk = selectedWeather.size === 0 || selectedWeather.has(j.weather);
+  const matchesFilters = (j: (typeof journeys)[number]) => {
+    const seasonOk =
+      selectedSeasons.size === 0 || selectedSeasons.has(j.season);
+    const weatherOk =
+      selectedWeather.size === 0 || selectedWeather.has(j.weather);
     const typeOk = selectedTypes.size === 0 || selectedTypes.has(j.type);
     const dur = durationBucket(parseDays(j.duration));
-    const durationOk = selectedDurations.size === 0 || selectedDurations.has(dur);
+    const durationOk =
+      selectedDurations.size === 0 || selectedDurations.has(dur);
     return seasonOk && weatherOk && typeOk && durationOk;
   };
 
@@ -200,14 +205,14 @@ export default function Journeys() {
 
   const scrollToJourneys = () => {
     document
-      .getElementById('journeys-section')
+      .getElementById('gallery-section')
       ?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const hasActiveFilters = 
-    selectedSeasons.size > 0 || 
-    selectedWeather.size > 0 || 
-    selectedTypes.size > 0 || 
+  const hasActiveFilters =
+    selectedSeasons.size > 0 ||
+    selectedWeather.size > 0 ||
+    selectedTypes.size > 0 ||
     selectedDurations.size > 0;
 
   const clearAllFilters = () => {
@@ -217,7 +222,10 @@ export default function Journeys() {
     setSelectedDurations(new Set());
   };
 
-  const removeFilter = (category: 'season' | 'weather' | 'type' | 'duration', value: string) => {
+  const removeFilter = (
+    category: 'season' | 'weather' | 'type' | 'duration',
+    value: string
+  ) => {
     switch (category) {
       case 'season':
         toggleInSet(setSelectedSeasons, selectedSeasons, value, false);
@@ -234,15 +242,21 @@ export default function Journeys() {
     }
   };
 
-  const FilterSection = ({ title, items, selectedSet, setter, category }: { 
-    title: string; 
-    items: string[]; 
-    selectedSet: Set<string>; 
+  const FilterSection = ({
+    title,
+    items,
+    selectedSet,
+    setter,
+    category,
+  }: {
+    title: string;
+    items: string[];
+    selectedSet: Set<string>;
     setter: (s: Set<string>) => void;
     category: 'season' | 'weather' | 'type' | 'duration';
   }) => (
     <div>
-      <h4 className="mb-4 text-xs font-medium uppercase tracking-[0.15em] text-zinc-500">
+      <h4 className="mb-4 text-xs font-medium tracking-[0.15em] text-zinc-500 uppercase">
         {title}
       </h4>
       <div className="flex flex-wrap gap-2">
@@ -251,14 +265,14 @@ export default function Journeys() {
           return (
             <motion.button
               key={item}
-              onClick={() => toggleInSet(setter, selectedSet, item, !isSelected)}
-              className={`
-                rounded-full px-4 py-2 text-sm font-light tracking-wide transition-all duration-300
-                ${isSelected 
-                  ? 'bg-zinc-900 text-white shadow-lg' 
-                  : 'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200 hover:border-zinc-300'
-                }
-              `}
+              onClick={() =>
+                toggleInSet(setter, selectedSet, item, !isSelected)
+              }
+              className={`rounded-full px-4 py-2 text-sm font-light tracking-wide transition-all duration-300 ${
+                isSelected
+                  ? 'bg-zinc-900 text-white shadow-lg'
+                  : 'border border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50'
+              } `}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -337,12 +351,13 @@ export default function Journeys() {
               Featured Journeys
             </h1>
 
-            <p className="font-inter mx-auto mb-6 max-w-3xl text-xl font-light leading-relaxed tracking-wide text-white/90 md:text-2xl">
+            <p className="font-inter mx-auto mb-6 max-w-3xl text-xl leading-relaxed font-light tracking-wide text-white/90 md:text-2xl">
               Curated stories from discerning travelers
             </p>
 
-            <p className="font-inter mx-auto mb-16 max-w-2xl text-base font-light leading-loose text-white/60 md:text-lg">
-              Discover authentic experiences crafted by explorers who seek more than destinations — they seek transformation
+            <p className="font-inter mx-auto mb-16 max-w-2xl text-base leading-loose font-light text-white/60 md:text-lg">
+              Discover authentic experiences crafted by explorers who seek more
+              than destinations — they seek transformation
             </p>
 
             {/* Stats */}
@@ -356,7 +371,7 @@ export default function Journeys() {
                 <div className="font-cormorant mb-2 text-5xl font-light text-white md:text-6xl">
                   150+
                 </div>
-                <div className="font-inter text-xs font-light uppercase tracking-[0.2em] text-white/60">
+                <div className="font-inter text-xs font-light tracking-[0.2em] text-white/60 uppercase">
                   Journeys
                 </div>
               </motion.div>
@@ -372,7 +387,7 @@ export default function Journeys() {
                 <div className="font-cormorant mb-2 text-5xl font-light text-white md:text-6xl">
                   80+
                 </div>
-                <div className="font-inter text-xs font-light uppercase tracking-[0.2em] text-white/60">
+                <div className="font-inter text-xs font-light tracking-[0.2em] text-white/60 uppercase">
                   Countries
                 </div>
               </motion.div>
@@ -388,7 +403,7 @@ export default function Journeys() {
                 <div className="font-cormorant mb-2 text-5xl font-light text-white md:text-6xl">
                   10k+
                 </div>
-                <div className="font-inter text-xs font-light uppercase tracking-[0.2em] text-white/60">
+                <div className="font-inter text-xs font-light tracking-[0.2em] text-white/60 uppercase">
                   Travelers
                 </div>
               </motion.div>
@@ -403,7 +418,7 @@ export default function Journeys() {
               <Button
                 size="lg"
                 onClick={scrollToJourneys}
-                className="font-inter group rounded-full border border-white/20 bg-white/10 px-10 py-7 text-base font-light tracking-widest uppercase text-white backdrop-blur-md transition-all duration-500 hover:bg-white hover:text-zinc-900 hover:shadow-2xl hover:shadow-white/20"
+                className="font-inter group rounded-full border border-white/20 bg-white/10 px-10 py-7 text-base font-light tracking-widest text-white uppercase backdrop-blur-md transition-all duration-500 hover:bg-white hover:text-zinc-900 hover:shadow-2xl hover:shadow-white/20"
               >
                 Explore Collection
                 <ChevronDown className="ml-3 size-4 transition-transform duration-300 group-hover:translate-y-1" />
@@ -416,299 +431,7 @@ export default function Journeys() {
         <div className="absolute right-0 bottom-0 left-0 z-10 h-32 bg-gradient-to-t from-white to-transparent" />
       </section>
 
-      {/* JOURNEYS SECTION */}
-      <section id="journeys-section" className="py-24">
-        <div className="mx-auto max-w-[1600px] px-6 sm:px-8 lg:px-12">
-          {/* Section Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="mb-20 text-center"
-          >
-            <p className="font-inter mb-4 text-xs font-light uppercase tracking-[0.25em] text-zinc-500">
-              Handpicked Selection
-            </p>
-            <h2 className="font-cormorant mb-6 text-6xl font-light tracking-tight text-zinc-900 md:text-7xl">
-              Signature Experiences
-            </h2>
-            <p className="font-inter mx-auto max-w-2xl text-lg font-light leading-loose text-zinc-600">
-              Each journey represents a carefully curated narrative of discovery, luxury, and authentic connection
-            </p>
-          </motion.div>
-
-          <div className="flex gap-12 lg:gap-16">
-            {/* Filters Sidebar - Desktop */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="hidden w-80 flex-shrink-0 lg:block"
-            >
-              <div className="sticky top-24">
-                <div className="rounded-3xl border border-zinc-200/60 bg-white/60 p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-sm">
-                  <div className="mb-8 flex items-center gap-3">
-                    <div className="rounded-full bg-zinc-900 p-2">
-                      <Filter className="size-4 text-white" strokeWidth={1.5} />
-                    </div>
-                    <h3 className="font-cormorant text-2xl font-light text-zinc-900">Refine</h3>
-                  </div>
-
-                  <div className="space-y-8">
-                    {/* Elegant Divider */}
-                    <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
-
-                    <FilterSection 
-                      title="Season"
-                      items={['Summer', 'Spring', 'Fall', 'Winter']}
-                      selectedSet={selectedSeasons}
-                      setter={setSelectedSeasons}
-                      category="season"
-                    />
-
-                    <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
-
-                    <FilterSection 
-                      title="Weather"
-                      items={['Sunny', 'Rainy', 'Mild', 'Cool']}
-                      selectedSet={selectedWeather}
-                      setter={setSelectedWeather}
-                      category="weather"
-                    />
-
-                    <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
-
-                    <FilterSection 
-                      title="Experience"
-                      items={['Adventure', 'Beach & Relaxation', 'Culture', 'Food & Culture', 'Family', 'City Break']}
-                      selectedSet={selectedTypes}
-                      setter={setSelectedTypes}
-                      category="type"
-                    />
-
-                    <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
-
-                    <FilterSection 
-                      title="Duration"
-                      items={['< 1 week', '1-2 weeks', '2-3 weeks', '> 3 weeks']}
-                      selectedSet={selectedDurations}
-                      setter={setSelectedDurations}
-                      category="duration"
-                    />
-                  </div>
-
-                  {hasActiveFilters && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="mt-8"
-                    >
-                      <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent mb-6" />
-                      <Button
-                        variant="ghost"
-                        onClick={clearAllFilters}
-                        className="font-inter w-full rounded-full border border-zinc-200 py-6 text-sm font-light tracking-wide text-zinc-600 transition-all duration-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white"
-                      >
-                        Clear All Filters
-                      </Button>
-                    </motion.div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Mobile Filter Button */}
-            <div className="fixed bottom-8 left-1/2 z-40 -translate-x-1/2 lg:hidden">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button 
-                    size="lg" 
-                    className="font-inter rounded-full bg-zinc-900 px-8 py-6 text-sm font-light uppercase tracking-widest text-white shadow-2xl transition-all duration-300 hover:bg-zinc-800 hover:shadow-zinc-900/50"
-                  >
-                    <Filter className="mr-2 size-4" strokeWidth={1.5} />
-                    Filters
-                    {hasActiveFilters && (
-                      <span className="ml-2 flex size-5 items-center justify-center rounded-full bg-amber-500 text-xs font-medium text-zinc-900">
-                        {selectedSeasons.size + selectedWeather.size + selectedTypes.size + selectedDurations.size}
-                      </span>
-                    )}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[90vw] sm:w-[400px]">
-                  <SheetHeader>
-                    <SheetTitle className="font-cormorant text-3xl font-light">Refine</SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-8 space-y-8">
-                    <FilterSection 
-                      title="Season"
-                      items={['Summer', 'Spring', 'Fall', 'Winter']}
-                      selectedSet={selectedSeasons}
-                      setter={setSelectedSeasons}
-                      category="season"
-                    />
-                    <div className="h-px bg-zinc-200" />
-                    <FilterSection 
-                      title="Weather"
-                      items={['Sunny', 'Rainy', 'Mild', 'Cool']}
-                      selectedSet={selectedWeather}
-                      setter={setSelectedWeather}
-                      category="weather"
-                    />
-                    <div className="h-px bg-zinc-200" />
-                    <FilterSection 
-                      title="Experience"
-                      items={['Adventure', 'Beach & Relaxation', 'Culture', 'Food & Culture', 'Family', 'City Break']}
-                      selectedSet={selectedTypes}
-                      setter={setSelectedTypes}
-                      category="type"
-                    />
-                    <div className="h-px bg-zinc-200" />
-                    <FilterSection 
-                      title="Duration"
-                      items={['< 1 week', '1-2 weeks', '2-3 weeks', '> 3 weeks']}
-                      selectedSet={selectedDurations}
-                      setter={setSelectedDurations}
-                      category="duration"
-                    />
-                    {hasActiveFilters && (
-                      <Button
-                        variant="ghost"
-                        onClick={clearAllFilters}
-                        className="font-inter w-full rounded-full py-6"
-                      >
-                        Clear All
-                      </Button>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
-
-            {/* Journey Grid */}
-            <div className="flex-1">
-              {/* Active Filters Bar */}
-              {hasActiveFilters && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.4 }}
-                  className="mb-8 rounded-2xl border border-zinc-200/60 bg-white/60 p-6 backdrop-blur-sm"
-                >
-                  <div className="mb-4 flex items-center justify-between">
-                    <p className="font-inter text-sm font-light tracking-wide text-zinc-600">
-                      Active Filters
-                    </p>
-                    <button 
-                      onClick={clearAllFilters}
-                      className="font-inter text-xs font-light uppercase tracking-widest text-zinc-500 transition-colors hover:text-zinc-900"
-                    >
-                      Clear All
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(selectedSeasons).map((season) => (
-                      <motion.div
-                        key={`active-season-${season}`}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.8, opacity: 0 }}
-                        className="flex items-center gap-2 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-light text-zinc-700"
-                      >
-                        {season}
-                        <button 
-                          onClick={() => removeFilter('season', season)}
-                          className="transition-transform hover:scale-110"
-                        >
-                          <X className="size-3" />
-                        </button>
-                      </motion.div>
-                    ))}
-                    {Array.from(selectedWeather).map((weather) => (
-                      <motion.div
-                        key={`active-weather-${weather}`}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.8, opacity: 0 }}
-                        className="flex items-center gap-2 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-light text-zinc-700"
-                      >
-                        {weather}
-                        <button 
-                          onClick={() => removeFilter('weather', weather)}
-                          className="transition-transform hover:scale-110"
-                        >
-                          <X className="size-3" />
-                        </button>
-                      </motion.div>
-                    ))}
-                    {Array.from(selectedTypes).map((type) => (
-                      <motion.div
-                        key={`active-type-${type}`}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.8, opacity: 0 }}
-                        className="flex items-center gap-2 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-light text-zinc-700"
-                      >
-                        {type}
-                        <button 
-                          onClick={() => removeFilter('type', type)}
-                          className="transition-transform hover:scale-110"
-                        >
-                          <X className="size-3" />
-                        </button>
-                      </motion.div>
-                    ))}
-                    {Array.from(selectedDurations).map((duration) => (
-                      <motion.div
-                        key={`active-duration-${duration}`}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.8, opacity: 0 }}
-                        className="flex items-center gap-2 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-light text-zinc-700"
-                      >
-                        {duration}
-                        <button 
-                          onClick={() => removeFilter('duration', duration)}
-                          className="transition-transform hover:scale-110"
-                        >
-                          <X className="size-3" />
-                        </button>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
-                {journeys.filter(matchesFilters).map((journey, index) => {
-                  const WeatherIcon =
-                    weatherIcons[
-                      journey.weather as keyof typeof weatherIcons
-                    ] || Sun;
-                  return (
-                    <JourneyCard 
-                      key={journey.id}
-                      journey={journey}
-                      index={index}
-                      isFavorite={favorites.includes(journey.id)}
-                      onToggleFavorite={toggleFavorite}
-                      WeatherIcon={WeatherIcon}
-                      isAnimating={wishlistAnimating === journey.id}
-                      onViewDetails={() => router.push(`/journeys/${journey.id}`)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-       <main className="h-screen w-full">
+      <main id="gallery-section" className="relative h-screen w-full">
         <InfiniteRunner
           itemsData={filteredJourneys}
           backgroundSpeed={3}
@@ -743,15 +466,300 @@ export default function Journeys() {
           }}
         />
 
-        {/* Instructions - desktop only */}
-        <div className="fixed bottom-8 left-1/2 hidden -translate-x-1/2 rounded-full bg-black/60 px-6 py-3 text-white backdrop-blur-sm md:block">
-          <p className="text-sm font-medium">
-            Press <kbd className="mx-1 rounded bg-white/20 px-2 py-1">←</kbd> or{' '}
-            <kbd className="mx-1 rounded bg-white/20 px-2 py-1">→</kbd> to
-            scroll,
-            <kbd className="mx-1 rounded bg-white/20 px-2 py-1">Enter</kbd> to
-            explore destination
-          </p>
+        {/* Bottom Bar - Instructions + Filter Button */}
+        <div className="absolute bottom-8 left-1/2 z-50 hidden -translate-x-1/2 items-center gap-4 md:flex">
+          {/* Instructions */}
+          <div className="rounded-full bg-black/60 px-6 py-3 text-white backdrop-blur-sm">
+            <p className="text-sm font-medium">
+              Press <kbd className="mx-1 rounded bg-white/20 px-2 py-1">←</kbd>{' '}
+              or <kbd className="mx-1 rounded bg-white/20 px-2 py-1">→</kbd> to
+              scroll,
+              <kbd className="mx-1 rounded bg-white/20 px-2 py-1">Enter</kbd> to
+              explore destination
+            </p>
+          </div>
+
+          {/* Filter Button with Dialog */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <button
+                className={cn(
+                  'relative flex size-12 items-center justify-center rounded-full shadow-lg backdrop-blur-sm transition-all duration-300',
+                  hasActiveFilters
+                    ? 'bg-amber-500/90 text-zinc-900'
+                    : 'bg-black/60 text-white hover:bg-black/70'
+                )}
+              >
+                <Filter className="size-5" strokeWidth={1.5} />
+                {hasActiveFilters && (
+                  <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-white text-xs font-semibold text-zinc-900 shadow-md">
+                    {selectedSeasons.size +
+                      selectedWeather.size +
+                      selectedTypes.size +
+                      selectedDurations.size}
+                  </span>
+                )}
+              </button>
+            </DialogTrigger>
+            <DialogContent
+              className="w-auto max-w-fit rounded-2xl border-white/10 bg-black/80 text-white backdrop-blur-xl sm:max-w-fit"
+              showCloseButton={true}
+            >
+              <DialogHeader>
+                <DialogTitle className="flex items-center justify-between pr-8 text-white">
+                  <span>Filters</span>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={clearAllFilters}
+                      className="text-xs font-normal text-white/50 transition-colors hover:text-white"
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </DialogTitle>
+              </DialogHeader>
+
+              {/* Filter Grid */}
+              <div className="mt-4 flex gap-6">
+                {/* Season */}
+                <div className="flex-1">
+                  <p className="mb-3 text-xs tracking-widest text-white/60 uppercase">
+                    Season
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {['Summer', 'Spring', 'Fall', 'Winter'].map((item) => {
+                      const isSelected = selectedSeasons.has(item);
+                      return (
+                        <button
+                          key={item}
+                          onClick={() =>
+                            toggleInSet(
+                              setSelectedSeasons,
+                              selectedSeasons,
+                              item,
+                              !isSelected
+                            )
+                          }
+                          className={cn(
+                            'flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm whitespace-nowrap transition-all duration-200',
+                            isSelected
+                              ? 'bg-amber-500/90 text-zinc-900'
+                              : 'text-white/80 hover:bg-white/10 hover:text-white'
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              'flex size-4 items-center justify-center rounded border',
+                              isSelected
+                                ? 'border-zinc-900 bg-zinc-900'
+                                : 'border-white/40'
+                            )}
+                          >
+                            {isSelected && (
+                              <svg
+                                className="size-3 text-white"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={3}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                          {item}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Weather */}
+                <div className="flex-1">
+                  <p className="mb-3 text-xs tracking-widest text-white/60 uppercase">
+                    Weather
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {['Sunny', 'Rainy', 'Mild', 'Cool'].map((item) => {
+                      const isSelected = selectedWeather.has(item);
+                      return (
+                        <button
+                          key={item}
+                          onClick={() =>
+                            toggleInSet(
+                              setSelectedWeather,
+                              selectedWeather,
+                              item,
+                              !isSelected
+                            )
+                          }
+                          className={cn(
+                            'flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm whitespace-nowrap transition-all duration-200',
+                            isSelected
+                              ? 'bg-amber-500/90 text-zinc-900'
+                              : 'text-white/80 hover:bg-white/10 hover:text-white'
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              'flex size-4 items-center justify-center rounded border',
+                              isSelected
+                                ? 'border-zinc-900 bg-zinc-900'
+                                : 'border-white/40'
+                            )}
+                          >
+                            {isSelected && (
+                              <svg
+                                className="size-3 text-white"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={3}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                          {item}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Experience */}
+                <div className="flex-1">
+                  <p className="mb-3 text-xs tracking-widest text-white/60 uppercase">
+                    Experience
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {[
+                      'Adventure',
+                      'Beach & Relaxation',
+                      'Culture',
+                      'Food & Culture',
+                      'Family',
+                      'City Break',
+                    ].map((item) => {
+                      const isSelected = selectedTypes.has(item);
+                      return (
+                        <button
+                          key={item}
+                          onClick={() =>
+                            toggleInSet(
+                              setSelectedTypes,
+                              selectedTypes,
+                              item,
+                              !isSelected
+                            )
+                          }
+                          className={cn(
+                            'flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm whitespace-nowrap transition-all duration-200',
+                            isSelected
+                              ? 'bg-amber-500/90 text-zinc-900'
+                              : 'text-white/80 hover:bg-white/10 hover:text-white'
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              'flex size-4 items-center justify-center rounded border',
+                              isSelected
+                                ? 'border-zinc-900 bg-zinc-900'
+                                : 'border-white/40'
+                            )}
+                          >
+                            {isSelected && (
+                              <svg
+                                className="size-3 text-white"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={3}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                          {item}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Duration */}
+                <div className="flex-1">
+                  <p className="mb-3 text-xs tracking-widest text-white/60 uppercase">
+                    Duration
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {['< 1 week', '1-2 weeks', '2-3 weeks', '> 3 weeks'].map(
+                      (item) => {
+                        const isSelected = selectedDurations.has(item);
+                        return (
+                          <button
+                            key={item}
+                            onClick={() =>
+                              toggleInSet(
+                                setSelectedDurations,
+                                selectedDurations,
+                                item,
+                                !isSelected
+                              )
+                            }
+                            className={cn(
+                              'flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm whitespace-nowrap transition-all duration-200',
+                              isSelected
+                                ? 'bg-amber-500/90 text-zinc-900'
+                                : 'text-white/80 hover:bg-white/10 hover:text-white'
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                'flex size-4 items-center justify-center rounded border',
+                                isSelected
+                                  ? 'border-zinc-900 bg-zinc-900'
+                                  : 'border-white/40'
+                              )}
+                            >
+                              {isSelected && (
+                                <svg
+                                  className="size-3 text-white"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth={3}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                            {item}
+                          </button>
+                        );
+                      }
+                    )}
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
     </div>
@@ -759,18 +767,18 @@ export default function Journeys() {
 }
 
 // Luxury Journey Card Component with Parallax Hover
-function JourneyCard({ 
-  journey, 
-  index, 
-  isFavorite, 
-  onToggleFavorite, 
+function JourneyCard({
+  journey,
+  index,
+  isFavorite,
+  onToggleFavorite,
   WeatherIcon,
   isAnimating,
-  onViewDetails 
-}: { 
-  journey: any; 
-  index: number; 
-  isFavorite: boolean; 
+  onViewDetails,
+}: {
+  journey: any;
+  index: number;
+  isFavorite: boolean;
   onToggleFavorite: (id: number) => void;
   WeatherIcon: any;
   isAnimating: boolean;
@@ -778,10 +786,10 @@ function JourneyCard({
 }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  
+
   const mouseXSpring = useSpring(x, { damping: 25, stiffness: 150 });
   const mouseYSpring = useSpring(y, { damping: 25, stiffness: 150 });
-  
+
   const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ['2deg', '-2deg']);
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ['-2deg', '2deg']);
 
@@ -807,11 +815,15 @@ function JourneyCard({
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-100px' }}
-      transition={{ duration: 0.7, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-      style={{ 
-        rotateX, 
+      transition={{
+        duration: 0.7,
+        delay: index * 0.1,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      style={{
+        rotateX,
         rotateY,
-        transformStyle: 'preserve-3d'
+        transformStyle: 'preserve-3d',
       }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -827,10 +839,10 @@ function JourneyCard({
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           />
-          
+
           {/* Cinematic Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-          
+
           {/* Wishlist Button */}
           <motion.button
             onClick={(e) => {
@@ -838,16 +850,20 @@ function JourneyCard({
               onToggleFavorite(journey.id);
             }}
             className={`absolute top-6 right-6 flex size-12 items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 ${
-              isFavorite 
-                ? 'bg-white/20 text-red-500' 
+              isFavorite
+                ? 'bg-white/20 text-red-500'
                 : 'bg-white/10 text-white hover:bg-white/20'
             }`}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            animate={isAnimating ? {
-              scale: [1, 1.3, 1],
-              rotate: [0, 10, -10, 0]
-            } : {}}
+            animate={
+              isAnimating
+                ? {
+                    scale: [1, 1.3, 1],
+                    rotate: [0, 10, -10, 0],
+                  }
+                : {}
+            }
             transition={{ duration: 0.6 }}
           >
             <Heart
@@ -858,7 +874,7 @@ function JourneyCard({
 
           {/* Title Overlay */}
           <div className="absolute right-6 bottom-6 left-6">
-            <motion.h3 
+            <motion.h3
               className="font-cormorant mb-2 text-4xl font-light tracking-tight text-white"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -883,14 +899,14 @@ function JourneyCard({
               <MapPin className="mr-1.5 size-3" strokeWidth={1.5} />
               {journey.destination}
             </Badge>
-            <Badge 
+            <Badge
               variant="outline"
               className="rounded-full border-zinc-200 bg-transparent px-4 py-1.5 text-xs font-light tracking-wide text-zinc-600"
             >
               <Calendar className="mr-1.5 size-3" strokeWidth={1.5} />
               {journey.duration}
             </Badge>
-            <Badge 
+            <Badge
               variant="outline"
               className="rounded-full border-zinc-200 bg-transparent px-4 py-1.5 text-xs font-light tracking-wide text-zinc-600"
             >
@@ -900,7 +916,7 @@ function JourneyCard({
           </div>
 
           {/* Description */}
-          <p className="font-inter mb-6 line-clamp-2 text-base font-light leading-relaxed text-zinc-600">
+          <p className="font-inter mb-6 line-clamp-2 text-base leading-relaxed font-light text-zinc-600">
             {journey.description}
           </p>
 
@@ -917,9 +933,7 @@ function JourneyCard({
               whileTap={{ scale: 0.98 }}
             >
               Discover
-              <motion.span
-                className="transition-transform duration-300 group-hover/btn:translate-x-1"
-              >
+              <motion.span className="transition-transform duration-300 group-hover/btn:translate-x-1">
                 →
               </motion.span>
             </motion.button>
