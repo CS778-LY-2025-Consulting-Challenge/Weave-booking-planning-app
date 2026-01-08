@@ -1,3 +1,4 @@
+import { ClerkProvider } from '@clerk/nextjs';
 import Providers from '@/components/Providers';
 import { AuthProvider } from '@/context/AuthContext';
 import type { Metadata } from 'next';
@@ -30,12 +31,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
-      <body suppressHydrationWarning className={inter.className}>
-        <AuthProvider>
-          <Providers>{children}</Providers>
-        </AuthProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
+        <body suppressHydrationWarning className={inter.className}>
+          <AuthProvider>
+            <Providers>{children}</Providers>
+          </AuthProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
