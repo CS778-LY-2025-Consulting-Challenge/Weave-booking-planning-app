@@ -212,7 +212,7 @@ export default function AttractionDetailPanel({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="right" className="w-full sm:max-w-2xl p-0 overflow-y-auto">
+      <SheetContent side="right" className="w-full sm:max-w-2xl p-0 flex flex-col overflow-hidden">
         {/* Hidden title for accessibility */}
         <SheetHeader className="sr-only">
           <SheetTitle>{attraction?.name || 'Attraction Details'}</SheetTitle>
@@ -226,9 +226,9 @@ export default function AttractionDetailPanel({
             </div>
           </div>
         ) : details ? (
-          <div className="flex h-full flex-col">
-            {/* Image Gallery */}
-            <div className="relative h-80 w-full bg-slate-900">
+          <div className="flex h-full flex-col overflow-y-auto">
+            {/* Image Gallery - Now part of scrollable content */}
+            <div className="relative h-80 w-full shrink-0 bg-slate-900">
               {details.images && details.images.length > 0 ? (
                 <>
                   <img
@@ -281,8 +281,8 @@ export default function AttractionDetailPanel({
               )}
             </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Content - Now part of scrollable flow */}
+            <div className="flex-1">
               {/* Header */}
               <div className="border-b border-slate-200 bg-white p-6">
                 <div className="mb-3 flex items-start justify-between">

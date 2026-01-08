@@ -111,17 +111,35 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
      * Time, title, description, location
 
 4. **transportation**: REQUIRED. List ALL major transport legs between cities (flights, trains, buses, ferries)
-   - Include mode, from, to, time, price estimate
+   - **CRITICAL**: For ANY trip involving different cities, you MUST provide transportation.
+   - **CRITICAL**: For round trips (e.g., Shanghai → Tokyo → Shanghai), you MUST include BOTH outbound AND return flights.
+   - Include mode, from, to, time, priceEstimate (e.g., "NZ$1,200 per person")
    - For flights, include coords array with departure and arrival coordinates
+   - Example: For a round trip Shanghai → Tokyo → Shanghai, provide 2 transportation entries:
+     * { "mode": "flight", "from": "Shanghai", "to": "Tokyo", ... }
+     * { "mode": "flight", "from": "Tokyo", "to": "Shanghai", ... }
 
 5. **accommodation**: REQUIRED for multi-day trips. You MUST provide hotels for EVERY city where the traveler stays overnight.
+   - **Hotel Selection Criteria** (CRITICAL):
+     * Prefer MAJOR HOTEL CHAINS and well-known hotels (Hilton, Hyatt, Marriott, InterContinental, Sheraton, etc.)
+     * These hotels are more likely to have official websites for live pricing
+     * Must have good ratings (4.0+) and substantial reviews (500+)
    - Calculation: For an N-day trip, typically provide (N-1) accommodation entries (one for each night).
-   - For EACH hotel, you MUST include:
+   - For EACH hotel, you MUST include ALL fields:
      * name: Actual hotel name (e.g., "Park Hyatt Tokyo", "Hilton Auckland")
-     * location: City and neighborhood (e.g., "Shinjuku, Tokyo")
-     * pricePerNight: Estimated price in USD (e.g., 250)
+     * location: Full address or neighborhood (e.g., "3-7-1-2 Nishi-Shinjuku, Shinjuku, Tokyo")
+     * city: The city name (e.g., "Tokyo", "Auckland")
+     * checkIn: ISO date format (e.g., "2026-01-10")
+     * checkOut: ISO date format (e.g., "2026-01-13")
      * nights: Number of nights staying (e.g., 3)
-     * coords: Precise latitude and longitude with accurate location
+     * pricePerNight: Estimated price string with NZ$ currency (e.g., "NZ$350")
+     * totalPrice: Total cost string (e.g., "NZ$1,050")
+     * rating: Simulated rating 4.0-5.0 (e.g., 4.6)
+     * reviewCount: Number of reviews 500-5000 (e.g., 2847)
+     * hotelType: Type of accommodation (e.g., "Luxury Hotel", "Business Hotel", "Boutique Hotel")
+     * amenities: Array of key features (e.g., ["Free WiFi", "Breakfast Included", "Pool", "Gym", "Spa"])
+     * coords: Precise latitude and longitude (e.g., { "lat": 35.6850, "lng": 139.6917 })
+     * imageQuery: Search term for finding hotel images (e.g., "Park Hyatt Tokyo exterior")
    - Example: For a 7-day trip visiting Tokyo (3 nights) and Auckland (3 nights), provide 2 accommodation entries
 
 6. **summary**: Calculate and provide:
@@ -212,17 +230,35 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
   "accommodation": [
     {
       "name": "Park Hyatt Tokyo",
-      "location": "Shinjuku, Tokyo",
-      "pricePerNight": 350,
+      "location": "3-7-1-2 Nishi-Shinjuku, Shinjuku, Tokyo",
+      "city": "Tokyo",
+      "checkIn": "2026-01-10",
+      "checkOut": "2026-01-13",
       "nights": 3,
-      "coords": { "lat": 35.6850, "lng": 139.6917 }
+      "pricePerNight": "NZ$450",
+      "totalPrice": "NZ$1,350",
+      "rating": 4.7,
+      "reviewCount": 2847,
+      "hotelType": "Luxury Hotel",
+      "amenities": ["Free WiFi", "Breakfast Included", "Pool", "Spa", "Gym", "24h Room Service"],
+      "coords": { "lat": 35.6850, "lng": 139.6917 },
+      "imageQuery": "Park Hyatt Tokyo exterior luxury"
     },
     {
       "name": "Hilton Auckland",
-      "location": "Auckland CBD, Auckland",
-      "pricePerNight": 200,
+      "location": "147 Quay Street, Auckland CBD",
+      "city": "Auckland",
+      "checkIn": "2026-01-17",
+      "checkOut": "2026-01-20",
       "nights": 3,
-      "coords": { "lat": -36.8485, "lng": 174.7633 }
+      "pricePerNight": "NZ$280",
+      "totalPrice": "NZ$840",
+      "rating": 4.5,
+      "reviewCount": 1923,
+      "hotelType": "Business Hotel",
+      "amenities": ["Free WiFi", "Gym", "Restaurant", "Bar", "Waterfront Views"],
+      "coords": { "lat": -36.8428, "lng": 174.7680 },
+      "imageQuery": "Hilton Auckland waterfront exterior"
     }
   ],
   "media": {
@@ -282,6 +318,142 @@ Create a comprehensive, day-by-day itinerary that matches these parameters.
       cities: content.mapPoints?.length,
       days: content.dayPlans?.length,
     });
+
+    // Fetch real flight data for transportation entries
+    if (content.transportation && Array.isArray(content.transportation)) {
+      console.log('[Itinerary API] Fetching real flight data for', content.transportation.length, 'transportation legs');
+      
+      const AVIATIONSTACK_API_KEY = process.env.AVIATIONSTACK_API_KEY || 'a173b1b2eb40369a4b71af4317372896';
+      
+      // Helper function to get IATA code
+      const getIATACode = (cityName: string): string => {
+        const CITY_TO_IATA: Record<string, string> = {
+          'Auckland': 'AKL', 'Tokyo': 'NRT', 'Shanghai': 'PVG', 'Beijing': 'PEK',
+          'Sydney': 'SYD', 'Melbourne': 'MEL', 'Brisbane': 'BNE',
+          'Wellington': 'WLG', 'Christchurch': 'CHC', 'Queenstown': 'ZQN',
+          'New York': 'JFK', 'Los Angeles': 'LAX', 'San Francisco': 'SFO',
+          'London': 'LHR', 'Paris': 'CDG', 'Singapore': 'SIN',
+          'Bangkok': 'BKK', 'Seoul': 'ICN', 'Hong Kong': 'HKG', 'Dubai': 'DXB',
+        };
+        
+        if (CITY_TO_IATA[cityName]) return CITY_TO_IATA[cityName];
+        const lowerCity = cityName.toLowerCase();
+        for (const [city, code] of Object.entries(CITY_TO_IATA)) {
+          if (city.toLowerCase() === lowerCity || cityName.toLowerCase().includes(city.toLowerCase())) {
+            return code;
+          }
+        }
+        return cityName.substring(0, 3).toUpperCase();
+      };
+      
+      const enrichedTransportation = await Promise.all(
+        content.transportation.map(async (transport: any) => {
+          // Only enrich flight transportation
+          if (transport.mode?.toLowerCase().includes('flight') || !transport.mode) {
+            try {
+              const fromCode = getIATACode(transport.from);
+              const toCode = getIATACode(transport.to);
+              const travellers = plannerState.travellers || 2;
+
+              // Call Aviationstack API directly
+              const apiUrl = `https://api.aviationstack.com/v1/flights?access_key=${AVIATIONSTACK_API_KEY}&dep_iata=${fromCode}&arr_iata=${toCode}&limit=3`;
+              
+              console.log('[Itinerary API] Calling Aviationstack:', fromCode, '→', toCode);
+              const flightResponse = await fetch(apiUrl);
+
+              if (flightResponse.ok) {
+                const flightData = await flightResponse.json();
+                if (flightData.data && flightData.data.length > 0) {
+                  const flight = flightData.data[0];
+                  const departure = flight.departure;
+                  const arrival = flight.arrival;
+                  const airline = flight.airline;
+                  
+                  // Calculate duration
+                  let duration = transport.duration || '10h 30m';
+                  let depDate: Date | null = null;
+                  let arrDate: Date | null = null;
+                  
+                  if (departure?.scheduled && arrival?.scheduled) {
+                    try {
+                      depDate = new Date(departure.scheduled);
+                      arrDate = new Date(arrival.scheduled);
+                      const diffMs = arrDate.getTime() - depDate.getTime();
+                      const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                      duration = `${hours}h ${minutes}m`;
+                    } catch (e) {
+                      console.warn('[Itinerary API] Duration calculation failed:', e);
+                    }
+                  }
+                  
+                  // Get departure date for this specific flight
+                  const flightDate = depDate 
+                    ? depDate.toISOString().split('T')[0]
+                    : (transport.date || plannerState.dates?.start || content.dates?.start);
+                  
+                  // Generate price estimate (per person)
+                  const route = `${fromCode}-${toCode}`;
+                  const basePrices: Record<string, number> = {
+                    'AKL-NRT': 1200, 'AKL-SYD': 300, 'SYD-NRT': 800,
+                    'NRT-PVG': 500, 'AKL-PVG': 1400,
+                    'NRT-AKL': 1200, 'SYD-AKL': 300, 'PVG-NRT': 500,
+                    'PVG-AKL': 1400,
+                  };
+                  const basePrice = basePrices[route] || 1000;
+                  const price = `NZ$${basePrice.toLocaleString()}`; // Per person price
+                  const totalPrice = basePrice * travellers;
+                  
+                  // Generate booking URL
+                  const bookingUrl = `https://www.google.com/travel/flights?q=${fromCode}+to+${toCode}&date=${flightDate}`;
+                  
+                  // Format time string
+                  const formattedTime = departure?.scheduled && arrival?.scheduled
+                    ? `${new Date(departure.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} - ${new Date(arrival.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`
+                    : transport.time || '10:00 - 14:00';
+                  
+                  console.log('[Itinerary API] Enriched with flight:', {
+                    airline: airline?.name,
+                    code: airline?.iata,
+                    flightNumber: flight.flight?.iata,
+                    duration,
+                    date: flightDate,
+                    time: formattedTime,
+                    from: fromCode,
+                    to: toCode,
+                  });
+                  
+                  return {
+                    ...transport,
+                    fromCode,
+                    toCode,
+                    flightNumber: flight.flight?.iata || `${airline?.iata || 'XX'}100`,
+                    airline: airline?.name || transport.airline || 'Unknown Airline',
+                    airlineCode: airline?.iata || transport.airlineCode || 'XX',
+                    duration: duration, // Always have duration
+                    stops: transport.stops ?? 0,
+                    aircraft: flight.aircraft?.iata || transport.aircraft || 'Unknown',
+                    price, // Per person price
+                    priceEstimate: `NZ$${totalPrice.toLocaleString()}`, // Total price for display
+                    bookingUrl,
+                    time: formattedTime,
+                    date: flightDate, // Use actual flight date
+                  };
+                }
+              }
+            } catch (error) {
+              console.warn('[Itinerary API] Failed to fetch flight data for', transport.from, '→', transport.to, ':', error);
+            }
+          }
+          
+          // Return original transport if not a flight or if API call failed
+          return transport;
+        })
+      );
+
+      content.transportation = enrichedTransportation;
+      console.log('[Itinerary API] Enriched transportation with real flight data');
+    }
 
     return NextResponse.json({ data: content });
   } catch (error: any) {
