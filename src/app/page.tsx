@@ -713,104 +713,95 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Destinations - Editorial Video Mosaic */}
-      <section className="bg-white py-20">
+      {/* Featured Destinations Carousel */}
+      <section className="bg-white py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Two-Column Layout */}
-          <div className="grid gap-12 lg:grid-cols-2 items-start">
-            {/* Left: Title Section */}
-            <div className="sticky top-20">
-              <p className="mb-2 text-sm font-bold tracking-[0.2em] uppercase text-gray-600">
-                FEATURED EXPERIENCES
-              </p>
-              <h2 className="mb-6 text-5xl font-black uppercase tracking-tight md:text-6xl lg:text-7xl leading-none">
-                The 25 Best Destinations
-              </h2>
-              <p className="text-lg text-gray-700 leading-relaxed">
-                These are the cities, islands and countries you absolutely must see to believe. Handpicked locations from around the globe.
-              </p>
-              <button
-                onClick={() => router.push('/destinations')}
-                className="mt-8 inline-flex items-center gap-2 rounded-lg bg-black px-8 py-4 text-sm tracking-wider text-white uppercase transition-all duration-300 hover:bg-gray-800"
-              >
-                VIEW ALL DESTINATIONS
-                <ArrowRight className="size-4" />
-              </button>
-            </div>
-
-            {/* Right: Video Grid Mosaic */}
-            <div className="grid gap-0 grid-cols-2 auto-rows-[280px]">
-              {/* Reunion - Top Left */}
-              <div className="relative overflow-hidden bg-black group cursor-pointer" onClick={() => router.push('/destinations')}>
-                <video
-                  className="h-full w-full object-cover"
-                  muted
-                  loop
-                  autoPlay
-                  playsInline
+          {/* Header with Navigation */}
+          <div className="mb-10 flex items-center justify-between">
+            <h2
+              className="text-2xl md:text-3xl font-light tracking-tight text-gray-900"
+              style={{ fontFamily: '"Times New Roman", Times, serif' }}
+            >
+              Featured destinations
+            </h2>
+            <div className="flex items-center gap-4">
+              <a href="/destinations" className="text-xs font-semibold uppercase tracking-widest text-gray-700 hover:text-black">
+                VIEW ALL
+              </a>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    const container = document.querySelector('[data-carousel-featured]');
+                    if (container) container.scrollBy({ left: -400, behavior: 'smooth' });
+                  }}
+                  className="rounded-md bg-black p-2 text-white hover:bg-gray-800 transition-colors"
+                  aria-label="Previous"
                 >
-                  <source
-                    src="https://videos.pexels.com/video-files/2832269/2832269-hd_1920_1080_30fps.mp4"
-                    type="video/mp4"
-                  />
-                </video>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <p className="text-sm font-semibold uppercase tracking-wider text-white/70">
-                    Africa
-                  </p>
-                  <h3 className="text-xl font-bold text-white">Reunion</h3>
-                </div>
-              </div>
-
-              {/* Maine - Top Right (Tall) */}
-              <div className="relative overflow-hidden bg-black group cursor-pointer row-span-2" onClick={() => router.push('/destinations')}>
-                <video
-                  className="h-full w-full object-cover"
-                  muted
-                  loop
-                  autoPlay
-                  playsInline
+                  <ChevronLeft className="size-5" />
+                </button>
+                <button
+                  onClick={() => {
+                    const container = document.querySelector('[data-carousel-featured]');
+                    if (container) container.scrollBy({ left: 400, behavior: 'smooth' });
+                  }}
+                  className="rounded-md bg-black p-2 text-white hover:bg-gray-800 transition-colors"
+                  aria-label="Next"
                 >
-                  <source
-                    src="https://videos.pexels.com/video-files/3717370/3717370-hd_1920_1080_25fps.mp4"
-                    type="video/mp4"
-                  />
-                </video>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <p className="text-sm font-semibold uppercase tracking-wider text-white/70">
-                    USA
-                  </p>
-                  <h3 className="text-xl font-bold text-white">Maine</h3>
-                </div>
-              </div>
-
-              {/* Botswana - Bottom Left */}
-              <div className="relative overflow-hidden bg-black group cursor-pointer" onClick={() => router.push('/destinations')}>
-                <video
-                  className="h-full w-full object-cover"
-                  muted
-                  loop
-                  autoPlay
-                  playsInline
-                >
-                  <source
-                    src="https://videos.pexels.com/video-files/5717184/5717184-hd_1920_1080_24fps.mp4"
-                    type="video/mp4"
-                  />
-                </video>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <p className="text-sm font-semibold uppercase tracking-wider text-white/70">
-                    Africa
-                  </p>
-                  <h3 className="text-xl font-bold text-white">Botswana</h3>
-                </div>
+                  <ChevronRight className="size-5" />
+                </button>
               </div>
             </div>
           </div>
+
+          {/* Carousel Container */}
+          <div className="overflow-hidden">
+            <div
+              data-carousel-featured
+              className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2"
+              style={{ scrollBehavior: 'smooth', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {[
+                { name: 'Ireland', region: 'Europe', image: '/images/ireland.jpg' },
+                { name: 'Venice', region: 'Europe', image: '/images/venice.jpg' },
+                { name: 'San Francisco', region: 'The USA', image: '/images/San%20Francisco.jpg' },
+                { name: 'Copenhagen', region: 'Denmark', image: '/images/COPENHAGEN.jpg' },
+                { name: 'Marrakesh', region: 'Morocco', image: '/images/Marrakesh.jpg' },
+                { name: 'Tokyo', region: 'Japan', image: '/images/Tokyo.jpg' },
+                { name: 'Paris', region: 'France', image: '/images/paris.jpg' },
+                { name: 'Sydney', region: 'Australia', image: '/images/sydeny.jpg' },
+                { name: 'Dubai', region: 'UAE', image: '/images/dubai.jpg' },
+                { name: 'Barcelona', region: 'Spain', image: '/images/barcelona.jpg' },
+              ].map((dest, idx) => (
+                <div
+                  key={idx}
+                  className="flex-shrink-0 w-56 snap-start cursor-pointer group"
+                  onClick={() => router.push('/destinations')}
+                >
+                  <div className="relative h-64 overflow-hidden bg-gray-300">
+                    <img
+                      src={dest.image}
+                      alt={dest.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                      {dest.region}
+                    </p>
+                    <h3 className="text-base font-bold text-gray-900 mt-1">
+                      {dest.name}
+                    </h3>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+        <style>{`
+          [data-carousel-featured]::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
       </section>
     </div>
   );
