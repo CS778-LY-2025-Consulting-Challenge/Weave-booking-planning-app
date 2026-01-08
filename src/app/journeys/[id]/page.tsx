@@ -1069,7 +1069,7 @@ export default function JourneyDetails() {
                               >
                                 <div className="relative aspect-[16/9] overflow-hidden bg-slate-900">
                                   <img
-                                    src={video.thumbnail || '/travels/placeholder-video.jpg'}
+                                    src={video.thumbnail || 'https://weave-travel-media.s3.ap-southeast-2.amazonaws.com/travels/placeholder-video.jpg'}
                                     alt={video.caption}
                                     className="h-full w-full object-cover opacity-90"
                                   />

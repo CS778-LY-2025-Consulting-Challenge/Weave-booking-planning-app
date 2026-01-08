@@ -16,7 +16,7 @@ interface ParallaxLayer {
 
 const layers: ParallaxLayer[] = [
   {
-    src: '/background.png',
+    src: '/api/image-proxy?path=zhangjiajie/background.png',
     speedx: 0.3,
     speedy: 0.38,
     speedz: 0,
@@ -25,7 +25,7 @@ const layers: ParallaxLayer[] = [
     className: 'bgImg',
   },
   {
-    src: '/fog_7.png',
+    src: '/api/image-proxy?path=zhangjiajie/fog_7.png',
     speedx: 0.27,
     speedy: 0.32,
     speedz: 0,
@@ -34,7 +34,7 @@ const layers: ParallaxLayer[] = [
     className: 'fog7',
   },
   {
-    src: '/mountain_10.png',
+    src: '/api/image-proxy?path=zhangjiajie/mountain_10.png',
     speedx: 0.195,
     speedy: 0.305,
     speedz: 0,
@@ -43,7 +43,7 @@ const layers: ParallaxLayer[] = [
     className: 'mountain10',
   },
   {
-    src: '/fog_6.png',
+    src: '/api/image-proxy?path=zhangjiajie/fog_6.png',
     speedx: 0.25,
     speedy: 0.28,
     speedz: 0,
@@ -52,7 +52,7 @@ const layers: ParallaxLayer[] = [
     className: 'fog6',
   },
   {
-    src: '/mountain_9.png',
+    src: '/api/image-proxy?path=zhangjiajie/mountain_9.png',
     speedx: 0.125,
     speedy: 0.155,
     speedz: 0.15,
@@ -61,7 +61,7 @@ const layers: ParallaxLayer[] = [
     className: 'mountain9',
   },
   {
-    src: '/mountain_8.png',
+    src: '/api/image-proxy?path=zhangjiajie/mountain_8.png',
     speedx: 0.1,
     speedy: 0.11,
     speedz: 0,
@@ -70,7 +70,7 @@ const layers: ParallaxLayer[] = [
     className: 'mountain8',
   },
   {
-    src: '/fog_5.png',
+    src: '/api/image-proxy?path=zhangjiajie/fog_5.png',
     speedx: 0.16,
     speedy: 0.105,
     speedz: 0,
@@ -79,7 +79,7 @@ const layers: ParallaxLayer[] = [
     className: 'fog5',
   },
   {
-    src: '/mountain_7.png',
+    src: '/api/image-proxy?path=zhangjiajie/mountain_7.png',
     speedx: 0.1,
     speedy: 0.1,
     speedz: 0,
@@ -88,7 +88,7 @@ const layers: ParallaxLayer[] = [
     className: 'mountain7',
   },
   {
-    src: '/mountain_6.png',
+    src: '/api/image-proxy?path=zhangjiajie/mountain_6.png',
     speedx: 0.065,
     speedy: 0.05,
     speedz: 0.05,
@@ -97,7 +97,7 @@ const layers: ParallaxLayer[] = [
     className: 'mountain6',
   },
   {
-    src: '/fog_4.png',
+    src: '/api/image-proxy?path=zhangjiajie/fog_4.png',
     speedx: 0.135,
     speedy: 0.04,
     speedz: 0,
@@ -106,7 +106,7 @@ const layers: ParallaxLayer[] = [
     className: 'fog4',
   },
   {
-    src: '/mountain_5.png',
+    src: '/api/image-proxy?path=zhangjiajie/mountain_5.png',
     speedx: 0.08,
     speedy: 0.03,
     speedz: 0.13,
@@ -115,7 +115,7 @@ const layers: ParallaxLayer[] = [
     className: 'mountain5',
   },
   {
-    src: '/fog_3.png',
+    src: '/api/image-proxy?path=zhangjiajie/fog_3.png',
     speedx: 0.11,
     speedy: 0.018,
     speedz: 0,
@@ -124,7 +124,7 @@ const layers: ParallaxLayer[] = [
     className: 'fog3',
   },
   {
-    src: '/mountain_4.png',
+    src: '/api/image-proxy?path=zhangjiajie/mountain_4.png',
     speedx: 0.059,
     speedy: 0.024,
     speedz: 0.35,
@@ -133,7 +133,7 @@ const layers: ParallaxLayer[] = [
     className: 'mountain4',
   },
   {
-    src: '/mountain_3.png',
+    src: '/api/image-proxy?path=zhangjiajie/mountain_3.png',
     speedx: 0.04,
     speedy: 0.018,
     speedz: 0.32,
@@ -142,7 +142,7 @@ const layers: ParallaxLayer[] = [
     className: 'mountain3',
   },
   {
-    src: '/fog_2.png',
+    src: '/api/image-proxy?path=zhangjiajie/fog_2.png',
     speedx: 0.15,
     speedy: 0.0115,
     speedz: 0,
@@ -151,7 +151,7 @@ const layers: ParallaxLayer[] = [
     className: 'fog2',
   },
   {
-    src: '/mountain_2.png',
+    src: '/api/image-proxy?path=zhangjiajie/mountain_2.png',
     speedx: 0.0235,
     speedy: 0.013,
     speedz: 0.42,
@@ -160,7 +160,7 @@ const layers: ParallaxLayer[] = [
     className: 'mountain2',
   },
   {
-    src: '/mountain_1.png',
+    src: '/api/image-proxy?path=zhangjiajie/mountain_1.png',
     speedx: 0.027,
     speedy: 0.018,
     speedz: 0.53,
@@ -169,7 +169,7 @@ const layers: ParallaxLayer[] = [
     className: 'mountain1',
   },
   {
-    src: '/fog_1.png',
+    src: '/api/image-proxy?path=zhangjiajie/fog_1.png',
     speedx: 0.12,
     speedy: 0.01,
     speedz: 0,
@@ -333,7 +333,7 @@ export default function ZhangjiajieParallax({
             ref={(el) => {
               layerRefs.current[i] = el;
             }}
-            src={`${imagePath}${layer.src}`}
+            src={layer.src}
             className={`${styles.parallax} ${styles[layer.className]}`}
             alt={layer.className}
           />
@@ -346,13 +346,13 @@ export default function ZhangjiajieParallax({
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`${imagePath}/sun_rays.png`}
+          src="/api/image-proxy?path=zhangjiajie/sun_rays.png"
           className={`${styles.sunRays} ${styles.hide}`}
           alt="sun rays"
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`${imagePath}/black_shadow.png`}
+          src="/api/image-proxy?path=zhangjiajie/black_shadow.png"
           className={`${styles.blackShadow} ${styles.hide}`}
           alt="black shadow"
         />

@@ -47,3 +47,10 @@ next-env.d.ts
 # ide
 .idea
 .vscode/*
+
+# markdown files (except README)
+*.md
+!README.md
+
+# scripts
+/scripts

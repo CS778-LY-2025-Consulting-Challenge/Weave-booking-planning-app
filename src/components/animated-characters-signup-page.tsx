@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Mail } from "lucide-react";
-
+import { useSignUp } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 interface PupilProps {
   size?: number;
@@ -169,6 +170,8 @@ const EyeBall = ({
 };
 
 function SignupPage() {
+  const { isLoaded, signUp, setActive } = useSignUp();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -294,17 +297,55 @@ function SignupPage() {
     setError("");
     setIsLoading(true);
 
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    if (email && password && name) {
-      console.log("✅ Signup successful!");
-      alert(`Account created successfully! Welcome, ${name}!`);
-    } else {
-      setError("Please fill in all fields.");
-      console.log("❌ Signup failed");
+    if (!isLoaded || !signUp) {
+      setError("Authentication is still loading. Please try again.");
+      setIsLoading(false);
+      return;
     }
 
-    setIsLoading(false);
+    try {
+      await signUp.create({
+        emailAddress: email,
+        password,
+        firstName: name.split(' ')[0],
+        lastName: name.split(' ').slice(1).join(' ') || '',
+      });
+
+      // Send verification email
+      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+
+      // For simplicity, auto-verify or redirect to verification page
+      // In production, you'd show a verification code input screen
+      router.push("/auth");
+    } catch (err: any) {
+      const message = err?.errors?.[0]?.message ?? "Unable to create account. Please try again.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    setError("");
+    setIsLoading(true);
+
+    if (!isLoaded || !signUp) {
+      setError("Authentication is still loading. Please try again.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      await signUp.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: "/dashboard",
+      });
+    } catch (err: any) {
+      const message = err?.errors?.[0]?.message ?? "Google sign-up failed. Please try again.";
+      setError(message);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -575,6 +616,8 @@ function SignupPage() {
                   variant="outline" 
                   className="w-full h-12 bg-background border-border/60 hover:bg-accent"
                   type="button"
+                  onClick={handleGoogleSignup}
+                  disabled={isLoading}
                 >
                   <Mail className="mr-2 size-5" />
                   Sign up with Google
