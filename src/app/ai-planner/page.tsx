@@ -8,7 +8,6 @@ import {
   Calendar,
   Users,
   Globe2,
-  Video,
   Hotel,
   Plane,
   Info,
@@ -50,6 +49,7 @@ import ActivityChangePanel from '@/components/ActivityChangePanel';
 import AttractionDetailPanel from '@/components/AttractionDetailPanel';
 import AccommodationCard from '@/components/AccommodationCard';
 import AccommodationChangePanel from '@/components/AccommodationChangePanel';
+import TransportationCard from '@/components/TransportationCard';
 
 type Coordinates = { lat: number; lng: number };
 type DayPlan = {
@@ -108,8 +108,19 @@ type TripState = {
     mode: string;
     from: string;
     to: string;
+    fromCode?: string;
+    toCode?: string;
     time?: string;
+    date?: string;
     priceEstimate?: string;
+    price?: string;
+    flightNumber?: string;
+    airline?: string;
+    airlineCode?: string;
+    duration?: string;
+    stops?: number;
+    aircraft?: string;
+    bookingUrl?: string;
     coords?: Coordinates[];
   }>;
   accommodation?: Array<{
@@ -1367,7 +1378,9 @@ export default function AIPlanner() {
     }
     return (
       <div className="space-y-6">
-        {plans.map((day, dayIdx) => {
+        {plans
+          .filter(day => day.activities && day.activities.length > 0) // Only show days with activities
+          .map((day, dayIdx) => {
           const dayNumber = typeof day.day === 'number' ? day.day : dayIdx + 1;
           const dateInfo = getDateForDay(dayNumber);
           
@@ -1838,49 +1851,46 @@ export default function AIPlanner() {
                 )}
               </CardHeader>
               <CardContent className="space-y-4 p-0 px-4 pt-2 pb-3">
-                {(filteredTransportation ?? []).map((leg, idx) => (
-                  <div
-                    key={`trans-${idx}`}
-                    className="relative rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
-                  >
-                    <div className="mb-3 flex items-center justify-between">
-                      <Badge
-                        variant="secondary"
-                        className="bg-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-600"
-                      >
-                        {leg.mode || 'Transport'}
-                      </Badge>
-                      <MoreHorizontal className="h-4 w-4 text-slate-400" />
-                    </div>
-                    
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex flex-1 flex-col">
-                        <h4 className="text-sm font-bold text-slate-900">
-                          {(leg.mode || '').toLowerCase().includes('flight')
-                            ? `Flight from ${leg.from} to ${leg.to}`
-                            : `${leg.from} → ${leg.to}`}
-                        </h4>
-                        <p className="text-xs text-slate-500">{leg.time ?? 'Flexible time'}</p>
-                      </div>
-                      
-                      <div className="flex flex-col items-end">
-                        <p className="text-sm font-bold text-slate-900">{leg.priceEstimate ?? '—'}</p>
-                        <p className="text-[10px] text-slate-400">Total for {activeState.travellers ?? 1} travellers</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center gap-4 border-t border-slate-50 pt-3 text-xs text-slate-500">
-                      <div className="flex items-center gap-1">
-                        <div className="h-2 w-2 rounded-full bg-blue-400"></div>
-                        <span>{leg.to}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Info className="h-3 w-3" />
-                        <span>Economy</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                {(filteredTransportation ?? []).map((leg, idx) => {
+                  // Find the original index in the full transportation array
+                  const originalIndex = activeState.transportation?.findIndex(
+                    t => t.from === leg.from && t.to === leg.to && t.mode === leg.mode
+                  ) ?? idx;
+                  
+                  return (
+                    <TransportationCard
+                      key={`trans-${originalIndex}`}
+                      transportation={{
+                        mode: leg.mode || 'flight',
+                        from: leg.from,
+                        to: leg.to,
+                        fromCode: (leg as any).fromCode,
+                        toCode: (leg as any).toCode,
+                        time: leg.time,
+                        date: (leg as any).date,
+                        priceEstimate: leg.priceEstimate,
+                        price: (leg as any).price,
+                        flightNumber: (leg as any).flightNumber,
+                        airline: (leg as any).airline,
+                        airlineCode: (leg as any).airlineCode,
+                        duration: (leg as any).duration,
+                        stops: (leg as any).stops,
+                        aircraft: (leg as any).aircraft,
+                        bookingUrl: (leg as any).bookingUrl,
+                        coords: leg.coords,
+                      }}
+                      travellers={activeState.travellers || 2}
+                      onView={() => {
+                        // TODO: Could open a detail panel
+                        console.log('[AIPlanner] View transportation:', leg);
+                      }}
+                      onRemove={() => {
+                        // TODO: Implement remove functionality
+                        console.log('[AIPlanner] Remove transportation:', leg);
+                      }}
+                    />
+                  );
+                })}
                 {!(filteredTransportation?.length) && (
                   <div className="flex flex-col items-center justify-center py-4 text-center">
                     <Plane className="mb-2 h-8 w-8 text-slate-200" />
@@ -2026,34 +2036,6 @@ export default function AIPlanner() {
                       </Button>
                     )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border border-slate-200 bg-white/90 shadow">
-              <CardHeader>
-                <CardTitle className="text-lg">Media</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-3">
-                {(activeState.media?.photos ?? []).map((url, idx) => (
-                  <div key={`photo-${idx}`} className="relative h-28 w-40 overflow-hidden rounded-md">
-                    <img src={url} alt="trip" className="h-full w-full object-cover" />
-                  </div>
-                ))}
-                {(activeState.media?.videos ?? []).map((url, idx) => (
-                  <a
-                    key={`video-${idx}`}
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-2 text-xs text-blue-700"
-                  >
-                    <Video className="h-3 w-3" />
-                    Video {idx + 1}
-                  </a>
-                ))}
-                {!activeState.media?.photos?.length && !activeState.media?.videos?.length && (
-                  <p className="text-sm text-gray-500">No media yet.</p>
                 )}
               </CardContent>
             </Card>

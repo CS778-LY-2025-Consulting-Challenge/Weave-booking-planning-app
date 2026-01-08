@@ -128,7 +128,18 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
     * imageQuery: Search term for finding hotel images (e.g., "Park Hyatt Tokyo exterior")
   - Example: For a 7-day trip visiting Tokyo (3 nights) and Auckland (3 nights), provide 2 accommodation entries.
 - **transportation**: REQUIRED. List ALL major transport between cities (flights, trains, ferries).
-  - For EACH transport leg, include mode, from, to, time, priceEstimate, and coords array.
+  - **CRITICAL**: For ANY trip involving different cities, you MUST provide transportation.
+  - **CRITICAL**: For round trips (e.g., Shanghai → Tokyo → Shanghai), you MUST include BOTH outbound AND return flights.
+  - For EACH transport leg, include:
+    * mode: "flight", "train", "ferry", etc.
+    * from: departure city name (e.g., "Shanghai")
+    * to: arrival city name (e.g., "Tokyo")
+    * time: estimated departure time (e.g., "10:30 AM" or "10:30")
+    * priceEstimate: estimated price per person (e.g., "NZ$1,200 per person")
+    * coords: array of [departure coords, arrival coords]
+  - Example: For a round trip Shanghai → Tokyo → Shanghai, provide 2 transportation entries:
+    * { "mode": "flight", "from": "Shanghai", "to": "Tokyo", ... }
+    * { "mode": "flight", "from": "Tokyo", "to": "Shanghai", ... }
 
 **The "Be Smart & Professional" Rules:**
 - Keep the 'reply' brief (<50 words). Focus energy on the JSON data.
@@ -136,6 +147,7 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
 - Ensure Latitude/Longitude are as accurate as possible for specific attractions.
 - **Ratings & Reviews**: Always include simulated rating (4.0 to 5.0) and reviewCount (50 to 2000) for every activity.
 - **CRITICAL**: For multi-day trips, ALWAYS provide accommodation. Travelers need a place to sleep! Don't forget this.
+- **CRITICAL**: For trips involving different cities, ALWAYS provide transportation for ALL legs (including return flights)! Travelers need to know how to get there and back!
 - **CRITICAL**: ALWAYS generate the EXACT number of days requested! If durationDays = 7, you MUST create 7 dayPlans entries (not 5, not 6, exactly 7!).
 
 **Output Format (Strict JSON):**
@@ -196,10 +208,32 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
         "from": "Auckland",
         "to": "Tokyo",
         "time": "10:30 AM",
-        "priceEstimate": "$800 per person",
+        "priceEstimate": "NZ$1,200 per person",
         "coords": [
           { "lat": -36.8485, "lng": 174.7633 },
           { "lat": 35.6762, "lng": 139.6503 }
+        ]
+      },
+      {
+        "mode": "flight",
+        "from": "Tokyo",
+        "to": "Shanghai",
+        "time": "02:00 PM",
+        "priceEstimate": "NZ$500 per person",
+        "coords": [
+          { "lat": 35.6762, "lng": 139.6503 },
+          { "lat": 31.2304, "lng": 121.4737 }
+        ]
+      },
+      {
+        "mode": "flight",
+        "from": "Shanghai",
+        "to": "Auckland",
+        "time": "11:00 AM",
+        "priceEstimate": "NZ$1,400 per person",
+        "coords": [
+          { "lat": 31.2304, "lng": 121.4737 },
+          { "lat": -36.8485, "lng": 174.7633 }
         ]
       }
     ],
@@ -264,10 +298,157 @@ export async function POST(request: Request) {
     });
 
     const content = JSON.parse(response.choices[0].message.content || '{}');
+    const plannerState = content.plannerState || {};
+
+    console.log('[Chat API] AI response keys:', Object.keys(content));
+    console.log('[Chat API] PlannerState keys:', Object.keys(plannerState));
+    console.log('[Chat API] Transportation data:', {
+      exists: !!plannerState.transportation,
+      isArray: Array.isArray(plannerState.transportation),
+      length: plannerState.transportation?.length || 0,
+      sample: plannerState.transportation?.[0],
+    });
+
+    // Enrich transportation with real flight data if available
+    if (plannerState.transportation && Array.isArray(plannerState.transportation) && plannerState.transportation.length > 0) {
+      console.log('[Chat API] Fetching real flight data for', plannerState.transportation.length, 'transportation legs');
+      
+      const AVIATIONSTACK_API_KEY = process.env.AVIATIONSTACK_API_KEY || 'a173b1b2eb40369a4b71af4317372896';
+      
+      // Helper function to get IATA code
+      const getIATACode = (cityName: string): string => {
+        const CITY_TO_IATA: Record<string, string> = {
+          'Auckland': 'AKL', 'Tokyo': 'NRT', 'Shanghai': 'PVG', 'Beijing': 'PEK',
+          'Sydney': 'SYD', 'Melbourne': 'MEL', 'Brisbane': 'BNE',
+          'Wellington': 'WLG', 'Christchurch': 'CHC', 'Queenstown': 'ZQN',
+          'New York': 'JFK', 'Los Angeles': 'LAX', 'San Francisco': 'SFO',
+          'London': 'LHR', 'Paris': 'CDG', 'Singapore': 'SIN',
+          'Bangkok': 'BKK', 'Seoul': 'ICN', 'Hong Kong': 'HKG', 'Dubai': 'DXB',
+        };
+        
+        if (CITY_TO_IATA[cityName]) return CITY_TO_IATA[cityName];
+        const lowerCity = cityName.toLowerCase();
+        for (const [city, code] of Object.entries(CITY_TO_IATA)) {
+          if (city.toLowerCase() === lowerCity || cityName.toLowerCase().includes(city.toLowerCase())) {
+            return code;
+          }
+        }
+        return cityName.substring(0, 3).toUpperCase();
+      };
+      
+      const travellers = plannerState.travellers || 2;
+      
+      const enrichedTransportation = await Promise.all(
+        plannerState.transportation.map(async (transport: any) => {
+          // Only enrich flight transportation
+          if (transport.mode?.toLowerCase().includes('flight') || !transport.mode) {
+            try {
+              const fromCode = getIATACode(transport.from);
+              const toCode = getIATACode(transport.to);
+
+              // Call Aviationstack API directly
+              const apiUrl = `https://api.aviationstack.com/v1/flights?access_key=${AVIATIONSTACK_API_KEY}&dep_iata=${fromCode}&arr_iata=${toCode}&limit=3`;
+              
+              console.log('[Chat API] Calling Aviationstack:', fromCode, '→', toCode);
+              const flightResponse = await fetch(apiUrl);
+
+              if (flightResponse.ok) {
+                const flightData = await flightResponse.json();
+                if (flightData.data && flightData.data.length > 0) {
+                  const flight = flightData.data[0];
+                  const departure = flight.departure;
+                  const arrival = flight.arrival;
+                  const airline = flight.airline;
+                  
+                  // Calculate duration
+                  let duration = transport.duration || '10h 30m';
+                  let depDate: Date | null = null;
+                  let arrDate: Date | null = null;
+                  
+                  if (departure?.scheduled && arrival?.scheduled) {
+                    try {
+                      depDate = new Date(departure.scheduled);
+                      arrDate = new Date(arrival.scheduled);
+                      const diffMs = arrDate.getTime() - depDate.getTime();
+                      const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                      duration = `${hours}h ${minutes}m`;
+                    } catch (e) {
+                      console.warn('[Chat API] Duration calculation failed:', e);
+                    }
+                  }
+                  
+                  // Get departure date for this specific flight
+                  const flightDate = depDate 
+                    ? depDate.toISOString().split('T')[0]
+                    : (transport.date || plannerState.dates?.start);
+                  
+                  // Generate price estimate (per person)
+                  const route = `${fromCode}-${toCode}`;
+                  const basePrices: Record<string, number> = {
+                    'AKL-NRT': 1200, 'AKL-SYD': 300, 'SYD-NRT': 800,
+                    'NRT-PVG': 500, 'AKL-PVG': 1400,
+                    'NRT-AKL': 1200, 'SYD-AKL': 300, 'PVG-NRT': 500,
+                    'PVG-AKL': 1400,
+                  };
+                  const basePrice = basePrices[route] || 1000;
+                  const price = `NZ$${basePrice.toLocaleString()}`; // Per person price
+                  const totalPrice = basePrice * travellers;
+                  
+                  // Generate booking URL
+                  const bookingUrl = `https://www.google.com/travel/flights?q=${fromCode}+to+${toCode}&date=${flightDate}`;
+                  
+                  // Format time string
+                  const formattedTime = departure?.scheduled && arrival?.scheduled
+                    ? `${new Date(departure.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} - ${new Date(arrival.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`
+                    : transport.time || '10:00 - 14:00';
+                  
+                  console.log('[Chat API] Enriched with flight:', {
+                    airline: airline?.name,
+                    code: airline?.iata,
+                    flightNumber: flight.flight?.iata,
+                    duration,
+                    date: flightDate,
+                    time: formattedTime,
+                    from: fromCode,
+                    to: toCode,
+                  });
+                  
+                  return {
+                    ...transport,
+                    fromCode,
+                    toCode,
+                    flightNumber: flight.flight?.iata || `${airline?.iata || 'XX'}100`,
+                    airline: airline?.name || transport.airline || 'Unknown Airline',
+                    airlineCode: airline?.iata || transport.airlineCode || 'XX',
+                    duration: duration, // Always have duration
+                    stops: transport.stops ?? 0,
+                    aircraft: flight.aircraft?.iata || transport.aircraft || 'Unknown',
+                    price, // Per person price
+                    priceEstimate: `NZ$${totalPrice.toLocaleString()}`, // Total price for display
+                    bookingUrl,
+                    time: formattedTime,
+                    date: flightDate, // Use actual flight date
+                  };
+                }
+              }
+            } catch (error) {
+              console.warn('[Chat API] Failed to fetch flight data for', transport.from, '→', transport.to, ':', error);
+            }
+          }
+          
+          // Return original transport if not a flight or if API call failed
+          return transport;
+        })
+      );
+
+      plannerState.transportation = enrichedTransportation;
+      console.log('[Chat API] Enriched transportation with real flight data');
+    }
 
     return NextResponse.json({
       reply: content.reply || "I'm sorry, I couldn't process that.",
-      plannerState: content.plannerState || {},
+      plannerState,
     });
   } catch (error: any) {
     console.error('OpenAI Error:', error);
