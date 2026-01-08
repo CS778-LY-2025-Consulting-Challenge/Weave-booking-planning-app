@@ -51,8 +51,7 @@ export default function Journeys() {
       weather: 'Clear',
       duration: '18 Days',
       type: 'Adventure',
-      image:
-        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuZXclMjB6ZWFsYW5kfGVufDB8fHx8fDE3NzA1MjYyNjR8MA&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/new%20zealand.jpg',
       description:
         "A transformative journey through Aotearoa's most iconic landscapes. Navigate the Fiordland cruises, experience adrenaline-pumping activities in Queenstown, and contemplate majesty at Milford Sound. Where adventure meets serenity.",
       likes: 567,
@@ -66,8 +65,7 @@ export default function Journeys() {
       weather: 'Sunny',
       duration: '10 Days',
       type: 'Adventure',
-      image:
-        'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiYWxpJTIwaW5kb25lc2lhfGVufDF8fHx8MTc2NDUzNzMxMXww&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/bali.jpg',
       description:
         'Sacred temples whisper ancient wisdom while emerald rice paddies stretch endlessly. Dive into cenote pools, embrace spiritual ceremonies, and discover the art of slow travel through Balinese hospitality.',
       likes: 234,
@@ -81,8 +79,7 @@ export default function Journeys() {
       weather: 'Mild',
       duration: '21 Days',
       type: 'Culture',
-      image:
-        'https://images.unsplash.com/photo-1431274172761-fca41d930114?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXJpcyUyMGVpZmZlbCUyMHRvd2VyfGVufDF8fHx8MTc2NDQ3MTg2NHww&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/paris.jpg',
       description:
         "A scholarly pilgrimage through Europe's cultural heart. From Renaissance masterpieces in Florence to Gothic grandeur in Paris, experience centuries of art, architecture, and storytelling in seven countries.",
       likes: 456,
@@ -96,8 +93,7 @@ export default function Journeys() {
       weather: 'Clear',
       duration: '14 Days',
       type: 'Adventure',
-      image:
-        'https://images.unsplash.com/photo-1669986480140-2c90b8edb443?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb3VudGFpbiUyMGFkdmVudHVyZSUyMHRyYXZlbHxlbnwxfHx8fDE3NjQ1MTI0ODB8MA&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/nepal.jpg',
       description:
         "Summit your inner peak amid the world's highest mountains. Through alpine meadows and prayer flag-adorned passes, witness crystalline skies and find profound silence that only the Himalayas can offer.",
       likes: 189,
@@ -111,8 +107,7 @@ export default function Journeys() {
       weather: 'Mild',
       duration: '7 Days',
       type: 'Food & Culture',
-      image:
-        'https://images.unsplash.com/photo-1591194233688-dca69d406068?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0b2t5byUyMGphcGFuJTIwY2l0eXxlbnwxfHx8fDE3NjQ1MjYyNjR8MA&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/Tokyo.jpg',
       description:
         'Taste the soul of Japan through Michelin-starred precision and street-corner perfection. From omakase temples to midnight ramen sanctuaries, discover how Tokyo elevates every meal into ritual.',
       likes: 312,
@@ -126,8 +121,7 @@ export default function Journeys() {
       weather: 'Sunny',
       duration: '12 Days',
       type: 'Beach & Relaxation',
-      image:
-        'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzYW50b3JpbmklMjBncmVlY2V8ZW58MXx8fHwxNzY0NDIxNzYxfDA&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/greek.jpg',
       description:
         'Island-hop through the Aegean where whitewashed villages meet azure waters. Each island unveils its own mythology, flavors, and the timeless rhythm of Mediterranean living.',
       likes: 278,
@@ -141,8 +135,7 @@ export default function Journeys() {
       weather: 'Cool',
       duration: '5 Days',
       type: 'City Break',
-      image:
-        'https://images.unsplash.com/photo-1543716091-a840c05249ec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuZXclMjB5b3JrJTIwY2l0eXxlbnwxfHx8fDE3NjQ1MjUyMTh8MA&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/new%20york.jpg',
       description:
         "Immerse in the electric choreography of the city that never sleeps. From Broadway's golden lights to Central Park's autumn foliage, experience the pulse of ambition and culture.",
       likes: 201,
