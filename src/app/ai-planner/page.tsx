@@ -50,6 +50,7 @@ import AttractionDetailPanel from '@/components/AttractionDetailPanel';
 import AccommodationCard from '@/components/AccommodationCard';
 import AccommodationChangePanel from '@/components/AccommodationChangePanel';
 import TransportationCard from '@/components/TransportationCard';
+import TravelSafetyCard from '@/components/TravelSafetyCard';
 
 type Coordinates = { lat: number; lng: number };
 type DayPlan = {
@@ -1785,6 +1786,17 @@ export default function AIPlanner() {
                 </div>
               </CardContent>
             </Card>
+            )}
+
+            {/* Travel Safety Alert - Show when trip is generated */}
+            {activeState.tripTitle && activeState.destination && (
+              <TravelSafetyCard 
+                destination={typeof activeState.destination === 'string' ? activeState.destination : activeState.destination[0]}
+                dates={activeState.dates?.start && activeState.dates?.end ? {
+                  start: activeState.dates.start,
+                  end: activeState.dates.end
+                } : undefined}
+              />
             )}
 
             {/* Day Plans, Transportation, Accommodation - Only show when trip is generated */}
