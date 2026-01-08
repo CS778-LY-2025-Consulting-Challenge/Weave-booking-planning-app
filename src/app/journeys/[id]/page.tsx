@@ -79,11 +79,11 @@ export default function JourneyDetails() {
           ],
           images: [
             { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800', caption: 'Mount Cook vista' },
-            { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800', caption: 'Aotearoa landscapes' },
+            { url: '/images/new-zealand-1.jpg', caption: 'Aotearoa landscapes' },
             { url: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800', caption: 'Pastoral farmland' },
           ],
           videos: [
-            { url: 'https://www.youtube.com/embed/0Hy8Ck_pXqo', caption: 'New Zealand intro', thumbnail: 'https://img.youtube.com/vi/0Hy8Ck_pXqo/hqdefault.jpg' },
+            { url: '/images/new zealand video.mp4', caption: 'New Zealand intro', thumbnail: '/images/new zealand.jpg' },
           ],
           video360Url: 'https://cloudflare1.360gigapixels.com/pano/milanrademakers/01906841_DSC-1437-Panorama-jpg/equirect_crop_3_1/6.jpg',
           has360: true,
