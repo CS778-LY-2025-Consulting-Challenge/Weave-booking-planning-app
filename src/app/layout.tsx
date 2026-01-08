@@ -1,5 +1,6 @@
 import { ClerkProvider } from '@clerk/nextjs';
 import Providers from '@/components/Providers';
+import { StripeProvider } from '@/components/StripeProvider';
 import { AuthProvider } from '@/context/AuthContext';
 import type { Metadata } from 'next';
 import { Cormorant_Garamond, Inter } from 'next/font/google';

@@ -1,533 +1,359 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import {
-  Calendar,
-  Check,
-  CreditCard,
-  Download,
-  Hotel,
-  Mail,
+  CheckCircle,
+  XCircle,
+  Clock,
   MapPin,
-  Package,
-  Plane,
-  Printer,
+  Users,
+  Calendar,
+  Loader2,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-interface BookingDetails {
-  type: 'flight' | 'hotel' | 'package';
-  confirmationNumber: string;
-  bookingDate: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  travelers: number;
-  price: number;
-  name?: string;
-  email?: string;
-  phone?: string;
-  flightDetails?: {
-    from: string;
-    to: string;
-    airline: string;
-    flightNumber: string;
-    departureTime: string;
-    arrivalTime: string;
-    class: string;
-  };
-  hotelDetails?: {
-    name: string;
-    address: string;
-    roomType: string;
-    checkIn: string;
-    checkOut: string;
-  };
-  packageDetails?: {
-    name: string;
-    duration: string;
-    includes: string[];
-  };
+interface BookingConfirmation {
+  bookingId: string;
+  hotelId?: string;
+  hotelName: string;
+  hotelLocation?: string;
+  roomId?: string;
+  roomName: string;
+  checkInDate: string;
+  checkOutDate: string;
+  guests: number;
+  totalPrice: number;
+  pricePerNight?: number;
+  status: 'success' | 'pending' | 'failed' | 'confirmed';
+  confirmationEmail?: string;
+  nights: number;
+  isMockBooking?: boolean;
+  bookingDate?: string;
 }
 
-export default function BookingConfirmation() {
+export default function BookingConfirmationPage() {
   const router = useRouter();
-  const [booking, setBooking] = useState<BookingDetails | null>(null);
+  const searchParams = useSearchParams();
+  const bookingId = searchParams.get('bookingId');
+  const sessionId = searchParams.get('session_id');
+  const status = searchParams.get('status');
+
+  const [booking, setBooking] = useState<BookingConfirmation | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get booking details from navigation state or localStorage
-    const bookingData =
-      // location.state?.booking ||
-      localStorage.getItem('latestBooking');
-    if (bookingData) {
-      setBooking(
-        typeof bookingData === 'string' ? JSON.parse(bookingData) : bookingData
-      );
-    } else {
-      // Mock booking if none exists (for testing)
-      setBooking({
-        type: 'package',
-        confirmationNumber:
-          'WV' + Math.random().toString(36).substring(2, 10).toUpperCase(),
-        bookingDate: new Date().toISOString().split('T')[0],
-        destination: 'Maldives',
-        startDate: '2026-01-15',
-        endDate: '2026-01-22',
-        travelers: 2,
-        price: 2499,
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '+1 234 567 8900',
-        packageDetails: {
-          name: 'Tropical Paradise Getaway',
-          duration: '7 Days / 6 Nights',
-          includes: [
-            'Round-trip flights',
-            '6 nights in 5-star resort',
-            'All meals included',
-            'Water sports activities',
-            'Spa treatment',
-          ],
-        },
-      });
-    }
+    const fetchBookingDetails = async () => {
+      try {
+        // First, check for mock booking in localStorage
+        if (bookingId) {
+          const storedBookings = localStorage.getItem('hotelBookings');
+          if (storedBookings) {
+            const bookings = JSON.parse(storedBookings);
+            const foundBooking = bookings.find((b: any) => b.bookingId === bookingId);
+            
+            if (foundBooking) {
+              setBooking(foundBooking);
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
 
-    // Scroll to top
-    window.scrollTo(0, 0);
-  }, []);
+        // If we have a session ID, fetch from backend
+        if (sessionId) {
+          // In production, fetch booking details from your backend
+          const mockBooking: BookingConfirmation = {
+            bookingId: `BK-${Date.now()}`,
+            hotelName: 'Luxury City Hotel',
+            roomName: 'Deluxe Room',
+            checkInDate: '2026-02-01',
+            checkOutDate: '2026-02-05',
+            guests: 2,
+            totalPrice: 1400,
+            status: status === 'success' ? 'success' : status === 'cancelled' ? 'failed' : 'pending',
+            confirmationEmail: 'guest@example.com',
+            nights: 4,
+            isMockBooking: false,
+          };
 
-  const handlePrint = () => {
-    window.print();
-    toast.success('Opening print dialog...');
-  };
+          setBooking(mockBooking);
 
-  const handleDownload = () => {
-    toast.success('Booking receipt downloaded!');
-  };
+          if (status === 'success') {
+            toast.success('Booking confirmed! Check your email for details.');
+          } else if (status === 'cancelled') {
+            toast.error('Booking was cancelled');
+          }
+        } else {
+          setError('No booking information found');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load booking details');
+        toast.error('Failed to load booking confirmation');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const handleEmail = () => {
-    toast.success('Confirmation email sent to ' + booking?.email);
-  };
+    fetchBookingDetails();
+  }, [bookingId, sessionId, status]);
 
-  if (!booking) {
+  if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <p className="mb-4 text-gray-500">No booking found</p>
-          <Button onClick={() => router.push('/')}>Return to Home</Button>
+          <Loader2 className="mx-auto mb-4 size-8 animate-spin text-blue-600" />
+          <p className="text-gray-600">Loading your booking confirmation...</p>
         </div>
       </div>
     );
   }
 
-  const getBookingIcon = () => {
-    switch (booking.type) {
-      case 'flight':
-        return Plane;
-      case 'hotel':
-        return Hotel;
-      case 'package':
-        return Package;
-    }
-  };
+  if (error || !booking) {
+    return (
+      <div className="min-h-screen bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl">
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <XCircle className="mx-auto mb-4 size-16 text-red-600" />
+                <h1 className="mb-2 text-2xl font-bold text-red-900">Booking Not Found</h1>
+                <p className="mb-6 text-red-700">{error || 'Unable to find your booking'}</p>
+                <Button onClick={() => router.push('/hotels')}>
+                  Back to Hotels
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
-  const BookingIcon = getBookingIcon();
+  const isSuccess = booking.status === 'success' || booking.status === 'confirmed';
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 via-blue-50 to-white px-4 pt-24 md:pt-28 pb-12">
-      <div className="mx-auto max-w-4xl">
-        {/* Success Header */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-2xl">
+        {/* Status Card */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
         >
-          <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-            <Check className="h-10 w-10 text-green-600" />
-          </div>
-          <h1 className="mb-2 text-4xl font-bold text-gray-900">
-            Booking Confirmed!
-          </h1>
-          <p className="text-gray-600">
-            Your {booking.type} has been successfully booked
-          </p>
+          <Card className={`border-0 ${isSuccess ? 'bg-green-50' : 'bg-yellow-50'}`}>
+            <CardContent className="pt-8 text-center">
+              {isSuccess ? (
+                <>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', delay: 0.2 }}
+                  >
+                    <CheckCircle className="mx-auto mb-4 size-20 text-green-600" />
+                  </motion.div>
+                  <h1 className="mb-2 text-3xl font-bold text-green-900">
+                    Booking Confirmed!
+                  </h1>
+                  <p className="text-green-700">
+                    Your reservation has been successfully confirmed
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Clock className="mx-auto mb-4 size-20 text-yellow-600" />
+                  <h1 className="mb-2 text-3xl font-bold text-yellow-900">
+                    Booking Pending
+                  </h1>
+                  <p className="text-yellow-700">
+                    Your booking is being processed
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
 
-        {/* Action Buttons */}
+        {/* Booking Details */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-8 flex flex-wrap justify-center gap-3"
-        >
-          <Button onClick={handlePrint} variant="outline" className="gap-2">
-            <Printer className="h-4 w-4" />
-            Print Receipt
-          </Button>
-          <Button onClick={handleDownload} variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Download PDF
-          </Button>
-          <Button onClick={handleEmail} variant="outline" className="gap-2">
-            <Mail className="h-4 w-4" />
-            Email Receipt
-          </Button>
-        </motion.div>
-
-        {/* Booking Details Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Card className="mb-6 pt-0">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 pt-6 text-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <BookingIcon className="h-8 w-8" />
-                  <div>
-                    <CardTitle className="text-white">
-                      Booking Confirmation
-                    </CardTitle>
-                    <p className="mt-1 text-sm text-blue-100">
-                      Confirmation #: {booking.confirmationNumber}
-                    </p>
-                  </div>
-                </div>
-                <Badge className="bg-green-500 text-white">Confirmed</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              {/* QR Code Section */}
-              <div className="mb-6 flex justify-center">
-                <div className="text-center">
-                  <div className="flex h-40 w-40 items-center justify-center rounded-lg border-2 border-gray-200 bg-gray-100">
-                    {/* QR Code placeholder - in production, use a QR code library */}
-                    <svg className="h-32 w-32" viewBox="0 0 100 100">
-                      <rect x="0" y="0" width="100" height="100" fill="white" />
-                      <rect x="5" y="5" width="20" height="20" fill="black" />
-                      <rect x="75" y="5" width="20" height="20" fill="black" />
-                      <rect x="5" y="75" width="20" height="20" fill="black" />
-                      <rect x="35" y="15" width="5" height="5" fill="black" />
-                      <rect x="45" y="15" width="5" height="5" fill="black" />
-                      <rect x="55" y="15" width="5" height="5" fill="black" />
-                      <rect x="35" y="35" width="30" height="30" fill="black" />
-                      <rect x="40" y="40" width="20" height="20" fill="white" />
-                      <rect x="15" y="45" width="5" height="5" fill="black" />
-                      <rect x="75" y="35" width="5" height="5" fill="black" />
-                      <rect x="85" y="45" width="5" height="5" fill="black" />
-                      <rect x="35" y="75" width="5" height="5" fill="black" />
-                      <rect x="45" y="85" width="5" height="5" fill="black" />
-                      <rect x="75" y="75" width="5" height="5" fill="black" />
-                      <rect x="85" y="85" width="5" height="5" fill="black" />
-                    </svg>
-                  </div>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Scan for mobile boarding pass
-                  </p>
-                </div>
-              </div>
-
-              <Separator className="mb-6" />
-
-              {/* Traveler Information */}
-              <div className="mb-6">
-                <h3 className="mb-3 font-semibold text-gray-900">
-                  Traveler Information
-                </h3>
-                <div className="grid gap-4 text-sm md:grid-cols-2">
-                  <div>
-                    <p className="text-gray-500">Name</p>
-                    <p className="font-medium">{booking.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Email</p>
-                    <p className="font-medium">{booking.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Phone</p>
-                    <p className="font-medium">{booking.phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Number of Travelers</p>
-                    <p className="font-medium">
-                      {booking.travelers}{' '}
-                      {booking.travelers === 1 ? 'person' : 'people'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <Separator className="mb-6" />
-
-              {/* Trip Details */}
-              <div className="mb-6">
-                <h3 className="mb-3 font-semibold text-gray-900">
-                  Trip Details
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="mt-0.5 h-5 w-5 text-blue-600" />
-                    <div>
-                      <p className="text-sm text-gray-500">Destination</p>
-                      <p className="font-medium">{booking.destination}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Calendar className="mt-0.5 h-5 w-5 text-blue-600" />
-                    <div>
-                      <p className="text-sm text-gray-500">Travel Dates</p>
-                      <p className="font-medium">
-                        {new Date(booking.startDate).toLocaleDateString(
-                          'en-US',
-                          { month: 'long', day: 'numeric', year: 'numeric' }
-                        )}{' '}
-                        -{' '}
-                        {new Date(booking.endDate).toLocaleDateString('en-US', {
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <CreditCard className="mt-0.5 h-5 w-5 text-blue-600" />
-                    <div>
-                      <p className="text-sm text-gray-500">Booking Date</p>
-                      <p className="font-medium">
-                        {new Date(booking.bookingDate).toLocaleDateString(
-                          'en-US',
-                          { month: 'long', day: 'numeric', year: 'numeric' }
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Type-specific Details */}
-              {booking.flightDetails && (
-                <>
-                  <Separator className="mb-6" />
-                  <div className="mb-6">
-                    <h3 className="mb-3 font-semibold text-gray-900">
-                      Flight Information
-                    </h3>
-                    <div className="space-y-2 rounded-lg bg-blue-50 p-4 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Airline:</span>
-                        <span className="font-medium">
-                          {booking.flightDetails.airline}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Flight Number:</span>
-                        <span className="font-medium">
-                          {booking.flightDetails.flightNumber}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Class:</span>
-                        <span className="font-medium">
-                          {booking.flightDetails.class}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Departure:</span>
-                        <span className="font-medium">
-                          {booking.flightDetails.departureTime}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Arrival:</span>
-                        <span className="font-medium">
-                          {booking.flightDetails.arrivalTime}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {booking.hotelDetails && (
-                <>
-                  <Separator className="mb-6" />
-                  <div className="mb-6">
-                    <h3 className="mb-3 font-semibold text-gray-900">
-                      Hotel Information
-                    </h3>
-                    <div className="space-y-2 rounded-lg bg-purple-50 p-4 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Hotel:</span>
-                        <span className="font-medium">
-                          {booking.hotelDetails.name}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Address:</span>
-                        <span className="font-medium">
-                          {booking.hotelDetails.address}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Room Type:</span>
-                        <span className="font-medium">
-                          {booking.hotelDetails.roomType}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Check-in:</span>
-                        <span className="font-medium">
-                          {booking.hotelDetails.checkIn}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Check-out:</span>
-                        <span className="font-medium">
-                          {booking.hotelDetails.checkOut}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {booking.packageDetails && (
-                <>
-                  <Separator className="mb-6" />
-                  <div className="mb-6">
-                    <h3 className="mb-3 font-semibold text-gray-900">
-                      Package Information
-                    </h3>
-                    <div className="rounded-lg bg-green-50 p-4 text-sm">
-                      <p className="mb-2 font-medium text-gray-900">
-                        {booking.packageDetails.name}
-                      </p>
-                      <p className="mb-3 text-gray-600">
-                        {booking.packageDetails.duration}
-                      </p>
-                      <div>
-                        <p className="mb-2 text-gray-600">Includes:</p>
-                        <ul className="space-y-1">
-                          {booking.packageDetails.includes.map((item, idx) => (
-                            <li key={idx} className="flex items-center gap-2">
-                              <Check className="h-4 w-4 text-green-600" />
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <Separator className="mb-6" />
-
-              {/* Price Summary */}
-              <div className="rounded-lg bg-gray-50 p-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">
-                    ${booking.price.toLocaleString()}
-                  </span>
-                </div>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-gray-600">Taxes & Fees</span>
-                  <span className="font-medium">
-                    ${(booking.price * 0.15).toFixed(2)}
-                  </span>
-                </div>
-                <Separator className="my-3" />
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold">Total Paid</span>
-                  <span className="text-2xl font-bold text-green-600">
-                    $
-                    {(booking.price * 1.15).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Important Information */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
         >
           <Card>
             <CardHeader>
-              <CardTitle>Important Information</CardTitle>
+              <CardTitle>Booking Details</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm text-gray-600">
-              <p>
-                • Please arrive at least 2 hours before your scheduled departure
-                time for international flights.
-              </p>
-              <p>
-                • A valid passport is required for international travel. Please
-                ensure your passport is valid for at least 6 months beyond your
-                travel dates.
-              </p>
-              <p>
-                • Cancellation and modification policies apply. Please review
-                your booking terms.
-              </p>
-              <p>
-                • For any questions or changes to your booking, contact our 24/7
-                support team.
-              </p>
-              <p>
-                • Keep this confirmation number handy for check-in and
-                inquiries.
-              </p>
+            <CardContent className="space-y-6">
+              {/* Confirmation Number */}
+              <div className="rounded-lg bg-gray-50 p-4">
+                <p className="text-sm text-gray-600">Confirmation Number</p>
+                <p className="text-2xl font-bold text-gray-900 break-all">{booking.bookingId}</p>
+                <p className="mt-2 text-xs text-gray-500">
+                  Save this number for your records
+                </p>
+              </div>
+
+              {/* Hotel & Room Info */}
+              <div className="space-y-4">
+                <h3 className="font-semibold">Hotel Information</h3>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="mt-1 size-5 flex-shrink-0 text-blue-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Hotel</p>
+                      <p className="font-semibold">{booking.hotelName}</p>
+                      {booking.hotelLocation && (
+                        <p className="text-sm text-gray-500">{booking.hotelLocation}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Room Type</p>
+                    <p className="font-semibold">{booking.roomName}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Check-in & Check-out */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="font-semibold">Stay Details</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Check-in</p>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="size-4 text-blue-600" />
+                      <p className="font-semibold">{booking.checkInDate}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Check-out</p>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="size-4 text-blue-600" />
+                      <p className="font-semibold">{booking.checkOutDate}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Nights</p>
+                    <p className="font-semibold">{booking.nights} nights</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Guests</p>
+                    <div className="flex items-center gap-2">
+                      <Users className="size-4 text-blue-600" />
+                      <p className="font-semibold">{booking.guests} guest(s)</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Price Summary */}
+              <div className="space-y-3 border-t pt-6">
+                <h3 className="font-semibold">Price Summary</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Nightly rate</span>
+                    <span>${(booking.pricePerNight || booking.totalPrice / booking.nights).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Number of nights</span>
+                    <span>{booking.nights}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold border-t pt-2">
+                    <span>Total Amount</span>
+                    <span className="text-blue-600">${booking.totalPrice.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Booking Date */}
+              {booking.bookingDate && (
+                <div className="rounded-lg bg-blue-50 p-4">
+                  <p className="text-sm text-blue-600">
+                    Booked on: <span className="font-semibold">
+                      {new Date(booking.bookingDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </p>
+                </div>
+              )}
+
+              {/* What's Next */}
+              {isSuccess && (
+                <div className="space-y-3 border-t pt-6">
+                  <h3 className="font-semibold">What's Next?</h3>
+                  <ol className="space-y-2 text-sm text-gray-600">
+                    <li>1. Check your email for the complete booking confirmation</li>
+                    <li>2. Review the cancellation policy and terms</li>
+                    <li>3. Prepare for check-in on {booking.checkInDate}</li>
+                    <li>4. Contact the hotel if you have any questions</li>
+                  </ol>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="space-y-3 border-t pt-6">
+                <Button
+                  onClick={() => router.push('/hotels')}
+                  className="w-full"
+                >
+                  Book Another Hotel
+                </Button>
+                <Button
+                  onClick={() => router.push('/profile')}
+                  variant="outline"
+                  className="w-full"
+                >
+                  View My Bookings
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Action Buttons */}
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <Button onClick={() => router.push('/dashboard')} className="gap-2">
-            View in Dashboard
-          </Button>
-          <Button onClick={() => router.push('/')} variant="outline">
-            Return to Home
-          </Button>
-        </div>
+        {/* FAQ Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-8"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Frequently Asked Questions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="mb-2 font-semibold">Can I modify my booking?</h4>
+                <p className="text-sm text-gray-600">
+                  Yes, you can modify your booking up to 24 hours before check-in. Contact the hotel directly using the confirmation number.
+                </p>
+              </div>
+              <div>
+                <h4 className="mb-2 font-semibold">What is the cancellation policy?</h4>
+                <p className="text-sm text-gray-600">
+                  Free cancellation up to 24 hours before check-in. Refer to your confirmation for specific details.
+                </p>
+              </div>
+              <div>
+                <h4 className="mb-2 font-semibold">When will I receive my confirmation email?</h4>
+                <p className="text-sm text-gray-600">
+                  You should receive a confirmation email within the next few minutes. Please check your spam folder if you don't see it in your inbox.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
-
-      {/* Print Styles */}
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .max-w-4xl, .max-w-4xl * {
-            visibility: visible;
-          }
-          .max-w-4xl {
-            position: absolute;
-            left: 0;
-            top: 0;
-          }
-          button {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
