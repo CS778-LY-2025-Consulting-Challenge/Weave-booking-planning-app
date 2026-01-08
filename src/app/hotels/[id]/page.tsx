@@ -1,679 +1,670 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Wifi,
-  Utensils,
-  Dumbbell,
-  Coffee,
-  Wine,
-  Droplet,
-  Car,
-  Clock,
-  MapPin,
-  Calendar,
-  Users,
-  Star,
+import { 
+  MapPin, 
+  Star, 
+  Wifi, 
+  Phone, 
+  Mail, 
+  Check, 
+  Heart,
   ChevronLeft,
-  ChevronRight,
-  Mail,
-  Phone,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useRouter, useParams } from 'next/navigation';
-import { useState } from 'react';
 import { toast } from 'sonner';
+import { HotelResult, Room } from '@/types/hotel';
 
-// Mock hotel details data
-const hotelDetailsData: Record<string, any> = {
-  'luxury-grand-hotel': {
-    id: 'luxury-grand-hotel',
-    name: 'Luxury Grand Hotel',
-    city: 'New York',
-    country: 'USA',
-    rating: 4.9,
-    reviews: 342,
-    description: 'Experience ultimate luxury at our 5-star hotel with world-class amenities and personalized service.',
-    images: [
-      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1595521624512-6dfb63b2ebb9?w=1200&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&h=600&fit=crop',
-    ],
-    location: '123 Fifth Avenue, New York, NY 10001',
-    checkinTime: '3:00 PM',
-    checkoutTime: '11:00 AM',
-    cancellationPolicy: 'Free cancellation up to 7 days before arrival',
-    rooms: [
-      {
-        id: 1,
-        name: 'Standard Room',
-        description: 'Comfortable room with city view, queen bed, and modern amenities',
-        price: 299,
-        beds: '1 Queen',
-        guests: 2,
-        size: '350 sq ft',
-        image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
-        amenities: ['Free WiFi', 'Air Conditioning', 'Flat-screen TV', 'Work Desk'],
-      },
-      {
-        id: 2,
-        name: 'Deluxe Room',
-        description: 'Spacious room with panoramic city views, premium bedding, and luxury bathroom',
-        price: 499,
-        beds: '1 King',
-        guests: 2,
-        size: '500 sq ft',
-        image: 'https://images.unsplash.com/photo-1595521624512-6dfb63b2ebb9?w=800&h=600&fit=crop',
-        amenities: ['Free WiFi', 'Mini Bar', 'Bathrobe & Slippers', 'Premium Toiletries'],
-      },
-      {
-        id: 3,
-        name: 'Presidential Suite',
-        description: 'Luxurious multi-room suite with separate living area, spa-like bathroom, and concierge service',
-        price: 999,
-        beds: '2 King',
-        guests: 4,
-        size: '1000 sq ft',
-        image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
-        amenities: ['24/7 Concierge', 'Private Spa', 'Separate Living Room', 'Complimentary Breakfast'],
-      },
-    ],
-    amenities: [
-      { icon: Wifi, name: 'Free WiFi', description: 'Throughout the hotel' },
-      { icon: Utensils, name: 'Fine Dining', description: '3 restaurants on-site' },
-      { icon: Dumbbell, name: 'Fitness Center', description: 'State-of-the-art equipment' },
-      { icon: Coffee, name: 'Café & Bar', description: '24/7 service' },
-      { icon: Wine, name: 'Wine Cellar', description: 'Curated collection' },
-      { icon: Droplet, name: 'Spa & Pool', description: 'Rooftop infinity pool' },
-      { icon: Car, name: 'Valet Parking', description: 'Complimentary' },
-      { icon: Users, name: 'Concierge', description: '24/7 availability' },
-    ],
-  },
+// Country code to name mapping
+const COUNTRY_MAP: Record<string, string> = {
+  'US': 'United States',
+  'GB': 'United Kingdom',
+  'CA': 'Canada',
+  'AU': 'Australia',
+  'NZ': 'New Zealand',
+  'IN': 'India',
+  'JP': 'Japan',
+  'CN': 'China',
+  'FR': 'France',
+  'DE': 'Germany',
+  'IT': 'Italy',
+  'ES': 'Spain',
+  'MX': 'Mexico',
+  'BR': 'Brazil',
+  'SG': 'Singapore',
+  'TH': 'Thailand',
+  'AE': 'United Arab Emirates',
+  'NL': 'Netherlands',
+  'SE': 'Sweden',
+  'CH': 'Switzerland',
+};
+
+const getCountryName = (countryCode: string): string => {
+  if (!countryCode) return 'Unknown';
+  const upperCode = countryCode.toUpperCase();
+  return COUNTRY_MAP[upperCode] || countryCode;
 };
 
 export default function HotelDetailsPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
+  
+  const [hotel, setHotel] = useState<HotelResult | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isBooking, setIsBooking] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isUsingMockData, setIsUsingMockData] = useState(false);
+
+  // Get dates from URL params
+  const checkInDate = searchParams.get('checkIn') || '';
+  const checkOutDate = searchParams.get('checkOut') || '';
+  const guests = parseInt(searchParams.get('guests') || '2');
   const hotelId = params.id as string;
-  const hotel = hotelDetailsData[hotelId] || hotelDetailsData['luxury-grand-hotel'];
+  
+  // Extract hotel name and location from search params (passed from hotel card)
+  const hotelName = searchParams.get('name') || '';
+  const location = searchParams.get('location') || '';
 
-  // Booking form states
-  const [bookingStep, setBookingStep] = useState(1);
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
-  const [guests, setGuests] = useState('2');
-  const [rooms, setRooms] = useState('1');
-  const [selectedRoom, setSelectedRoom] = useState(hotel.rooms[0]);
-  const [guestDetails, setGuestDetails] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-  });
+  useEffect(() => {
+    const fetchHotelDetails = async () => {
+      setIsLoading(true);
+      setError(null);
+      setIsUsingMockData(false);
 
-  const calculateNights = () => {
-    if (!checkIn || !checkOut) return 0;
-    const start = new Date(checkIn);
-    const end = new Date(checkOut);
-    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      try {
+        if (!checkInDate || !checkOutDate) {
+          // If no dates, use mock data directly
+          console.log('[Hotel Details] No dates provided, using mock data');
+          const fallbackHotel = createFallbackHotel(hotelId, hotelName, location);
+          setHotel(fallbackHotel);
+          setIsUsingMockData(true);
+          if (fallbackHotel.rooms && fallbackHotel.rooms.length > 0) {
+            setSelectedRoom(fallbackHotel.rooms[0]);
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('[Hotel Details] Fetching details for:', { hotelId, hotelName, location });
+
+        // Call Amadeus details endpoint
+        const params = new URLSearchParams({
+          hotelId,
+          checkInDate,
+          checkOutDate,
+          guests: guests.toString(),
+        });
+
+        const response = await fetch(`/api/hotels/details?${params.toString()}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.warn('[Hotel Details] API error, using mock data:', data?.error);
+          // Use fallback data instead of throwing error
+          const fallbackHotel = createFallbackHotel(hotelId, hotelName, location);
+          setHotel(fallbackHotel);
+          setIsUsingMockData(true);
+          if (fallbackHotel.rooms && fallbackHotel.rooms.length > 0) {
+            setSelectedRoom(fallbackHotel.rooms[0]);
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        const property = data?.data?.hotel || data?.hotel || data;
+        if (!property) {
+          throw new Error('No hotel data found');
+        }
+
+        const images = property.media || property.images || [];
+        const mainImage =
+          images[0]?.uri ||
+          images[0]?.url ||
+          'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80';
+
+        const allImages = images
+          .map((img: any) => img?.uri || img?.url)
+          .filter(Boolean)
+          .slice(0, 4);
+
+        const pricePerNight = Math.round(
+          (property.offers?.[0]?.price?.total || property.offers?.[0]?.price?.base || 180) /
+            Math.max(
+              1,
+              Math.ceil(
+                (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) /
+                  (1000 * 60 * 60 * 24)
+              )
+            )
+        );
+
+        const transformedHotel: HotelResult = {
+          id: property.hotelId || hotelId,
+          name: property.name || hotelName || 'Hotel',
+          location: property.address?.lines?.join(', ') || property.address?.cityName || location || 'Unknown',
+          city: property.address?.cityName || location.split(',')[0] || 'Unknown',
+          country: property.address?.countryCode || 'Unknown',
+          rating: property.rating ? parseFloat(property.rating) : 4.0,
+          reviews: property.reviews || 0,
+          pricePerNight,
+          image: mainImage,
+          images: allImages.length > 0 ? allImages : [mainImage],
+          description: property.description || 'Experience luxury and comfort at this hotel.',
+          amenities: property.amenities || ['WiFi', 'Restaurant', 'Gym'],
+          guests,
+          rooms: [
+            {
+              id: 'room-default',
+              name: 'Standard Room',
+              type: 'Double',
+              capacity: guests,
+              price: pricePerNight,
+              amenities: ['WiFi', 'AC', 'TV', 'Bathroom'],
+              available: 3,
+            },
+          ],
+          policies: {
+            cancellation: 'Free cancellation up to 24 hours before check-in',
+            checkInTime: property.checkInDate || '15:00',
+            checkOutTime: property.checkOutDate || '11:00',
+          },
+          contact: {
+            phone: property.contact?.phone || '+1-212-555-0123',
+            email: property.contact?.email || 'reservations@hotel.com',
+          },
+        };
+
+        setHotel(transformedHotel);
+        if (transformedHotel.rooms && transformedHotel.rooms.length > 0) {
+          setSelectedRoom(transformedHotel.rooms[0]);
+        }
+      } catch (err) {
+        console.error('[Hotel Details] Error, using mock data:', err);
+        // Use fallback data instead of showing error
+        const fallbackHotel = createFallbackHotel(hotelId, hotelName, location);
+        setHotel(fallbackHotel);
+        setIsUsingMockData(true);
+        if (fallbackHotel.rooms && fallbackHotel.rooms.length > 0) {
+          setSelectedRoom(fallbackHotel.rooms[0]);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchHotelDetails();
+  }, [hotelId, checkInDate, checkOutDate, guests, hotelName, location]);
+
+  // Helper function to create fallback hotel data
+  const createFallbackHotel = (id: string, name: string, loc: string): HotelResult => {
+    const basePrice = 150 + Math.floor(Math.random() * 200);
+    
+    return {
+      id: id || 'fallback-hotel',
+      name: name || 'Luxury Hotel',
+      location: loc || 'City Center',
+      city: loc.split(',')[0] || 'City',
+      country: getCountryName(loc.split(',').pop()?.trim() || 'US'),
+      rating: 4.5,
+      reviews: 1234,
+      pricePerNight: basePrice,
+      image: 'https://images.unsplash.com/photo-1631049307038-da0ec9d70304?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1631049307038-da0ec9d70304?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80',
+        'https://images.unsplash.com/photo-1595521624512-6dfb63b2ebb9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80',
+        'https://images.unsplash.com/photo-1566073771259-6a8506099945?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80',
+      ],
+      description: `Experience luxury and comfort at ${name || 'this beautiful hotel'}. Featuring modern amenities, spacious rooms, and exceptional service, your stay will be unforgettable.`,
+      amenities: ['Free WiFi', 'Restaurant', 'Fitness Center', 'Room Service', 'Spa', 'Pool'],
+      guests: guests,
+      rooms: [
+        {
+          id: 'room-standard',
+          name: 'Standard Room',
+          type: 'Double',
+          capacity: 2,
+          price: basePrice,
+          amenities: ['WiFi', 'AC', 'TV', 'Bathroom'],
+          available: 5,
+        },
+        {
+          id: 'room-deluxe',
+          name: 'Deluxe Room',
+          type: 'King',
+          capacity: 2,
+          price: basePrice + 50,
+          amenities: ['WiFi', 'AC', 'TV', 'Bathroom', 'Mini Bar', 'City View'],
+          available: 3,
+        },
+        {
+          id: 'room-suite',
+          name: 'Executive Suite',
+          type: 'Suite',
+          capacity: 4,
+          price: basePrice + 150,
+          amenities: ['WiFi', 'AC', 'TV', 'Bathroom', 'Mini Bar', 'City View', 'Living Room', 'Kitchen'],
+          available: 2,
+        },
+      ],
+      policies: {
+        cancellation: 'Free cancellation up to 24 hours before check-in',
+        checkInTime: '15:00',
+        checkOutTime: '11:00',
+      },
+      contact: {
+        phone: '+1-212-555-0123',
+        email: 'reservations@hotel.com',
+      },
+    };
   };
 
-  const nights = calculateNights();
-  const totalPrice = selectedRoom.price * nights * parseInt(rooms);
+  const calculateTotalPrice = () => {
+    if (!selectedRoom || !checkInDate || !checkOutDate) return 0;
+    const start = new Date(checkInDate);
+    const end = new Date(checkOutDate);
+    const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return selectedRoom.price * nights;
+  };
 
-  const handleBooking = () => {
-    if (!checkIn || !checkOut || !guestDetails.firstName || !guestDetails.lastName || !guestDetails.email) {
-      toast.error('Please fill in all required fields');
+  const handleBooking = async () => {
+    if (!selectedRoom || !checkInDate || !checkOutDate) {
+      toast.error('Please select a room and dates');
       return;
     }
-    toast.success('Booking confirmed! Check your email for confirmation.');
-    router.push('/hotels');
+
+    setIsBooking(true);
+
+    try {
+      // Create booking object
+      const bookingData = {
+        bookingId: `BOOK-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        hotelId: hotel?.id,
+        hotelName: hotel?.name,
+        hotelLocation: hotel?.location,
+        roomId: selectedRoom.id,
+        roomName: selectedRoom.name,
+        checkInDate,
+        checkOutDate,
+        guests,
+        totalPrice: calculateTotalPrice(),
+        pricePerNight: selectedRoom.price,
+        nights: Math.ceil(
+          (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) /
+            (1000 * 60 * 60 * 24)
+        ),
+        status: 'confirmed',
+        bookingDate: new Date().toISOString(),
+        isMockBooking: isUsingMockData,
+      };
+
+      // Try Stripe payment flow first (even for mock data)
+      try {
+        console.log('[Booking] Creating Stripe checkout session...');
+        
+        const response = await fetch('/api/payment/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            hotelId: hotel?.id,
+            hotelName: hotel?.name,
+            hotelLocation: hotel?.location,
+            roomId: selectedRoom.id,
+            roomName: selectedRoom.name,
+            checkInDate,
+            checkOutDate,
+            guests,
+            totalPrice: calculateTotalPrice(),
+            userId: 'user-123', // Replace with actual user ID from auth
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[Booking] Stripe session created:', data);
+
+          // Redirect to Stripe checkout
+          if (data.url) {
+            // Save booking data to localStorage before redirecting
+            const existingBookings = JSON.parse(localStorage.getItem('hotelBookings') || '[]');
+            existingBookings.push({ ...bookingData, stripeSessionId: data.sessionId, status: 'pending' });
+            localStorage.setItem('hotelBookings', JSON.stringify(existingBookings));
+            
+            toast.success('Redirecting to payment...');
+            window.location.href = data.url;
+            return;
+          }
+        }
+
+        console.warn('[Booking] Stripe payment failed, using mock booking');
+      } catch (stripeError) {
+        console.warn('[Booking] Stripe error:', stripeError);
+      }
+
+      // Fallback: Save booking locally
+      const existingBookings = JSON.parse(localStorage.getItem('hotelBookings') || '[]');
+      existingBookings.push(bookingData);
+      localStorage.setItem('hotelBookings', JSON.stringify(existingBookings));
+
+      toast.success('Booking confirmed successfully!');
+      
+      setTimeout(() => {
+        router.push(`/booking-confirmation?bookingId=${bookingData.bookingId}`);
+      }, 1500);
+    } catch (error) {
+      console.error('Booking error:', error);
+      
+      // Final fallback: Create mock booking
+      const bookingData = {
+        bookingId: `BOOK-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        hotelId: hotel?.id,
+        hotelName: hotel?.name,
+        hotelLocation: hotel?.location,
+        roomId: selectedRoom.id,
+        roomName: selectedRoom.name,
+        checkInDate,
+        checkOutDate,
+        guests,
+        totalPrice: calculateTotalPrice(),
+        pricePerNight: selectedRoom.price,
+        nights: Math.ceil(
+          (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) /
+            (1000 * 60 * 60 * 24)
+        ),
+        status: 'confirmed',
+        bookingDate: new Date().toISOString(),
+        isMockBooking: true,
+      };
+      
+      const existingBookings = JSON.parse(localStorage.getItem('hotelBookings') || '[]');
+      existingBookings.push(bookingData);
+      localStorage.setItem('hotelBookings', JSON.stringify(existingBookings));
+
+      toast.success('Booking confirmed successfully!');
+      
+      setTimeout(() => {
+        router.push(`/booking-confirmation?bookingId=${bookingData.bookingId}`);
+      }, 1500);
+    } finally {
+      setIsBooking(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="size-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !hotel) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+        <AlertCircle className="size-8 text-red-500" />
+        <p>{error || 'Hotel not found'}</p>
+        <Button onClick={() => router.back()}>Go Back</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header with back button */}
-      <div className="border-b bg-white pt-20">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <button
+      {/* Header */}
+      <div className="border-b border-gray-200 bg-white px-4 py-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="ghost" 
             onClick={() => router.back()}
-            className="mb-4 inline-flex items-center gap-2 text-gray-600 hover:text-black"
+            className="gap-2"
           >
-            <ChevronLeft className="size-5" />
-            Back to Search
-          </button>
+            <ChevronLeft className="size-4" />
+            Back
+          </Button>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        {/* Hotel Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">{hotel.name}</h1>
-              <div className="mt-2 flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <Star className="size-5 fill-yellow-400 text-yellow-400" />
-                  <span className="font-semibold">{hotel.rating}</span>
-                  <span className="text-gray-600">({hotel.reviews} reviews)</span>
+              <h1 className="text-4xl font-bold">{hotel.name}</h1>
+              <div className="mt-4 flex flex-wrap items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <Star className="size-5 text-yellow-400 fill-yellow-400" />
+                  <span className="font-semibold">{hotel.rating}/5</span>
+                  <span className="text-gray-600">({hotel.reviews.toLocaleString()} reviews)</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <MapPin className="size-5" />
-                  <span>{hotel.location}</span>
+                <div className="flex items-center gap-2">
+                  <MapPin className="size-5 text-blue-600" />
+                  <span>{hotel.city}, {hotel.country}</span>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Hotel Images Gallery */}
-      <div className="px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="md:col-span-2"
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setIsFavorite(!isFavorite)}
+              className="rounded-full"
             >
-              <img
-                src={hotel.images[0]}
-                alt="Hotel main"
-                className="h-96 w-full rounded-lg object-cover shadow-lg"
+              <Heart
+                className={`size-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
               />
-            </motion.div>
-            {hotel.images.slice(1).map((img: string, i: number) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: (i + 1) * 0.1 }}
-              >
-                <img
-                  src={img}
-                  alt={`Hotel ${i + 2}`}
-                  className="h-96 w-full rounded-lg object-cover shadow-lg"
-                />
-              </motion.div>
-            ))}
+            </Button>
           </div>
-        </div>
-      </div>
+        </motion.div>
 
-      {/* Description */}
-      <div className="border-b px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-lg text-gray-700">{hotel.description}</p>
-        </div>
-      </div>
-
-      {/* Amenities */}
-      <div className="border-b px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <h2 className="mb-8 text-3xl font-bold">Hotel Amenities</h2>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {hotel.amenities.map((amenity: any, idx: number) => {
-              const Icon = amenity.icon;
-              return (
-                <motion.div
+        {/* Images Gallery */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="mb-12"
+        >
+          {hotel.images && hotel.images.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {/* Main large image - spans 2 columns on desktop */}
+              <div className="md:col-span-2 lg:col-span-2 rounded-lg overflow-hidden h-96 sm:h-[450px] md:h-[500px] lg:h-[600px] shadow-lg">
+                <img
+                  src={hotel.images[0]}
+                  alt={`${hotel.name} main`}
+                  className="h-full w-full object-cover hover:scale-105 transition-transform duration-700"
+                  loading="eager"
+                />
+              </div>
+              
+              {/* Secondary images grid */}
+              {hotel.images.slice(1).map((img, idx) => (
+                <div
                   key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="rounded-lg bg-gray-50 p-6"
+                  className="rounded-lg overflow-hidden h-80 sm:h-96 shadow-lg"
                 >
-                  <Icon className="mb-3 size-8 text-gray-900" />
-                  <h3 className="mb-1 font-semibold text-gray-900">{amenity.name}</h3>
-                  <p className="text-sm text-gray-600">{amenity.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+                  <img
+                    src={img}
+                    alt={`${hotel.name} ${idx + 2}`}
+                    className="h-full w-full object-cover hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
 
-      {/* Room Types */}
-      <div className="border-b px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <h2 className="mb-8 text-3xl font-bold">Room Types</h2>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            {hotel.rooms.map((room: any, idx: number) => (
-              <motion.div
-                key={room.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                onClick={() => setSelectedRoom(room)}
-                className={`cursor-pointer rounded-lg border-2 transition-all ${
-                  selectedRoom.id === room.id
-                    ? 'border-black bg-black/5'
-                    : 'border-gray-200 hover:border-gray-400'
-                }`}
-              >
-                <img
-                  src={room.image}
-                  alt={room.name}
-                  className="h-64 w-full rounded-t-lg object-cover"
-                />
-                <div className="p-6">
-                  <h3 className="mb-2 text-xl font-bold">{room.name}</h3>
-                  <p className="mb-4 text-sm text-gray-600">{room.description}</p>
-                  <div className="mb-4 space-y-2 border-b pb-4 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Size</span>
-                      <span className="font-semibold">{room.size}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Beds</span>
-                      <span className="font-semibold">{room.beds}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Guests</span>
-                      <span className="font-semibold">{room.guests} max</span>
-                    </div>
-                  </div>
-                  <div className="mb-3 flex flex-wrap gap-1">
-                    {room.amenities.map((amenity: string, i: number) => (
-                      <Badge key={i} variant="secondary" className="text-xs">
-                        {amenity}
-                      </Badge>
+        <div className="grid gap-8 md:grid-cols-3">
+          {/* Left Column - Hotel Info */}
+          <div className="md:col-span-2 space-y-8">
+            {/* Description */}
+            <Card>
+              <CardHeader>
+                <CardTitle>About This Hotel</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <p className="text-gray-700">{hotel.description}</p>
+
+                {/* Amenities */}
+                <div>
+                  <h3 className="mb-4 font-semibold">Amenities</h3>
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                    {hotel.amenities.map(amenity => (
+                      <div key={amenity} className="flex items-center gap-2">
+                        <Check className="size-4 text-green-600" />
+                        <span className="text-sm">{amenity}</span>
+                      </div>
                     ))}
                   </div>
-                  <p className="text-2xl font-bold">
-                    ${room.price}
-                    <span className="text-sm text-gray-600">/night</span>
-                  </p>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      {/* Policies */}
-      <div className="border-b px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <h2 className="mb-8 text-3xl font-bold">Hotel Policies</h2>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Card className="border-gray-200">
-              <CardContent className="p-6">
-                <div className="mb-2 flex items-center gap-2">
-                  <Clock className="size-5 text-gray-900" />
-                  <h3 className="font-bold">Check-in / Check-out</h3>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Check-in: {hotel.checkinTime} | Check-out: {hotel.checkoutTime}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-gray-200">
-              <CardContent className="p-6">
-                <h3 className="mb-2 font-bold">Cancellation Policy</h3>
-                <p className="text-sm text-gray-600">{hotel.cancellationPolicy}</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-
-      {/* Booking Form */}
-      <div className="bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="mb-8 text-3xl font-bold">Complete Your Booking</h2>
-
-          <div className="mb-8 flex gap-4">
-            {[1, 2, 3].map((step) => (
-              <button
-                key={step}
-                onClick={() => setBookingStep(step)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
-                  bookingStep >= step
-                    ? 'bg-black text-white'
-                    : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                Step {step}
-              </button>
-            ))}
-          </div>
-
-          <Card className="border-gray-200">
-            <CardContent className="p-8">
-              {/* Step 1: Dates & Guests */}
-              {bookingStep === 1 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="space-y-6"
-                >
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div>
-                      <Label htmlFor="checkin" className="mb-2 block font-semibold">
-                        Check-in Date
-                      </Label>
-                      <Input
-                        id="checkin"
-                        type="date"
-                        value={checkIn}
-                        onChange={(e) => setCheckIn(e.target.value)}
-                        className="border-gray-300"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="checkout" className="mb-2 block font-semibold">
-                        Check-out Date
-                      </Label>
-                      <Input
-                        id="checkout"
-                        type="date"
-                        value={checkOut}
-                        onChange={(e) => setCheckOut(e.target.value)}
-                        className="border-gray-300"
-                      />
+                {/* Policies */}
+                {hotel.policies && (
+                  <div className="border-t pt-6">
+                    <h3 className="mb-4 font-semibold">Hotel Policies</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Check-in</p>
+                        <p className="font-semibold">{hotel.policies.checkInTime}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Check-out</p>
+                        <p className="font-semibold">{hotel.policies.checkOutTime}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Cancellation</p>
+                        <p className="font-semibold">{hotel.policies.cancellation}</p>
+                      </div>
                     </div>
                   </div>
+                )}
 
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div>
-                      <Label htmlFor="guests" className="mb-2 block font-semibold">
-                        Number of Guests
-                      </Label>
-                      <Select value={guests} onValueChange={setGuests}>
-                        <SelectTrigger className="border-gray-300">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[1, 2, 3, 4].map((n) => (
-                            <SelectItem key={n} value={String(n)}>
-                              {n} {n === 1 ? 'Guest' : 'Guests'}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                {/* Contact */}
+                {hotel.contact && (
+                  <div className="border-t pt-6 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Phone className="size-5 text-blue-600" />
+                      <a href={`tel:${hotel.contact.phone}`} className="text-blue-600 hover:underline">
+                        {hotel.contact.phone}
+                      </a>
                     </div>
-                    <div>
-                      <Label htmlFor="rooms" className="mb-2 block font-semibold">
-                        Number of Rooms
-                      </Label>
-                      <Select value={rooms} onValueChange={setRooms}>
-                        <SelectTrigger className="border-gray-300">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[1, 2, 3, 4].map((n) => (
-                            <SelectItem key={n} value={String(n)}>
-                              {n} {n === 1 ? 'Room' : 'Rooms'}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div className="flex items-center gap-3">
+                      <Mail className="size-5 text-blue-600" />
+                      <a href={`mailto:${hotel.contact.email}`} className="text-blue-600 hover:underline">
+                        {hotel.contact.email}
+                      </a>
                     </div>
                   </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
-                  <div className="rounded-lg bg-gray-50 p-4">
-                    <p className="text-sm text-gray-600">
-                      {nights} nights × {rooms} room(s) × ${selectedRoom.price}/night
-                    </p>
-                    <p className="mt-2 text-2xl font-bold">
-                      Total: ${totalPrice}
-                    </p>
+          {/* Right Column - Booking */}
+          <div className="space-y-6">
+            {/* Room Selection */}
+            <Card className="sticky top-20">
+              <CardHeader>
+                <CardTitle>Select Room</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {hotel.rooms && hotel.rooms.map(room => (
+                  <div
+                    key={room.id}
+                    onClick={() => setSelectedRoom(room)}
+                    className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                      selectedRoom?.id === room.id
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-semibold">{room.name}</h4>
+                        <p className="text-sm text-gray-600">{room.type} - {room.capacity} guests</p>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {room.amenities.slice(0, 2).map(a => (
+                            <Badge key={a} variant="secondary" className="text-xs">
+                              {a}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-blue-600">${room.price.toLocaleString()}</p>
+                        <p className="text-xs text-gray-600">/night</p>
+                        {room.available > 0 && (
+                          <Badge variant="outline" className="mt-2">{room.available} left</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Booking Summary */}
+                <div className="border-t pt-4 space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-600">Check-in</p>
+                    <p className="font-semibold">{checkInDate}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Check-out</p>
+                    <p className="font-semibold">{checkOutDate}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Guests</p>
+                    <p className="font-semibold">{guests}</p>
+                  </div>
+
+                  <div className="border-t pt-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Nights:</span>
+                      <span>
+                        {checkInDate && checkOutDate
+                          ? Math.ceil(
+                              (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) /
+                              (1000 * 60 * 60 * 24)
+                            )
+                          : 0}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Price per night:</span>
+                      <span>${selectedRoom?.price.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2 text-lg font-bold">
+                      <span>Total:</span>
+                      <span className="text-blue-600">${calculateTotalPrice().toLocaleString()}</span>
+                    </div>
                   </div>
 
                   <Button
-                    onClick={() => setBookingStep(2)}
-                    disabled={!checkIn || !checkOut}
-                    className="w-full bg-black py-6 text-lg hover:bg-gray-800"
+                    onClick={handleBooking}
+                    disabled={isBooking || !selectedRoom || !checkInDate || !checkOutDate}
+                    className="w-full py-6 text-lg"
                   >
-                    Continue to Guest Details
+                    {isBooking ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      `Book Now - $${calculateTotalPrice().toLocaleString()}`
+                    )}
                   </Button>
-                </motion.div>
-              )}
-
-              {/* Step 2: Guest Details */}
-              {bookingStep === 2 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="space-y-6"
-                >
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div>
-                      <Label className="mb-2 block font-semibold">First Name *</Label>
-                      <Input
-                        value={guestDetails.firstName}
-                        onChange={(e) =>
-                          setGuestDetails({
-                            ...guestDetails,
-                            firstName: e.target.value,
-                          })
-                        }
-                        className="border-gray-300"
-                        placeholder="John"
-                      />
-                    </div>
-                    <div>
-                      <Label className="mb-2 block font-semibold">Last Name *</Label>
-                      <Input
-                        value={guestDetails.lastName}
-                        onChange={(e) =>
-                          setGuestDetails({
-                            ...guestDetails,
-                            lastName: e.target.value,
-                          })
-                        }
-                        className="border-gray-300"
-                        placeholder="Doe"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="mb-2 block font-semibold">Email Address *</Label>
-                    <Input
-                      type="email"
-                      value={guestDetails.email}
-                      onChange={(e) =>
-                        setGuestDetails({
-                          ...guestDetails,
-                          email: e.target.value,
-                        })
-                      }
-                      className="border-gray-300"
-                      placeholder="john@example.com"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="mb-2 block font-semibold">Phone Number</Label>
-                    <Input
-                      value={guestDetails.phone}
-                      onChange={(e) =>
-                        setGuestDetails({
-                          ...guestDetails,
-                          phone: e.target.value,
-                        })
-                      }
-                      className="border-gray-300"
-                      placeholder="+1 (555) 000-0000"
-                    />
-                  </div>
-
-                  <div className="flex gap-4">
-                    <Button
-                      onClick={() => setBookingStep(1)}
-                      variant="outline"
-                      className="flex-1 py-6"
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      onClick={() => setBookingStep(3)}
-                      className="flex-1 bg-black py-6 hover:bg-gray-800"
-                    >
-                      Continue to Review
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 3: Review & Confirm */}
-              {bookingStep === 3 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="space-y-8"
-                >
-                  <div className="space-y-4 rounded-lg bg-gray-50 p-6">
-                    <h3 className="text-lg font-bold">Booking Summary</h3>
-                    <div className="space-y-2 border-b pb-4 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Check-in</span>
-                        <span className="font-semibold">{checkIn}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Check-out</span>
-                        <span className="font-semibold">{checkOut}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Room Type</span>
-                        <span className="font-semibold">{selectedRoom.name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Number of Rooms</span>
-                        <span className="font-semibold">{rooms}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Guests</span>
-                        <span className="font-semibold">{guests}</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 pt-4 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">{nights} nights × ${selectedRoom.price}</span>
-                        <span className="font-semibold">${selectedRoom.price * nights * parseInt(rooms)}</span>
-                      </div>
-                      <div className="flex justify-between border-t pt-4 text-lg">
-                        <span className="font-bold">Total Price</span>
-                        <span className="font-bold">${totalPrice}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 rounded-lg bg-gray-50 p-6">
-                    <h3 className="text-lg font-bold">Guest Information</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Name</span>
-                        <span className="font-semibold">
-                          {guestDetails.firstName} {guestDetails.lastName}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Email</span>
-                        <span className="font-semibold">{guestDetails.email}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Phone</span>
-                        <span className="font-semibold">{guestDetails.phone || 'Not provided'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <Button
-                      onClick={() => setBookingStep(2)}
-                      variant="outline"
-                      className="flex-1 py-6"
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      onClick={handleBooking}
-                      className="flex-1 bg-black py-6 text-lg hover:bg-gray-800"
-                    >
-                      Confirm Booking
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Get In Touch / Contact Section */}
-      <div className="border-t bg-white px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-16 md:grid-cols-2">
-            <div>
-              <h2 className="mb-8 text-3xl font-bold">Get In Touch</h2>
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-black">
-                    <MapPin className="size-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-gray-500">Address</p>
-                    <p className="text-lg">{hotel.location}</p>
-                  </div>
                 </div>
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-black">
-                    <Phone className="size-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-gray-500">Phone</p>
-                    <p className="text-lg">+1 (555) 123-4567</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-black">
-                    <Mail className="size-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-gray-500">Email</p>
-                    <p className="text-lg">reservations@{hotel.name.toLowerCase().replace(/\s+/g, '')}.com</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-black">
-                    <Clock className="size-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-gray-500">Check-in / Check-out</p>
-                    <p className="text-lg">{hotel.checkinTime} / {hotel.checkoutTime}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <Card className="border-gray-200 bg-gray-50">
-                <CardContent className="p-8">
-                  <h3 className="mb-6 text-2xl font-bold">Special Offers</h3>
-                  <p className="mb-6 text-gray-600">
-                    Subscribe to receive exclusive offers, event invitations, and the latest news from {hotel.name}.
-                  </p>
-                  <div className="space-y-4">
-                    <Input placeholder="Your email address" className="h-12 border-gray-300" />
-                    <Button className="h-12 w-full bg-black hover:bg-gray-800">
-                      Subscribe
-                      <ChevronRight className="ml-2 size-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

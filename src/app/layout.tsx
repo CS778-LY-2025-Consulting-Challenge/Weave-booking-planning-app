@@ -1,4 +1,5 @@
 import Providers from '@/components/Providers';
+import { StripeProvider } from '@/components/StripeProvider';
 import { AuthProvider } from '@/context/AuthContext';
 import type { Metadata } from 'next';
 import { Cormorant_Garamond, Inter } from 'next/font/google';
@@ -32,9 +33,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
       <body suppressHydrationWarning className={inter.className}>
-        <AuthProvider>
-          <Providers>{children}</Providers>
-        </AuthProvider>
+        <StripeProvider>
+          <AuthProvider>
+            <Providers>{children}</Providers>
+          </AuthProvider>
+        </StripeProvider>
       </body>
     </html>
   );

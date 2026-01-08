@@ -447,7 +447,23 @@ export default function HotelBooking() {
               isLoading={isSearching}
               error={searchError}
               onViewDetails={(hotel) => {
-                router.push(`/hotels/${encodeURIComponent(hotel.name.toLowerCase().replace(/\s+/g, '-'))}`);
+                const params = new URLSearchParams({
+                  checkIn: checkIn,
+                  checkOut: checkOut,
+                  guests: guests.toString(),
+                  name: hotel.name,
+                  location: hotel.city || hotel.location,
+                });
+                
+                // Add SerpAPI fields if available
+                if (hotel.property_token) {
+                  params.append('property_token', hotel.property_token);
+                }
+                if (hotel.serpapi_property_details_link) {
+                  params.append('details_link', hotel.serpapi_property_details_link);
+                }
+                
+                router.push(`/hotels/${encodeURIComponent(hotel.id)}?${params.toString()}`);
               }}
             />
           </div>
