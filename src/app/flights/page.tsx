@@ -49,7 +49,7 @@ import { useRouter } from 'next/navigation';
 import { FlightBookingFlow } from '@/components/FlightBookingFlow';
 
 interface Flight {
-  id: number;
+  id: string;
   airline: string;
   from: string;
   to: string;
@@ -126,12 +126,19 @@ const CITIES: City[] = [
 
 export default function FlightBooking() {
   const router = useRouter();
+  const getDefaultDate = (daysFromNow: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() + daysFromNow);
+    return date;
+  };
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [tripType, setTripType] = useState('roundtrip');
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showBookingFlow, setShowBookingFlow] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [fromInput, setFromInput] = useState('');
   const [toInput, setToInput] = useState('');
   const [fromOpen, setFromOpen] = useState(false);
@@ -142,10 +149,10 @@ export default function FlightBooking() {
     infants: 0,
   });
   const [departureDate, setDepartureDate] = useState<Date | null>(
-    new Date(2025, 11, 15)
+    getDefaultDate(0)
   );
   const [returnDate, setReturnDate] = useState<Date | null>(
-    new Date(2025, 11, 22)
+    getDefaultDate(7)
   );
 
   // Multi-city flights state
@@ -170,9 +177,9 @@ export default function FlightBooking() {
   const totalPassengers =
     passengerCounts.adults + passengerCounts.children + passengerCounts.infants;
 
-  const allFlights: Flight[] = [
+  const INITIAL_FLIGHTS: Flight[] = [
     {
-      id: 1,
+      id: '1',
       airline: 'Emirates',
       from: 'New York (JFK)',
       to: 'Dubai (DXB)',
@@ -186,7 +193,7 @@ export default function FlightBooking() {
       departureTime: 'morning',
     },
     {
-      id: 2,
+      id: '2',
       airline: 'Singapore Airlines',
       from: 'New York (JFK)',
       to: 'Dubai (DXB)',
@@ -200,7 +207,7 @@ export default function FlightBooking() {
       departureTime: 'morning',
     },
     {
-      id: 3,
+      id: '3',
       airline: 'Qatar Airways',
       from: 'New York (JFK)',
       to: 'Dubai (DXB)',
@@ -214,7 +221,7 @@ export default function FlightBooking() {
       departureTime: 'morning',
     },
     {
-      id: 4,
+      id: '4',
       airline: 'Etihad Airways',
       from: 'New York (JFK)',
       to: 'Dubai (DXB)',
@@ -228,7 +235,7 @@ export default function FlightBooking() {
       departureTime: 'afternoon',
     },
     {
-      id: 5,
+      id: '5',
       airline: 'British Airways',
       from: 'New York (JFK)',
       to: 'Dubai (DXB)',
@@ -238,10 +245,11 @@ export default function FlightBooking() {
       stops: '1 Stop',
       cabin: 'Premium Economy',
       price: 1299,
-      logo: 'https://images.unsplash.com/photo-1506033690138-a2f823a05a99?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwbGFuZSUyMHdpbmRvdyUyMHZpZXd8ZW58MXx8fHwxNzY0NTUyNzQ1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+      logo: 'https://images.unsplash.com/photo-1506033690138-a2f823a05a99?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwbGFuZCUyMHdpbmRvdyUyMHZpZXd8ZW58MXx8fHwxNzY0NTUyNzQ1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
       departureTime: 'evening',
     },
   ];
+  const [allFlights, setAllFlights] = useState<Flight[]>(INITIAL_FLIGHTS);
 
   // Filter logic
   const filteredFlights = allFlights.filter((flight) => {
@@ -314,8 +322,140 @@ export default function FlightBooking() {
     }
   };
 
-  const handleSearch = () => {
+  const parsePrice = (value: unknown, passengers: number) => {
+    if (typeof value === 'number') {
+      return passengers > 0 ? Math.round(value / passengers) : value;
+    }
+    if (typeof value !== 'string') return 0;
+    const numeric = parseFloat(value.replace(/[^\d.]/g, ''));
+    if (!Number.isFinite(numeric)) return 0;
+    return passengers > 0 ? Math.round(numeric / passengers) : Math.round(numeric);
+  };
+
+  const formatTime = (datetime?: string) => {
+    if (!datetime) return '10:00 AM';
+    const date = new Date(datetime);
+    if (Number.isNaN(date.getTime())) return '10:00 AM';
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  };
+
+  const getDepartureTimeBucket = (datetime?: string): Flight['departureTime'] => {
+    if (!datetime) return 'morning';
+    const date = new Date(datetime);
+    if (Number.isNaN(date.getTime())) return 'morning';
+    const hour = date.getHours();
+    if (hour < 12) return 'morning';
+    if (hour < 18) return 'afternoon';
+    return 'evening';
+  };
+
+  const formatAirportLabel = (airport?: string, iata?: string, fallback?: string) => {
+    if (iata && airport) return `${airport} (${iata})`;
+    if (iata) return `${fallback || 'Unknown'} (${iata})`;
+    return airport || fallback || 'Unknown';
+  };
+
+  const getSearchParams = () => {
+    if (tripType === 'multicity') {
+      const firstLeg = multiCityFlights.find((leg) => leg.from && leg.to);
+      return {
+        from: firstLeg?.from || '',
+        to: firstLeg?.to || '',
+        date: firstLeg?.date || departureDate,
+      };
+    }
+    return { from: fromInput, to: toInput, date: departureDate };
+  };
+
+  const handleSearch = async () => {
+    const searchParams = getSearchParams();
     setHasSearched(true);
+    setIsSearching(true);
+    setSearchError(null);
+
+    if (!searchParams.from || !searchParams.to) {
+      setSearchError('Please enter both origin and destination.');
+      setIsSearching(false);
+      return;
+    }
+
+    const dateString = searchParams.date
+      ? searchParams.date.toISOString().split('T')[0]
+      : undefined;
+
+    try {
+      const response = await fetch('/api/flights/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: searchParams.from,
+          to: searchParams.to,
+          date: dateString,
+          passengers: totalPassengers,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setSearchError(data.error || 'Flight search failed.');
+        setAllFlights(INITIAL_FLIGHTS);
+        return;
+      }
+
+      const results = Array.isArray(data.results) ? data.results : [];
+      if (results.length === 0) {
+        // Check if the API returned an error_info with suggestions
+        if (data.error_info) {
+          setSearchError(`${data.error_info.message}. ${data.error_info.suggestion}`);
+        } else {
+          setSearchError('No flights found for your search. Try adjusting your dates or selecting different cities.');
+        }
+        setAllFlights([]);
+        return;
+      }
+
+      const mappedFlights = results.map((flight: any, index: number) => {
+        const stopsCount = typeof flight.stops === 'number' ? flight.stops : 0;
+        const departureScheduled = flight.departure?.scheduled;
+        const arrivalScheduled = flight.arrival?.scheduled;
+
+        // Generate a unique ID combining flight ID, index, and timestamp to ensure no duplicates
+        const uniqueId = `${flight.id || flight.flightNumber || 'flight'}-${index}-${Date.now()}`;
+
+        return {
+          id: uniqueId,
+          airline: flight.airline || 'Unknown Airline',
+          from: formatAirportLabel(
+            flight.departure?.airport,
+            flight.departure?.iata,
+            searchParams.from
+          ),
+          to: formatAirportLabel(
+            flight.arrival?.airport,
+            flight.arrival?.iata,
+            searchParams.to
+          ),
+          departure: formatTime(departureScheduled),
+          arrival: formatTime(arrivalScheduled),
+          duration: flight.duration || '10h 30m',
+          stops: stopsCount === 0 ? 'Non-stop' : `${stopsCount} Stop${stopsCount > 1 ? 's' : ''}`,
+          cabin: 'Economy',
+          price: parsePrice(flight.price, totalPassengers),
+          logo:
+            flight.logo ||
+            'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhaXJwbGFuZSUyMHRyYXZlbHxlbnwxfHx8fDE3NjQ1NTI3NDR8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          departureTime: getDepartureTimeBucket(departureScheduled),
+        };
+      });
+
+      setAllFlights(mappedFlights);
+    } catch (error: any) {
+      setSearchError(error.message || 'Flight search failed.');
+      setAllFlights(INITIAL_FLIGHTS);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const filterCities = (searchValue: string): City[] => {
@@ -1215,6 +1355,20 @@ export default function FlightBooking() {
 
           {/* Flight Results */}
           <div className="flex-1">
+            {searchError && (
+              <Card className="mb-6 border-red-200 bg-red-50">
+                <CardContent className="p-4 text-sm text-red-700">
+                  {searchError}
+                </CardContent>
+              </Card>
+            )}
+            {isSearching && (
+              <Card className="mb-6">
+                <CardContent className="p-4 text-sm text-gray-600">
+                  Searching flights...
+                </CardContent>
+              </Card>
+            )}
             <div className="mb-6 flex items-center justify-between">
               <p className="text-gray-600">
                 {sortedFlights.length} flights found

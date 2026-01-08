@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Amadeus API</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
+        button { padding: 10px 20px; background: #dc2626; color: white; border: none; cursor: pointer; }
+        #results { margin-top: 20px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Test Amadeus Flight API</h1>
+    <button onclick="searchFlights()">Search MAD → BCN Flights</button>
+    <div id="results"></div>
+    
+    <script>
+        async function searchFlights() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.textContent = 'Searching...';
+            
+            try {
+                const response = await fetch('/api/flights/amadeus-search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        originLocationCode: 'MAD',
+                        destinationLocationCode: 'BCN',
+                        departureDate: '2026-02-15',
+                        adults: 1,
+                        travelClass: 'ECONOMY'
+                    })
+                });
+                
+                const data = await response.json();
+                resultsDiv.textContent = `✅ SUCCESS!\n\nFound ${data.meta.count} flights\n\n` + 
+                    `Sample Flight:\n` +
+                    `From: ${data.data[0].summary.from}\n` +
+                    `To: ${data.data[0].summary.to}\n` +
+                    `Departure: ${data.data[0].summary.departureTime}\n` +
+                    `Arrival: ${data.data[0].summary.arrivalTime}\n` +
+                    `Duration: ${data.data[0].summary.duration}\n` +
+                    `Price: ${data.data[0].price.currency} $${data.data[0].price.total}\n` +
+                    `Airline: ${data.data[0].summary.airline}`;
+            } catch (error) {
+                resultsDiv.textContent = '❌ ERROR: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
