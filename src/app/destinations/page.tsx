@@ -1,89 +1,85 @@
-﻿ 'use client';
+﻿'use client';
 
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 
 export default function TrendingDestinations() {
   const [bestInTravelSrc, setBestInTravelSrc] = useState(
-    'https://www.lonelyplanet.com/best-in-travel'
+    '/best-in-travel/index.html'
   );
+  const [iframeHeight, setIframeHeight] = useState<number | undefined>(undefined);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    const localPath = '/best-in-travel/index.html';
-
-    fetch(localPath, { method: 'HEAD' })
+    // Prefer local file; if missing, fallback to remote (may have its own scroll)
+    fetch('/best-in-travel/index.html', { method: 'HEAD' })
       .then((res) => {
         if (res.ok) {
-          setBestInTravelSrc(localPath);
+          setBestInTravelSrc('/best-in-travel/index.html');
+        } else {
+          setBestInTravelSrc('https://www.lonelyplanet.com/best-in-travel');
         }
       })
       .catch(() => {
-        /* ignore failures and keep the remote fallback */
+        setBestInTravelSrc('https://www.lonelyplanet.com/best-in-travel');
       });
   }, []);
 
   useEffect(() => {
     const handleIframeLoad = () => {
-      if (!iframeRef.current) return;
+      const iframe = iframeRef.current;
+      if (!iframe) return;
 
       try {
-        const doc = iframeRef.current.contentDocument;
+        const doc = iframe.contentDocument;
         if (!doc) return;
 
-        // If we're loading the local HTML and it has no styles, fallback to remote
-        const isLocal = bestInTravelSrc.startsWith('/');
-        if (isLocal) {
-          const hasStyles =
-            (doc as any).styleSheets?.length > 0 ||
-            !!doc.querySelector('link[rel="stylesheet"], style');
-
-          if (!hasStyles) {
-            setBestInTravelSrc('https://www.lonelyplanet.com/best-in-travel');
-            return;
-          }
-        }
-
-        const navTerms = [
-          'Destinations',
-          'Books',
-          'Trips',
-          'Stories',
-          'Search',
-          'Cart',
-          'Sign In',
-        ];
-
+        // Seamless integration: hide the embedded page's own header if present
         const header = doc.querySelector('header');
-        if (
-          header &&
-          header.textContent &&
-          navTerms.every((term) => header.textContent?.includes(term))
-        ) {
-          header.style.display = 'none';
-        }
+        if (header) header.style.display = 'none';
 
+        // Remove any welcome banner text block if found
         const matchingNode = Array.from(doc.querySelectorAll<HTMLElement>('*')).find(
           (el) =>
             el.textContent &&
             el.textContent.includes('Places to go in 2026') &&
             el.textContent.includes('Welcome to Lonely Planet')
         );
+        if (matchingNode) matchingNode.style.display = 'none';
 
-        if (matchingNode) {
-          matchingNode.style.display = 'none';
-        }
-      } catch (error) {
-        /* cross-origin; ignore */
+        // Resize iframe to match content height for single page scrollbar
+        const body = doc.body;
+        const html = doc.documentElement;
+        const height = Math.max(
+          body.scrollHeight,
+          body.offsetHeight,
+          html.clientHeight,
+          html.scrollHeight,
+          html.offsetHeight
+        );
+        setIframeHeight(height);
+
+        // Optional: observe changes to adjust height if content expands
+        const observer = new ResizeObserver(() => {
+          const newHeight = Math.max(
+            body.scrollHeight,
+            body.offsetHeight,
+            html.clientHeight,
+            html.scrollHeight,
+            html.offsetHeight
+          );
+          setIframeHeight(newHeight);
+        });
+        observer.observe(body);
+      } catch (err) {
+        // Cross-origin: cannot access content; leave default height
+        setIframeHeight(undefined);
       }
     };
 
     const node = iframeRef.current;
     node?.addEventListener('load', handleIframeLoad);
-
-    return () => {
-      node?.removeEventListener('load', handleIframeLoad);
-    };
+    return () => node?.removeEventListener('load', handleIframeLoad);
   }, [bestInTravelSrc]);
 
   return (
@@ -113,33 +109,35 @@ export default function TrendingDestinations() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="mb-4 text-white drop-shadow-lg">
-              Trending Destinations
-            </h1>
+            <h1 className="mb-4 text-white drop-shadow-lg">Trending Destinations</h1>
             <p className="mx-auto max-w-3xl text-xl text-white/90 drop-shadow-md">
-              Discover the world's most exciting destinations right now. From
-              hidden gems to iconic landmarks, explore where travelers are
-              heading this season.
+              Discover the world's most exciting destinations right now.
             </p>
           </motion.div>
         </div>
       </div>
 
-      {/* Best-in-Travel Content (replaces destination cards grid) */}
+      {/* Integrated Best-in-Travel content */}
       <section className="bg-white">
         <div className="w-full">
-          <div className="h-[90vh] w-screen overflow-hidden">
-            <iframe
-              src={bestInTravelSrc}
-              title="Lonely Planet Best in Travel 2026"
-              loading="lazy"
-              className="h-full w-full"
-              referrerPolicy="no-referrer"
-              ref={iframeRef}
-            />
-          </div>
+          <iframe
+            src={bestInTravelSrc}
+            title="Best in Travel 2026"
+            loading="lazy"
+            className="w-full border-0"
+            style={{
+              display: 'block',
+              width: '100%',
+              height: iframeHeight ? `${iframeHeight}px` : '1500px',
+              minHeight: '600px',
+            }}
+            scrolling="no"
+            referrerPolicy="no-referrer"
+            ref={iframeRef}
+          />
         </div>
       </section>
+      {/* Footer is provided globally via Providers in layout */}
     </div>
   );
 }
