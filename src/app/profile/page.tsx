@@ -38,9 +38,11 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 
 export default function Profile() {
   const { isAuthenticated } = useAuth();
+  const { user } = useUser();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -49,10 +51,11 @@ export default function Profile() {
       router.push('/auth');
     }
   }, [isAuthenticated, router]);
+
   const [profileData, setProfileData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
+    firstName: user?.firstName || 'John',
+    lastName: user?.lastName || 'Doe',
+    email: user?.emailAddresses?.[0]?.emailAddress || 'john.doe@example.com',
     phone: '+1 (555) 123-4567',
     address: 'Auckland, New Zealand',
     dateOfBirth: '1990-05-15',
@@ -125,10 +128,12 @@ export default function Profile() {
                 <div className="relative">
                   <Avatar className="h-32 w-32">
                     <AvatarImage
-                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400"
+                      src={user?.imageUrl || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400'}
                       alt="Profile"
                     />
-                    <AvatarFallback className="text-2xl">JD</AvatarFallback>
+                    <AvatarFallback className="text-2xl">
+                      {profileData.firstName.charAt(0)}{profileData.lastName.charAt(0)}
+                    </AvatarFallback>
                   </Avatar>
                   <Button
                     size="sm"

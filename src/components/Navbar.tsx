@@ -13,6 +13,7 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
 import AnimatedLogoutButton from './AnimatedLogoutButton';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/button';
@@ -190,63 +191,28 @@ export default function Navbar() {
 
             {/* Auth Section */}
             <div className="flex items-center gap-4">
-              {isAuthenticated ? (
-                <div className="relative" ref={dropdownRef}>
-                  <Button
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    variant="ghost"
-                    size="sm"
-                    className="gap-2 border border-white/30 bg-white/10 text-white transition-all duration-300 hover:bg-white/20"
+              <SignedIn>
+                <div className="flex items-center gap-4">
+                  <Link
+                    href="/user-profile"
+                    className="text-sm text-white transition-all duration-300 hover:scale-105 hover:text-gray-200"
                   >
-                    <User className="size-4" />
-                    <span className="hidden sm:inline">Profile</span>
-                    <ChevronDown
-                      className={`size-4 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
-                    />
-                  </Button>
-
-                  {/* Custom Dropdown Menu */}
-                  {dropdownOpen && (
-                    <div className="absolute right-0 z-[100] mt-2 w-56 rounded-lg border border-white/20 bg-black/30 py-2 shadow-xl">
-                      <button
-                        onClick={() => {
-                          setDropdownOpen(false);
-                          router.push('/profile');
-                        }}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white transition-colors hover:bg-black/20"
-                      >
-                        <Settings className="size-4" />
-                        Profile & Settings
-                      </button>
-                      <button
-                        onClick={handleDashboardClick}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white transition-colors hover:bg-black/20"
-                      >
-                        <LayoutDashboard className="size-4" />
-                        Dashboard
-                      </button>
-                      <button
-                        onClick={() => {
-                          setDropdownOpen(false);
-                          router.push('/wishlist');
-                        }}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white transition-colors hover:bg-black/20"
-                      >
-                        <Heart className="size-4" />
-                        My Wishlist
-                      </button>
-                      <div className="my-1 h-px bg-white/20" />
-                      <div className="px-4 py-2">
-                        <AnimatedLogoutButton
-                          onClick={handleLogout}
-                          className="w-full rounded-lg bg-gradient-to-r from-slate-800 to-slate-900 px-4 py-2 text-sm font-medium text-white transition-all hover:from-slate-700 hover:to-slate-800"
-                          variant="dropdown"
-                        />
-                      </div>
-                    </div>
-                  )}
+                    Profile
+                  </Link>
+                  <UserButton 
+                    afterSignOutUrl="/"
+                    appearance={{
+                      elements: {
+                        avatarBox: 'w-10 h-10 rounded-full border border-white/20',
+                        userButtonPopoverCard: 'bg-black/30 border border-white/20 backdrop-blur-xl',
+                        userPreviewMainIdentifier: 'text-white',
+                        userButtonBox: 'flex-row-reverse',
+                      }
+                    }}
+                  />
                 </div>
-              ) : (
+              </SignedIn>
+              <SignedOut>
                 <Button
                   onClick={() => router.push('/auth')}
                   size="sm"
@@ -254,7 +220,7 @@ export default function Navbar() {
                 >
                   Sign In
                 </Button>
-              )}
+              </SignedOut>
 
               {/* Mobile Menu */}
               <Sheet>
@@ -280,49 +246,46 @@ export default function Navbar() {
                     ))}
 
                     {/* Mobile Auth Section */}
-                    {isAuthenticated ? (
-                      <>
-                        <div className="my-2 h-px bg-white/20" />
-                        <Link
-                          href="/profile"
-                          className="flex items-center gap-2 p-2 text-white transition-colors hover:text-gray-200"
-                        >
-                          <Settings className="size-4" />
-                          Profile & Settings
-                        </Link>
-                        <button
-                          onClick={handleDashboardClick}
-                          className="flex items-center gap-2 p-2 text-left text-white transition-colors hover:text-gray-200"
-                        >
-                          <LayoutDashboard className="size-4" />
-                          Dashboard
-                        </button>
-                        <Link
-                          href="/wishlist"
-                          className="flex items-center gap-2 p-2 text-white transition-colors hover:text-gray-200"
-                        >
-                          <Heart className="size-4" />
-                          My Wishlist
-                        </Link>
-                        <div className="px-2">
-                          <AnimatedLogoutButton
-                            onClick={handleLogout}
-                            className="w-full rounded-lg bg-gradient-to-r from-slate-800 to-slate-900 px-4 py-2 text-sm font-medium text-white transition-all hover:from-slate-700 hover:to-slate-800"
-                            variant="mobile"
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="my-2 h-px bg-white/20" />
-                        <Button
-                          onClick={() => router.push('/auth')}
-                          className="mx-2 bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-purple-700 text-white"
-                        >
-                          Sign In
-                        </Button>
-                      </>
-                    )}
+                    <SignedIn>
+                      <div className="my-2 h-px bg-white/20" />
+                      <Link
+                        href="/user-profile"
+                        className="flex items-center gap-2 p-2 text-white transition-colors hover:text-gray-200"
+                      >
+                        <Settings className="size-4" />
+                        Profile Settings
+                      </Link>
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center gap-2 p-2 text-white transition-colors hover:text-gray-200"
+                      >
+                        <LayoutDashboard className="size-4" />
+                        Dashboard
+                      </Link>
+                      <Link
+                        href="/wishlist"
+                        className="flex items-center gap-2 p-2 text-white transition-colors hover:text-gray-200"
+                      >
+                        <Heart className="size-4" />
+                        My Wishlist
+                      </Link>
+                    </SignedIn>
+                    <SignedOut>
+                      <div className="my-2 h-px bg-white/20" />
+                      <Button
+                        onClick={() => router.push('/auth')}
+                        className="mx-2 bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-purple-700 text-white"
+                      >
+                        Sign In
+                      </Button>
+                      <Button
+                        onClick={() => router.push('/signup')}
+                        variant="outline"
+                        className="mx-2 border-white/30 text-white hover:bg-white/10"
+                      >
+                        Sign Up
+                      </Button>
+                    </SignedOut>
                   </div>
                 </SheetContent>
               </Sheet>

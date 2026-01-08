@@ -1,3 +1,4 @@
+import { ClerkProvider } from '@clerk/nextjs';
 import Providers from '@/components/Providers';
 import { StripeProvider } from '@/components/StripeProvider';
 import { AuthProvider } from '@/context/AuthContext';
@@ -31,14 +32,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
-      <body suppressHydrationWarning className={inter.className}>
-        <StripeProvider>
+    <ClerkProvider>
+      <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
+        <body suppressHydrationWarning className={inter.className}>
           <AuthProvider>
             <Providers>{children}</Providers>
           </AuthProvider>
-        </StripeProvider>
-      </body>
-    </html>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

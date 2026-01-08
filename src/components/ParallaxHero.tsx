@@ -1,11 +1,22 @@
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 
 const ParallaxHero = () => {
+  const [backgroundUrl, setBackgroundUrl] = useState<string>('');
+  const [textUrl, setTextUrl] = useState<string>('');
+  const [mountainUrl, setMountainUrl] = useState<string>('');
   const [mountainOffset, setMountainOffset] = useState(500);
   const [showScrollHint, setShowScrollHint] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const SCROLL_HINT_HIDE_OFFSET = 150;
+
+  // Fetch signed URLs on mount
+  useEffect(() => {
+    setBackgroundUrl(`/api/image-proxy?path=home/background.jpg`);
+    setTextUrl(`/api/image-proxy?path=home/text.png`);
+    setMountainUrl(`/api/image-proxy?path=home/mountain.png`);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -48,7 +59,7 @@ const ParallaxHero = () => {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: 'url(/home/background.jpg)',
+            backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : undefined,
           }}
         />
 
@@ -63,11 +74,16 @@ const ParallaxHero = () => {
         <div
           className="absolute inset-x-0 top-20 w-[80%] mx-auto flex items-center justify-center"
         >
-          <img
-            src="/home/text.png"
-            alt=""
-            className="max-w-full max-h-full object-contain"
-          />
+          {textUrl && (
+            <Image
+              src={textUrl}
+              alt="Weave Text"
+              width={600}
+              height={200}
+              className="max-w-full max-h-full object-contain"
+              unoptimized
+            />
+          )}
         </div>
 
         {/* Mountain layer - moves up during sticky scroll */}
@@ -77,11 +93,16 @@ const ParallaxHero = () => {
             transform: `translateY(${mountainOffset}px)`,
           }}
         >
-          <img
-            src="/home/mountain.png"
-            alt=""
-            className="w-full h-auto object-contain"
-          />
+          {mountainUrl && (
+            <Image
+              src={mountainUrl}
+              alt="Mountain"
+              width={1920}
+              height={1080}
+              className="w-full h-auto object-contain"
+              unoptimized
+            />
+          )}
         </div>
 
         {/* Scroll Indicator */}

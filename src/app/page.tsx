@@ -713,81 +713,95 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trending User Journeys */}
-      <section className="bg-gray-50 py-16">
+      {/* Featured Destinations Carousel */}
+      <section className="bg-white py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
-            <h2 className="font-[Abril_Fatface] text-[40px]">
+          {/* Header with Navigation */}
+          <div className="mb-10 flex items-center justify-between">
+            <h2
+              className="text-2xl md:text-3xl font-light tracking-tight text-gray-900"
+              style={{ fontFamily: '"Times New Roman", Times, serif' }}
+            >
               Featured destinations
             </h2>
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/destinations')}
-                className="text-sm tracking-wider uppercase hover:underline"
-              >
+              <a href="/destinations" className="text-xs font-semibold uppercase tracking-widest text-gray-700 hover:text-black">
                 VIEW ALL
-              </button>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 rounded-sm"
-                  onClick={prevFeaturedDestSlide}
-                  disabled={featuredDestScroll === 0}
+              </a>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    const container = document.querySelector('[data-carousel-featured]');
+                    if (container) container.scrollBy({ left: -400, behavior: 'smooth' });
+                  }}
+                  className="rounded-md bg-black p-2 text-white hover:bg-gray-800 transition-colors"
+                  aria-label="Previous"
                 >
-                  <ChevronLeft className="size-4" />
-                </Button>
-                <Button
-                  variant="default"
-                  size="icon"
-                  className="h-10 w-10 rounded-sm bg-black hover:bg-gray-800"
-                  onClick={nextFeaturedDestSlide}
-                  disabled={featuredDestScroll >= destinations.length - 5}
+                  <ChevronLeft className="size-5" />
+                </button>
+                <button
+                  onClick={() => {
+                    const container = document.querySelector('[data-carousel-featured]');
+                    if (container) container.scrollBy({ left: 400, behavior: 'smooth' });
+                  }}
+                  className="rounded-md bg-black p-2 text-white hover:bg-gray-800 transition-colors"
+                  aria-label="Next"
                 >
-                  <ChevronRight className="size-4" />
-                </Button>
+                  <ChevronRight className="size-5" />
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Horizontal Scrolling Cards */}
+          {/* Carousel Container */}
           <div className="overflow-hidden">
             <div
-              className="flex gap-4 transition-transform duration-500 ease-in-out"
-              style={{
-                transform: `translateX(-${featuredDestScroll * (100 / 5)}%)`,
-              }}
+              data-carousel-featured
+              className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2"
+              style={{ scrollBehavior: 'smooth', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              {destinations.map((destination) => (
+              {[
+                { name: 'Ireland', region: 'Europe', image: '/images/ireland.jpg' },
+                { name: 'Venice', region: 'Europe', image: '/images/venice.jpg' },
+                { name: 'San Francisco', region: 'The USA', image: '/images/San%20Francisco.jpg' },
+                { name: 'Copenhagen', region: 'Denmark', image: '/images/COPENHAGEN.jpg' },
+                { name: 'Marrakesh', region: 'Morocco', image: '/images/Marrakesh.jpg' },
+                { name: 'Tokyo', region: 'Japan', image: '/images/Tokyo.jpg' },
+                { name: 'Paris', region: 'France', image: '/images/paris.jpg' },
+                { name: 'Sydney', region: 'Australia', image: '/images/sydeny.jpg' },
+                { name: 'Dubai', region: 'UAE', image: '/images/dubai.jpg' },
+                { name: 'Barcelona', region: 'Spain', image: '/images/barcelona.jpg' },
+              ].map((dest, idx) => (
                 <div
-                  key={destination.id}
-                  className="group w-[calc(20%-12.8px)] min-w-[240px] flex-shrink-0 cursor-pointer"
+                  key={idx}
+                  className="flex-shrink-0 w-56 snap-start cursor-pointer group"
                   onClick={() => router.push('/destinations')}
                 >
-                  {/* Image */}
-                  <div className="relative mb-4 aspect-[3/4] overflow-hidden">
+                  <div className="relative h-64 overflow-hidden bg-gray-300">
                     <img
-                      src={destination.image}
-                      alt={destination.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      src={dest.image}
+                      alt={dest.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
-
-                  {/* Region */}
-                  <p className="mb-1 text-xs tracking-wider text-gray-600 uppercase">
-                    {destination.region.replace('_', ' ')}
-                  </p>
-
-                  {/* Name */}
-                  <h3 className="text-lg" style={{ fontWeight: '700' }}>
-                    {destination.name}
-                  </h3>
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                      {dest.region}
+                    </p>
+                    <h3 className="text-base font-bold text-gray-900 mt-1">
+                      {dest.name}
+                    </h3>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
+        <style>{`
+          [data-carousel-featured]::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
       </section>
     </div>
   );

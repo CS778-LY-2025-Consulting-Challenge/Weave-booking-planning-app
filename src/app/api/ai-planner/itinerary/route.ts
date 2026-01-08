@@ -12,6 +12,20 @@ Now you must generate a COMPLETE, DETAILED itinerary.
 **Your Mission:**
 Generate a full trip plan with day-by-day activities, transportation, accommodation, and map data.
 
+**CRITICAL - Date Format Requirements:**
+- ALWAYS return dates in ISO format: "YYYY-MM-DD" (e.g., "2026-01-10", "2026-01-20")
+- The "dates" object is REQUIRED and must include:
+  * "start": "YYYY-MM-DD" (the first day of the trip)
+  * "end": "YYYY-MM-DD" (the last day of the trip)
+  * "durationDays": number (total number of days, must match the length of dayPlans array)
+- For each dayPlan entry, also include a "date" field in ISO format matching the specific day
+- Example: If trip is Jan 10-20, 2026 (10 days):
+  * "dates": { "start": "2026-01-10", "end": "2026-01-20", "durationDays": 10 }
+  * dayPlans[0]: { "day": 1, "date": "2026-01-10", ... }
+  * dayPlans[1]: { "day": 2, "date": "2026-01-11", ... }
+  * ...
+  * dayPlans[9]: { "day": 10, "date": "2026-01-20", ... }
+
 **Activity Quality Standards (CRITICAL):**
 Each day should have 3-4 well-planned activities. Quality over quantity!
 
@@ -78,9 +92,14 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
    - CRITICAL: If the trip returns to the starting city, the routeFlow MUST include the departure city at BOTH the beginning AND the end
    - This ensures the map displays the complete round-trip route with return flight
 
-3. **dayPlans**: For EVERY day of the trip, create detailed activities.
+3. **dayPlans**: YOU MUST GENERATE EXACTLY THE NUMBER OF DAYS SPECIFIED IN THE USER'S REQUEST!
+   - This is ABSOLUTELY CRITICAL: If the trip is 7 days, you MUST create 7 dayPlans entries (day 1 through day 7, NO shortcuts!)
+   - If durationDays is 10, you MUST create 10 dayPlans entries (day 1 through day 10)
+   - NEVER reduce the trip length on your own initiative
+   - For EVERY day of the trip, create detailed activities.
    - Each day MUST have:
      * **city**: REQUIRED - The main city where this day's activities take place (e.g., "Tokyo", "Auckland"). This is CRITICAL for filtering. Even if the day starts with "Arrive in Tokyo", the city should be "Tokyo".
+     * **daySummary**: REQUIRED - A SHORT, catchy 3-5 word summary of the day's theme. Examples: "Imperial History and Fine Dining", "Temple of Heaven and Hutong Foodie Tour", "Modern Art and Waterfront Dining", "Mountain Hikes and Local Cuisine". Keep it brief and descriptive!
    - Each activity MUST have:
      * Precise coordinates (lat, lng)
      * Type: "attraction", "food", or "hotel" (REQUIRED)
@@ -115,40 +134,64 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
 7. **tripTitle**: A catchy title for the trip (e.g., "10-Day Culinary Adventure in Japan")
 
 **CRITICAL Reminders:**
+- YOU MUST GENERATE EXACTLY THE REQUESTED NUMBER OF DAYS! If user wants 7 days, provide 7 dayPlans entries (day 1, 2, 3, 4, 5, 6, 7). NO exceptions!
 - For multi-day trips, ALWAYS provide accommodation entries. Travelers need a place to sleep every night!
 - NEVER use [...] placeholders. Provide complete, realistic data for every field.
 - Calculate accommodation correctly: N-day trip = (N-1) nights = appropriate number of hotel entries based on cities visited.
+- Verify your output: Count your dayPlans array length - it MUST match durationDays exactly!
 
 **Output Format (Strict JSON):**
 {
-  "tripTitle": "string",
-  "summary": { "days": number, "cities": number, "activitiesCount": number, "hotelsCount": number, "transportsCount": number },
-  "routeFlow": ["City1", "City2", "City3", "City1"],
-  "mapPoints": [{ "name": "string", "lat": number, "lng": number }],
-  "destination": "string or array",
-  "departureCity": "string",
-  "dates": { "start": "YYYY-MM-DD", "end": "YYYY-MM-DD", "durationDays": number },
-  "travellers": number,
-  "purpose": "string",
-  "preferences": ["string"],
+  "tripTitle": "10-Day Japan & China Adventure",
+  "summary": { "days": 10, "cities": 3, "activitiesCount": 24, "hotelsCount": 2, "transportsCount": 3 },
+  "routeFlow": ["Auckland", "Tokyo", "Shanghai", "Auckland"],
+  "mapPoints": [
+    { "name": "Auckland", "lat": -36.8485, "lng": 174.7633 },
+    { "name": "Tokyo", "lat": 35.6762, "lng": 139.6503 },
+    { "name": "Shanghai", "lat": 31.2304, "lng": 121.4737 }
+  ],
+  "destination": "Tokyo",
+  "departureCity": "Auckland",
+  "dates": { "start": "2026-01-10", "end": "2026-01-20", "durationDays": 10 },
+  "travellers": 2,
+  "purpose": "Leisure & Culture",
+  "preferences": ["Food", "Culture", "Shopping"],
   "dayPlans": [
     {
-      "day": number,
-      "date": "YYYY-MM-DD",
-      "title": "string",
+      "day": 1,
+      "date": "2026-01-10",
+      "title": "Arrival in Tokyo",
+      "daySummary": "Modern Tokyo and Ramen Culture",
       "city": "Tokyo",
-      "summary": "string",
-      "weather": { "text": "string" },
+      "summary": "Arrive in Tokyo and explore Shibuya",
+      "weather": { 
+        "condition": "cloudy", 
+        "tempRange": "8°C - 14°C" 
+      },
       "activities": [
         {
-          "time": "Morning/Afternoon/Evening",
-          "title": "string",
-          "desc": "string",
-          "location": "string",
-          "coords": { "lat": number, "lng": number },
-          "type": "attraction|food|hotel",
-          "rating": number,
-          "reviewCount": number
+          "time": "Afternoon",
+          "title": "Shibuya Crossing & Hachiko Statue",
+          "desc": "Experience the world's busiest pedestrian crossing and visit the famous Hachiko statue. Great spot for people-watching and iconic Tokyo photos.",
+          "location": "Shibuya Station Square, Tokyo",
+          "coords": { "lat": 35.6595, "lng": 139.7004 },
+          "type": "attraction",
+          "duration": "1-2 hours",
+          "price": "Free",
+          "rating": 4.7,
+          "reviewCount": 2845
+        },
+        {
+          "time": "Evening",
+          "title": "Dinner at Ichiran Ramen Shibuya",
+          "desc": "Famous tonkotsu ramen chain with private booth seating. Rich, creamy pork broth and customizable toppings.",
+          "location": "Dogenzaka, Shibuya, Tokyo",
+          "coords": { "lat": 35.6600, "lng": 139.6980 },
+          "type": "food",
+          "duration": "1 hour",
+          "price": "$12-18",
+          "rating": 4.4,
+          "reviewCount": 1320
         }
       ]
     }
@@ -204,16 +247,20 @@ export async function POST(request: Request) {
     console.log('[Itinerary API] Received plannerState:', plannerState);
 
     // Build a context summary for the AI
+    const durationDays = plannerState.dates?.durationDays || 0;
     const contextPrompt = `
 Generate a complete itinerary based on:
 - Destination: ${plannerState.destination || 'Not specified'}
 - Departure City: ${plannerState.departureCity || 'Not specified'}
 - Start Date: ${plannerState.dates?.start || 'Not specified'}
 - End Date: ${plannerState.dates?.end || 'Not specified'}
-- Duration: ${plannerState.dates?.durationDays || 'Not specified'} days
+- Duration: ${durationDays} days
 - Travellers: ${plannerState.travellers || 'Not specified'}
 - Purpose: ${plannerState.purpose || 'General travel'}
 - Preferences: ${plannerState.preferences?.join(', ') || 'None specified'}
+
+CRITICAL REQUIREMENT: You MUST create EXACTLY ${durationDays} dayPlans entries (day 1 through day ${durationDays}).
+This is a strict requirement - the user requested ${durationDays} days, so provide ${durationDays} days of activities!
 
 Create a comprehensive, day-by-day itinerary that matches these parameters.
 `;
