@@ -153,14 +153,14 @@ const ParallaxHero = () => {
         />
 
         {/* Welcome text */}
-        <div className="absolute inset-x-0 top-8 z-10 text-center">
+        <div className="absolute inset-x-0 top-8 text-center">
           <span className="text-xs font-light tracking-[0.4em] text-white uppercase opacity-80">
             WELCOME TO WEAVE
           </span>
         </div>
 
         {/* Text layer */}
-        <div className="pointer-events-none absolute inset-x-0 top-20 z-10 mx-auto flex w-[80%] items-center justify-center">
+        <div className="pointer-events-none absolute inset-x-0 top-20 mx-auto flex w-[80%] items-center justify-center">
           {textUrl && (
             <Image
               src={textUrl}
