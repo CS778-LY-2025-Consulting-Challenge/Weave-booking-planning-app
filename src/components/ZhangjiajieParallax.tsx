@@ -249,74 +249,87 @@ export default function ZhangjiajieParallax({
     });
 
     Promise.all(imageLoadPromises).then(() => {
-      const timeline = gsap.timeline();
-      timelineRef.current = timeline;
+      // 使用 requestAnimationFrame 确保在路由跳转后 DOM 布局已完成渲染
+      // 这样 getBoundingClientRect().top 才能拿到准确的值
+      requestAnimationFrame(() => {
+        const ctx = gsap.context(() => {
+          const timeline = gsap.timeline();
+          timelineRef.current = timeline;
 
-      layerRefs.current.forEach((el, i) => {
-        if (el) {
-          const fromTop = el.offsetHeight / 2 + layers[i].distance;
+          layerRefs.current.forEach((el, i) => {
+            if (el) {
+              const fromTop = el.offsetHeight / 2 + layers[i].distance;
+              timeline.from(
+                el,
+                {
+                  top: `${fromTop}px`,
+                  duration: 3.5,
+                  ease: 'power3.out',
+                },
+                '1'
+              );
+            }
+          });
+
+          const textH1El = main.querySelector(`.${styles.textH1}`);
+          const textH2El = main.querySelector(`.${styles.textH2}`);
+          const hideEls = main.querySelectorAll(`.${styles.hide}`);
+
+          // 保持原始的计算逻辑，确保视觉效果与初始加载一致
           timeline.from(
-            el,
+            textH1El,
             {
-              top: `${fromTop}px`,
-              duration: 3.5,
-              ease: 'power3.out',
+              y:
+                window.innerHeight -
+                (textH1El?.getBoundingClientRect().top || 0) +
+                200,
+              duration: 2,
             },
-            '1'
+            '2.5'
           );
-        }
+
+          timeline.from(
+            textH2El,
+            {
+              y: -150,
+              opacity: 0,
+              duration: 1.5,
+            },
+            '3'
+          );
+
+          timeline.from(
+            hideEls,
+            {
+              opacity: 0,
+              duration: 1.5,
+            },
+            '3'
+          );
+
+          setTimeout(() => {
+            [...layerRefs.current, textRef.current].forEach((el) => {
+              if (el)
+                el.style.transition =
+                  '0.45s cubic-bezier(0.2, 0.49, 0.32, 0.99)';
+            });
+          }, timeline.endTime() * 1000);
+        }, main); // 将 scope 限定在 main 容器内
+
+        (main as any)._gsapContext = ctx;
       });
-
-      const textH1El = main.querySelector(`.${styles.textH1}`);
-      const textH2El = main.querySelector(`.${styles.textH2}`);
-      const hideEls = main.querySelectorAll(`.${styles.hide}`);
-
-      timeline.from(
-        textH1El,
-        {
-          y:
-            window.innerHeight -
-            (textH1El?.getBoundingClientRect().top || 0) +
-            200,
-          duration: 2,
-        },
-        '2.5'
-      );
-
-      timeline.from(
-        textH2El,
-        {
-          y: -150,
-          opacity: 0,
-          duration: 1.5,
-        },
-        '3'
-      );
-
-      timeline.from(
-        hideEls,
-        {
-          opacity: 0,
-          duration: 1.5,
-        },
-        '3'
-      );
-
-      setTimeout(() => {
-        [...layerRefs.current, textRef.current].forEach((el) => {
-          if (el)
-            el.style.transition = '0.45s cubic-bezier(0.2, 0.49, 0.32, 0.99)';
-        });
-      }, timeline.endTime() * 1000);
     });
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      if ((main as any)._gsapContext) {
+        (main as any)._gsapContext.revert();
+      }
       if (timelineRef.current) {
         timelineRef.current.kill();
       }
       layerRefs.current.forEach((el) => {
-        if (el) gsap.set(el, { clearProps: 'top' });
+        if (el) gsap.set(el, { clearProps: 'all' });
       });
     };
   }, [updateParallax]);

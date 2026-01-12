@@ -1,7 +1,13 @@
 import clsx from 'clsx';
 import { motion, useAnimation, useMotionValue } from 'framer-motion';
 import { HeartIcon } from 'lucide-react';
-import { forwardRef, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
+import {
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 
 export interface Trip {
   id: number;
@@ -93,14 +99,14 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
         ref={constraintsRef}
       >
         <motion.div
-          drag={!isAnimating && "x"}
+          drag={!isAnimating && 'x'}
           dragConstraints={constraintsRef}
           dragElastic={0.1}
           onDragStart={() => setIsDragging(true)}
           onDragEnd={() => setTimeout(() => setIsDragging(false), 100)}
           animate={controls}
           style={{ x }}
-          className="flex cursor-grab gap-6 pl-[calc(100%-300px)] pr-[calc(100%-300px)] active:cursor-grabbing"
+          className="flex cursor-grab gap-6 pr-[calc(100%-300px)] pl-[calc(100%-300px)] active:cursor-grabbing"
         >
           {orderedTrips.map((trip) => {
             const isSelected = trip.id === selectedId;
@@ -134,7 +140,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
 
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
 
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                  <div className="absolute right-0 bottom-0 left-0 p-4 text-white">
                     <h3 className="mb-1 text-lg font-bold tracking-wider">
                       {trip.title}
                     </h3>
