@@ -29,13 +29,14 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useParams, useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import JourneyBookingFlow from '@/components/JourneyBookingFlow';
 
 export default function JourneyDetails() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentDay, setCurrentDay] = useState(0);
   const [isBookOpen, setIsBookOpen] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
@@ -49,6 +50,7 @@ export default function JourneyDetails() {
     title: string;
   } | null>(null);
   const pageFlipRef = useRef<BookFlipRef>(null);
+  const autoOpenHandled = useRef(false);
 
   // Per-journey data keyed by URL id
   const journeysData: Record<string, any> = {
@@ -528,7 +530,39 @@ export default function JourneyDetails() {
     },
   };
 
-  const journey = journeysData[(id as string) || '1'] ?? journeysData['1'];
+  const journey = useMemo(
+    () => journeysData[(id as string) || '1'] ?? journeysData['1'],
+    [id]
+  );
+
+  useEffect(() => {
+    if (!journey || autoOpenHandled.current) return;
+
+    const mediaType = searchParams.get('media');
+    const requestedDay = Math.max(
+      0,
+      Math.min(
+        (Number(searchParams.get('day')) || 1) - 1,
+        journey.days.length - 1
+      )
+    );
+
+    if (mediaType === '360') {
+      autoOpenHandled.current = true;
+      setIsBookOpen(true);
+      setCurrentDay(requestedDay);
+      pageFlipRef.current?.turnToPage(requestedDay * 2);
+
+      const targetDay = journey.days[requestedDay];
+      if (targetDay?.has360 && targetDay.video360Url) {
+        setSelectedMedia({
+          type: '360',
+          url: targetDay.video360Url,
+          title: targetDay.title,
+        });
+      }
+    }
+  }, [journey, searchParams]);
 
   const handleCopyJourney = () => {
     alert('Journey copied to your dashboard! You can now customize it.');
