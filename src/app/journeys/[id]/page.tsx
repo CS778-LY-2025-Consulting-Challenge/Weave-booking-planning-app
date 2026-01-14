@@ -1281,13 +1281,32 @@ export default function JourneyDetails() {
               style={{ height: '500px' }}
             >
               <div className="h-full w-full">
-                <iframe
-                  src={selectedMedia?.url}
-                  className="h-full w-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+                {selectedMedia?.url && (selectedMedia.url.includes('.mp4') || selectedMedia.url.includes('.webm') || selectedMedia.url.startsWith('/')) ? (
+                  // Local video file or MP4/WebM - use video element
+                  <video
+                    src={selectedMedia.url}
+                    controls
+                    autoPlay
+                    preload="metadata"
+                    playsInline
+                    className="h-full w-full"
+                    onError={(e) => {
+                      console.error('Video load error:', e);
+                      // Fallback to showing error message
+                    }}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  // YouTube or external embed URL - use iframe
+                  <iframe
+                    src={selectedMedia?.url}
+                    className="h-full w-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                )}
               </div>
             </div>
           </DialogContent>

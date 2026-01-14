@@ -579,6 +579,12 @@ export default function Guides() {
                             controls
                             loop
                             muted
+                            playsInline
+                            preload="metadata"
+                            onError={(e) => {
+                              console.error('Video error:', e);
+                              setPlayingVideoId(null);
+                            }}
                           />
                           <button
                             onClick={() => setPlayingVideoId(null)}
