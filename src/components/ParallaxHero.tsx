@@ -157,7 +157,7 @@ const ParallaxHero = () => {
               />
 
               {/* Timeline Overlay on Mountain */}
-              <div className="pointer-events-none absolute inset-0 flex items-end justify-center pb-12">
+              <div className="pointer-events-none absolute inset-0 top-[28%] flex items-start justify-center">
                 <div className="pointer-events-auto relative flex w-full max-w-4xl items-start justify-center px-8">
                   {/* Center Vertical Line */}
                   <div className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 bg-gradient-to-b from-white/60 via-white/30 to-transparent" />
