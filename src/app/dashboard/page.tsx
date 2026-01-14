@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 
 interface Journey {
@@ -54,22 +54,34 @@ interface SavedPackage {
 }
 
 export default function Dashboard() {
-  const { isAuthenticated, userType, logout } = useAuth();
+  const { isLoaded, isSignedIn, user } = useUser();
   const router = useRouter();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [savedPackages, setSavedPackages] = useState<SavedPackage[]>([]);
 
-  // Authentication check
+  // Authentication check - redirect to auth if not signed in
   useEffect(() => {
-    if (!isAuthenticated || userType === 'guide') {
+    if (isLoaded && !isSignedIn) {
       router.push('/auth');
+      return;
     }
-  }, [isAuthenticated, userType, router]);
 
-  const handleLogout = () => {
-    logout();
-    router.push('/auth');
-  };
+    if (isLoaded && isSignedIn) {
+      const userType = user?.publicMetadata?.userType as string;
+
+      // Redirect to onboarding if no user type is set
+      if (!userType) {
+        router.push('/onboarding');
+        return;
+      }
+
+      // Redirect to guide dashboard if user is a guide
+      if (userType === 'guide') {
+        router.push('/guide-dashboard');
+        return;
+      }
+    }
+  }, [isLoaded, isSignedIn, user, router]);
 
   // Load saved packages from localStorage
   useEffect(() => {
@@ -143,26 +155,19 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
-      {/* Header with Logout */}
+      {/* Header */}
       <div className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <h2 className="text-lg font-semibold text-gray-900">Dashboard</h2>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Logout</span>
-          </Button>
         </div>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Welcome Header */}
         <div className="mb-8">
-          <h1 className="mb-2">Welcome back, Traveler!</h1>
+          <h1 className="mb-2">
+            Welcome back, {user?.firstName || 'Traveler'}!
+          </h1>
           <p className="text-gray-600">
             Manage your journeys and plan your next adventure
           </p>

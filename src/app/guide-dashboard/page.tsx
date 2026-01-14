@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import {
   Calendar,
@@ -26,43 +26,60 @@ interface Appointment {
 
 export default function GuideDashboard() {
   const router = useRouter();
-  const { isAuthenticated, userType, guideEmail, guideName, logout } = useAuth();
+  const { isLoaded, isSignedIn, user } = useUser();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Protect route - redirect if not authenticated or not a guide
-    if (!isAuthenticated || userType !== 'guide') {
+    if (isLoaded && !isSignedIn) {
       router.push('/auth');
       return;
     }
 
-    // Load appointments from localStorage
-    setIsLoading(true);
-    const storedAppointments = localStorage.getItem('guideAppointments');
-    if (storedAppointments) {
-      try {
-        const allAppointments = JSON.parse(storedAppointments) as Appointment[];
-        // Filter appointments for the current guide
-        const guideAppointments = allAppointments.filter(
-          (apt) => apt.guideEmail === guideEmail
-        );
-        // Sort by date (soonest first)
-        guideAppointments.sort(
-          (a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
-        );
-        setAppointments(guideAppointments);
-      } catch (error) {
-        console.error('Error parsing appointments:', error);
+    if (isLoaded && isSignedIn) {
+      const userType = user?.publicMetadata?.userType as string;
+
+      // Redirect to onboarding if no user type is set
+      if (!userType) {
+        router.push('/onboarding');
+        return;
+      }
+
+      // Redirect to regular dashboard if user is a traveler
+      if (userType !== 'guide') {
+        router.push('/dashboard');
+        return;
       }
     }
-    setIsLoading(false);
-  }, [isAuthenticated, userType, guideEmail, router]);
 
-  const handleLogout = () => {
-    logout();
-    router.push('/auth');
-  };
+    // Load appointments from localStorage
+    if (isLoaded && isSignedIn && user) {
+      setIsLoading(true);
+      const storedAppointments = localStorage.getItem('guideAppointments');
+      if (storedAppointments) {
+        try {
+          const allAppointments = JSON.parse(
+            storedAppointments
+          ) as Appointment[];
+          // Filter appointments for the current guide
+          const guideEmail = user.primaryEmailAddress?.emailAddress;
+          const guideAppointments = allAppointments.filter(
+            (apt) => apt.guideEmail === guideEmail
+          );
+          // Sort by date (soonest first)
+          guideAppointments.sort(
+            (a, b) =>
+              new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
+          );
+          setAppointments(guideAppointments);
+        } catch (error) {
+          console.error('Error parsing appointments:', error);
+        }
+      }
+      setIsLoading(false);
+    }
+  }, [isLoaded, isSignedIn, user, router]);
 
   const upcomingAppointments = appointments.filter(
     (apt) => new Date(apt.dateTime) > new Date()
@@ -74,8 +91,8 @@ export default function GuideDashboard() {
       <main className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         {/* Page Title */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-slate-900 sm:text-5xl mb-2">
-            Welcome, {guideName}! 👋
+          <h1 className="mb-2 text-4xl font-bold text-slate-900 sm:text-5xl">
+            Welcome, {user?.firstName || 'Guide'}! 👋
           </h1>
           <p className="text-lg text-slate-600">
             Here are your upcoming appointments with travelers
@@ -115,12 +132,15 @@ export default function GuideDashboard() {
                 <div>
                   <p className="text-sm text-slate-600">This Week</p>
                   <p className="text-3xl font-bold text-slate-900">
-                    {upcomingAppointments.filter((apt) => {
-                      const daysUntil =
-                        (new Date(apt.dateTime).getTime() - new Date().getTime()) /
-                        (1000 * 60 * 60 * 24);
-                      return daysUntil <= 7;
-                    }).length}
+                    {
+                      upcomingAppointments.filter((apt) => {
+                        const daysUntil =
+                          (new Date(apt.dateTime).getTime() -
+                            new Date().getTime()) /
+                          (1000 * 60 * 60 * 24);
+                        return daysUntil <= 7;
+                      }).length
+                    }
                   </p>
                 </div>
                 <Clock className="h-12 w-12 text-purple-500/20" />
@@ -132,7 +152,9 @@ export default function GuideDashboard() {
           {isLoading ? (
             <div className="rounded-lg border border-slate-200 bg-white p-12 text-center">
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-500" />
-              <p className="mt-4 text-slate-600">Loading your appointments...</p>
+              <p className="mt-4 text-slate-600">
+                Loading your appointments...
+              </p>
             </div>
           ) : upcomingAppointments.length > 0 ? (
             <div className="space-y-4">
@@ -140,7 +162,10 @@ export default function GuideDashboard() {
                 Upcoming Appointments
               </h2>
               {upcomingAppointments.map((appointment) => (
-                <AppointmentCard key={appointment.id} appointment={appointment} />
+                <AppointmentCard
+                  key={appointment.id}
+                  appointment={appointment}
+                />
               ))}
             </div>
           ) : (
@@ -154,7 +179,8 @@ export default function GuideDashboard() {
 
 function AppointmentCard({ appointment }: { appointment: Appointment }) {
   const appointmentDate = new Date(appointment.dateTime);
-  const isToday = format(appointmentDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+  const isToday =
+    format(appointmentDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
   const isTomorrow =
     format(appointmentDate, 'yyyy-MM-dd') ===
     format(new Date(Date.now() + 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
@@ -166,15 +192,15 @@ function AppointmentCard({ appointment }: { appointment: Appointment }) {
   };
 
   return (
-    <div className="group rounded-lg border border-slate-200 bg-white transition-all hover:border-blue-300 hover:shadow-md p-6">
+    <div className="group rounded-lg border border-slate-200 bg-white p-6 transition-all hover:border-blue-300 hover:shadow-md">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           {/* Traveler Info */}
           <div className="mb-3">
-            <h3 className="text-lg font-semibold text-slate-900 truncate">
+            <h3 className="truncate text-lg font-semibold text-slate-900">
               {appointment.travelerName}
             </h3>
-            <p className="text-sm text-slate-600 truncate">
+            <p className="truncate text-sm text-slate-600">
               {appointment.journeyName}
             </p>
           </div>
@@ -232,7 +258,7 @@ function AppointmentCard({ appointment }: { appointment: Appointment }) {
       </div>
 
       {/* Status Badge */}
-      <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
         <span
           className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
             appointment.status === 'confirmed'
@@ -243,7 +269,8 @@ function AppointmentCard({ appointment }: { appointment: Appointment }) {
           }`}
         >
           {appointment.status === 'confirmed' ? '✓ ' : ''}
-          {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+          {appointment.status.charAt(0).toUpperCase() +
+            appointment.status.slice(1)}
         </span>
         <p className="text-xs text-slate-500">
           {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : 'Upcoming'}
@@ -256,16 +283,15 @@ function AppointmentCard({ appointment }: { appointment: Appointment }) {
 function EmptyStateCard() {
   return (
     <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-12 text-center">
-      <Calendar className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-      <h3 className="text-lg font-semibold text-slate-900 mb-2">
+      <Calendar className="mx-auto mb-4 h-12 w-12 text-slate-400" />
+      <h3 className="mb-2 text-lg font-semibold text-slate-900">
         No upcoming appointments yet
       </h3>
-      <p className="text-slate-600 mb-6 max-w-md mx-auto">
-        You don't have any confirmed appointments at the moment. Appointments will appear here once travelers book sessions with you.
+      <p className="mx-auto mb-6 max-w-md text-slate-600">
+        You don't have any confirmed appointments at the moment. Appointments
+        will appear here once travelers book sessions with you.
       </p>
-      <Button variant="outline">
-        View Profile
-      </Button>
+      <Button variant="outline">View Profile</Button>
     </div>
   );
 }
