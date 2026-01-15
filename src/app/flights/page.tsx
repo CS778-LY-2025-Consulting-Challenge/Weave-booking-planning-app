@@ -570,7 +570,7 @@ export default function FlightBooking() {
   return (
     <div className="relative min-h-screen">
       {/* Full-Screen Hero Video Section - Covers entire viewport including navbar area */}
-      <div className="relative h-[85vh] w-full overflow-hidden">
+      <div className="relative h-screen w-full overflow-hidden">
         {/* YouTube Video - Full Screen */}
         <div className="pointer-events-none absolute inset-0 h-full w-full">
           <iframe
@@ -1204,126 +1204,6 @@ export default function FlightBooking() {
           </CardContent>
         </Card>
 
-        {/* Featured Destinations Section */}
-        <div className="mt-12">
-          <div className="mb-8 text-center">
-            <h3 className="text-3xl font-bold text-gray-900">Featured Destinations</h3>
-            <p className="mt-2 text-gray-600">Explore our premium flight packages to incredible destinations</p>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                country: 'UNITED ARAB EMIRATES',
-                city: 'Dubai',
-                image: '/images/dubai-flight.jpg',
-                bookUntil: '05 Feb 26',
-                cabin: 'Economy Class Return',
-                price: 'NZD 1999',
-              },
-              {
-                country: 'JAPAN',
-                city: 'Tokyo',
-                image: '/images/tokyo-flight.jpg',
-                bookUntil: '05 Feb 26',
-                cabin: 'Economy Class Return',
-                price: 'NZD 3299',
-              },
-              {
-                country: 'AUSTRALIA',
-                city: 'Sydney',
-                image: '/images/sydeny-flight.jpg',
-                bookUntil: '05 Feb 26',
-                cabin: 'Economy Class Return',
-                price: 'NZD 2199',
-              },
-              {
-                country: 'SPAIN',
-                city: 'Barcelona',
-                image: '/images/barcelona-flight.jpg',
-                bookUntil: '05 Feb 26',
-                cabin: 'Business Class Return',
-                price: 'NZD 9599',
-              },
-              {
-                country: 'THAILAND',
-                city: 'Bangkok',
-                image: '/images/bangkok-flight.jpg',
-                bookUntil: '05 Feb 26',
-                cabin: 'Business Class Return',
-                price: 'NZD 8299',
-              },
-              {
-                country: 'SINGAPORE',
-                city: 'Singapore',
-                image: '/images/singapore-flight.jpg',
-                bookUntil: '05 Feb 26',
-                cabin: 'Business Class Return',
-                price: 'NZD 10449',
-              },
-            ].map((destination, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ y: -8 }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
-                onClick={() => setFromInput(destination.city)}
-                className="group cursor-pointer"
-              >
-                <div className="relative overflow-hidden rounded-lg bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">
-                  {/* Image Container */}
-                  <div className="relative h-48 overflow-hidden bg-gray-200">
-                    <motion.img
-                      src={destination.image}
-                      alt={destination.city}
-                      className="h-full w-full object-cover"
-                      whileHover={{ scale: 1.08 }}
-                      transition={{ duration: 0.4 }}
-                    />
-                    <div className="absolute inset-0 bg-black/10 transition-all duration-300 group-hover:bg-black/20" />
-                  </div>
-
-                  {/* Content Container */}
-                  <div className="p-5">
-                    {/* Country Label */}
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        {destination.country}
-                      </span>
-                    </div>
-
-                    {/* City Name */}
-                    <h3 className="mb-4 text-2xl font-bold text-gray-900">
-                      {destination.city}
-                    </h3>
-
-                    {/* Book Until */}
-                    <div className="mb-3 text-sm text-blue-600 font-medium">
-                      Book until {destination.bookUntil}
-                    </div>
-
-                    {/* Cabin Type */}
-                    <div className="mb-4 text-sm text-gray-600">
-                      {destination.cabin}
-                    </div>
-
-                    {/* Price */}
-                    <div className="border-t pt-4">
-                      <div className="text-sm text-gray-600">from</div>
-                      <div className="text-xl font-bold text-gray-900">
-                        {destination.price}
-                        <span className="text-xs text-gray-500">*</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Hover Overlay - Premium Glow */}
-                  <div className="absolute -inset-2 rounded-lg bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 opacity-0 blur transition-opacity duration-300 group-hover:opacity-20 -z-10" />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
         {hasSearched && (
           <div className="flex gap-8">
             {/* Filters Sidebar */}
@@ -1602,6 +1482,126 @@ export default function FlightBooking() {
             </div>
           </div>
         )}
+
+        {/* Featured Destinations Section */}
+        <div className="mt-12">
+          <div className="mb-8 text-center">
+            <h3 className="text-3xl font-bold text-gray-900">Featured Destinations</h3>
+            <p className="mt-2 text-gray-600">Explore our premium flight packages to incredible destinations</p>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[
+                {
+                  country: 'UNITED ARAB EMIRATES',
+                  city: 'Dubai',
+                  image: '/images/dubai-flight.jpg',
+                  bookUntil: '05 Feb 26',
+                  cabin: 'Economy Class Return',
+                  price: 'NZD 1999',
+                },
+                {
+                  country: 'JAPAN',
+                  city: 'Tokyo',
+                  image: '/images/tokyo-flight.jpg',
+                  bookUntil: '05 Feb 26',
+                  cabin: 'Economy Class Return',
+                  price: 'NZD 3299',
+                },
+                {
+                  country: 'AUSTRALIA',
+                  city: 'Sydney',
+                  image: '/images/sydeny-flight.jpg',
+                  bookUntil: '05 Feb 26',
+                  cabin: 'Economy Class Return',
+                  price: 'NZD 2199',
+                },
+                {
+                  country: 'SPAIN',
+                  city: 'Barcelona',
+                  image: '/images/barcelona-flight.jpg',
+                  bookUntil: '05 Feb 26',
+                  cabin: 'Business Class Return',
+                  price: 'NZD 9599',
+                },
+                {
+                  country: 'THAILAND',
+                  city: 'Bangkok',
+                  image: '/images/bangkok-flight.jpg',
+                  bookUntil: '05 Feb 26',
+                  cabin: 'Business Class Return',
+                  price: 'NZD 8299',
+                },
+                {
+                  country: 'SINGAPORE',
+                  city: 'Singapore',
+                  image: '/images/singapore-flight.jpg',
+                  bookUntil: '05 Feb 26',
+                  cabin: 'Business Class Return',
+                  price: 'NZD 10449',
+                },
+              ].map((destination, index) => (
+                <motion.div
+                  key={index}
+                  whileHover={{ y: -8 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  onClick={() => setFromInput(destination.city)}
+                  className="group cursor-pointer"
+                >
+                  <div className="relative overflow-hidden rounded-lg bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">
+                    {/* Image Container */}
+                    <div className="relative h-48 overflow-hidden bg-gray-200">
+                      <motion.img
+                        src={destination.image}
+                        alt={destination.city}
+                        className="h-full w-full object-cover"
+                        whileHover={{ scale: 1.08 }}
+                        transition={{ duration: 0.4 }}
+                      />
+                      <div className="absolute inset-0 bg-black/10 transition-all duration-300 group-hover:bg-black/20" />
+                    </div>
+
+                    {/* Content Container */}
+                    <div className="p-5">
+                      {/* Country Label */}
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                          {destination.country}
+                        </span>
+                      </div>
+
+                      {/* City Name */}
+                      <h3 className="mb-4 text-2xl font-bold text-gray-900">
+                        {destination.city}
+                      </h3>
+
+                      {/* Book Until */}
+                      <div className="mb-3 text-sm text-blue-600 font-medium">
+                        Book until {destination.bookUntil}
+                      </div>
+
+                      {/* Cabin Type */}
+                      <div className="mb-4 text-sm text-gray-600">
+                        {destination.cabin}
+                      </div>
+
+                      {/* Price */}
+                      <div className="border-t pt-4">
+                        <div className="text-sm text-gray-600">from</div>
+                        <div className="text-xl font-bold text-gray-900">
+                          {destination.price}
+                          <span className="text-xs text-gray-500">*</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Hover Overlay - Premium Glow */}
+                    <div className="absolute -inset-2 rounded-lg bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 opacity-0 blur transition-opacity duration-300 group-hover:opacity-20 -z-10" />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
       </div>
 
       {/* Booking Confirmation Dialog */}
