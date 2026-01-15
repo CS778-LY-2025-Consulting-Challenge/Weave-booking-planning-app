@@ -1,94 +1,127 @@
-import { NextResponse } from 'next/server';
-import { searchAllFlights, getSearchStats } from '@/services/unifiedFlightService';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
+const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
+const SERPAPI_BASE_URL = 'https://serpapi.com/search.json';
+
+export async function GET(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { from, to, date, returnDate, passengers = 1, travelClass = 1, type = 2 } = body;
+    const searchParams = request.nextUrl.searchParams;
+    
+    const departureId = searchParams.get('departure_id') || searchParams.get('from');
+    const arrivalId = searchParams.get('arrival_id') || searchParams.get('to');
+    const outboundDate = searchParams.get('outbound_date') || searchParams.get('departureDate');
+    const returnDate = searchParams.get('return_date') || searchParams.get('returnDate');
+    const type = searchParams.get('type') || (returnDate ? '1' : '2'); // 1=Round trip, 2=One-way
+    const adults = searchParams.get('adults') || '1';
+    const children = searchParams.get('children') || '0';
+    const infants = searchParams.get('infants_in_seat') || searchParams.get('infants') || '0';
+    const currency = searchParams.get('currency') || 'USD';
 
-    console.log('[Flights API] Unified search request:', { from, to, date, returnDate, passengers, type });
+    console.log('[Flights API] Search params:', {
+      departureId,
+      arrivalId,
+      outboundDate,
+      returnDate,
+      type,
+      adults,
+      children,
+      infants
+    });
 
-    if (!from || !to) {
+    if (!departureId || !arrivalId || !outboundDate) {
       return NextResponse.json(
-        { error: 'Missing required parameters: from and to' },
+        { error: 'Missing required parameters: departure_id, arrival_id, outbound_date' },
         { status: 400 }
       );
     }
 
-    // Parse passengers
-    const totalPassengers = typeof passengers === 'number' ? passengers : 1;
+    // Validate round trip requirements
+    if (type === '1' && !returnDate) {
+      return NextResponse.json(
+        { error: 'return_date is required for round trip flights (type=1)' },
+        { status: 400 }
+      );
+    }
 
-    // Search using unified service (combines Google Flights + Aviationstack)
-    const searchResult = await searchAllFlights({
-      from,
-      to,
-      date,
-      returnDate,
-      passengers: totalPassengers,
-      travelClass,
-      type,
-      currency: 'USD',
+    if (!SERPAPI_API_KEY) {
+      console.error('[Flights API] SERPAPI_API_KEY not configured');
+      return NextResponse.json(
+        { error: 'SerpAPI key not configured' },
+        { status: 500 }
+      );
+    }
+
+    // Build SerpAPI Google Flights query
+    const params = new URLSearchParams({
+      engine: 'google_flights',
+      departure_id: departureId,
+      arrival_id: arrivalId,
+      outbound_date: outboundDate,
+      type: type,
+      currency: currency,
+      hl: 'en',
+      gl: 'us',
+      adults: adults,
+      children: children,
+      infants_in_seat: infants,
+      api_key: SERPAPI_API_KEY,
     });
 
-    const { flights, summary } = searchResult;
+    if (returnDate && type === '1') {
+      params.append('return_date', returnDate);
+    }
 
-    // Log search statistics (for debugging, not shown to users)
-    console.log(`[Flights API] ${getSearchStats(searchResult)}`);
-    console.log(`[Flights API] API Status - Google: ${summary.apiStatus.googleFlights}, Aviationstack: ${summary.apiStatus.aviationstack}`);
+    const url = `${SERPAPI_BASE_URL}?${params.toString()}`;
+    console.log(`[Flights API] Fetching from SerpAPI: ${url.replace(SERPAPI_API_KEY, 'HIDDEN')}`);
 
-    // Format response to match existing UI structure
-    const results = flights.map((flight) => ({
-      id: flight.id,
-      flightNumber: flight.flightNumber,
-      airline: flight.airline,
-      airlineCode: flight.airlineCode,
-      logo: flight.logo,
-      departure: {
-        airport: flight.departure.airport,
-        iata: flight.departure.iata,
-        scheduled: flight.departure.scheduled || flight.departure.time,
-        terminal: flight.departure.terminal,
-        gate: flight.departure.gate,
-      },
-      arrival: {
-        airport: flight.arrival.airport,
-        iata: flight.arrival.iata,
-        scheduled: flight.arrival.scheduled || flight.arrival.time,
-        terminal: flight.arrival.terminal,
-        gate: flight.arrival.gate,
-      },
-      duration: flight.duration,
-      stops: flight.stops,
-      stopsText: flight.stopsText,
-      aircraft: flight.aircraft,
-      price: flight.price,
-      status: flight.status,
-      source: flight.source, // For debugging (not shown to users)
-    }));
-
-    return NextResponse.json({
-      results,
-      total: results.length,
-      from: flights[0]?.departure.iata || from,
-      to: flights[0]?.arrival.iata || to,
-      // Include metadata for debugging (not shown to users)
-      _meta: {
-        sources: {
-          googleFlights: summary.fromGoogleFlights,
-          aviationstack: summary.fromAviationstack,
-        },
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
       },
     });
-  } catch (error: any) {
-    console.error('[Flights API] Error:', error);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Flights API] SerpAPI error:', response.status, errorText);
+      return NextResponse.json(
+        { error: `SerpAPI error: ${response.status}`, details: errorText },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
     
-    // Return empty results instead of error to maintain seamless UX
+    // Check for API-level errors
+    if (data.error) {
+      console.error('[Flights API] SerpAPI returned error:', data.error);
+      return NextResponse.json(
+        { error: data.error },
+        { status: 400 }
+      );
+    }
+
+    // Combine best_flights and other_flights
+    const allFlights = [
+      ...(data.best_flights || []),
+      ...(data.other_flights || []),
+    ];
+
+    console.log(`[Flights API] Successfully fetched ${allFlights.length} flights`);
+
     return NextResponse.json({
-      results: [],
-      total: 0,
-      from: '',
-      to: '',
+      success: true,
+      flights: allFlights,
+      total_results: allFlights.length,
+      search_metadata: data.search_metadata,
+      search_parameters: data.search_parameters,
     });
+
+  } catch (error) {
+    console.error('[Flights API] Error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to search flights' },
+      { status: 500 }
+    );
   }
 }
 
