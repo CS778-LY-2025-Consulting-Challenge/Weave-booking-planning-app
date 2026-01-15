@@ -44,9 +44,10 @@ import {
   X,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FlightBookingFlow } from '@/components/FlightBookingFlow';
+import { toast } from 'sonner';
 
 interface Flight {
   id: string;
@@ -251,8 +252,144 @@ export default function FlightBooking() {
   ];
   const [allFlights, setAllFlights] = useState<Flight[]>(INITIAL_FLIGHTS);
 
+  const fetchFlights = async () => {
+    if (!fromInput || !toInput) {
+      toast.error('Please select both departure and arrival locations');
+      return;
+    }
+
+    if (!departureDate) {
+      toast.error('Please select a departure date');
+      return;
+    }
+
+    if (tripType === 'roundtrip' && !returnDate) {
+      toast.error('Please select a return date for round trip flights');
+      return;
+    }
+
+    setIsSearching(true);
+    setError(null);
+
+    try {
+      // Extract airport codes from input string format "City Name (CODE)"
+      const fromMatch = fromInput.match(/\(([^)]+)\)$/);
+      const toMatch = toInput.match(/\(([^)]+)\)$/);
+
+      const fromCode = fromMatch ? fromMatch[1] : fromInput;
+      const toCode = toMatch ? toMatch[1] : toInput;
+
+      // Format date as YYYY-MM-DD
+      const formatDate = (date: Date) => {
+        return date.toISOString().split('T')[0];
+      };
+
+      const params = new URLSearchParams({
+        departure_id: fromCode,
+        arrival_id: toCode,
+        outbound_date: formatDate(departureDate),
+        type: tripType === 'roundtrip' ? '1' : '2', // 1=Round trip, 2=One-way
+        currency: 'USD',
+        adults: passengerCounts.adults.toString(),
+        children: passengerCounts.children.toString(),
+        infants_in_seat: passengerCounts.infants.toString(),
+      });
+
+      if (tripType === 'roundtrip' && returnDate) {
+        params.append('return_date', formatDate(returnDate));
+      }
+
+      const response = await fetch(`/api/serpapi/flights?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Add timeout to prevent hanging
+        signal: AbortSignal.timeout(30000), // 30 second timeout
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMsg = data.error || 'Failed to fetch flights';
+        console.error('Flight API error:', {
+          status: response.status,
+          error: errorMsg,
+          details: data.details
+        });
+        throw new Error(errorMsg);
+      }
+
+      if (data.flights && data.flights.length > 0) {
+        // Map API response to Flight interface
+        const mappedFlights: Flight[] = data.flights.map((f: any, index: number) => {
+          // Identify departure time of day
+          const depHour = parseInt(f.flights?.[0]?.departure_airport?.time?.split(':')[0] || '0');
+          let timeOfDay: 'morning' | 'afternoon' | 'evening' = 'morning';
+          if (depHour >= 12 && depHour < 17) timeOfDay = 'afternoon';
+          if (depHour >= 17) timeOfDay = 'evening';
+
+          // Handle SerpAPI's nested flight structure
+          const firstFlight = f.flights?.[0] || f;
+
+          return {
+            id: index + 100, // Avoid conflict with mock IDs
+            airline: firstFlight.airline || f.airline || 'Unknown Airline',
+            from: firstFlight.departure_airport?.name || f.departure_airport?.name,
+            to: firstFlight.arrival_airport?.name || f.arrival_airport?.name,
+            departure: firstFlight.departure_airport?.time || f.departure_airport?.time,
+            arrival: firstFlight.arrival_airport?.time || f.arrival_airport?.time,
+            duration: f.total_duration
+              ? `${Math.floor(f.total_duration / 60)}h ${f.total_duration % 60}m`
+              : `${Math.floor((f.duration || 0) / 60)}h ${(f.duration || 0) % 60}m`,
+            stops: f.layovers
+              ? (f.layovers.length === 0 ? 'Non-stop' : `${f.layovers.length} Stop${f.layovers.length > 1 ? 's' : ''}`)
+              : 'Non-stop',
+            cabin: f.travel_class || firstFlight.travel_class || 'Economy',
+            price: f.price || 0,
+            logo: f.airline_logo || firstFlight.airline_logo || 'https://via.placeholder.com/100x30?text=Airline',
+            departureTime: timeOfDay,
+          };
+        });
+        setSearchResults(mappedFlights);
+        toast.success(`Found ${mappedFlights.length} flights`);
+      } else {
+        setSearchResults([]);
+        toast.info('No flights found for your search criteria');
+      }
+    } catch (err) {
+      console.error('Search error:', err);
+
+      let errorMessage = 'An error occurred while searching for flights';
+
+      if (err instanceof Error) {
+        if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+          errorMessage = 'Request timed out. Please check your internet connection and try again.';
+        } else if (err.message.includes('fetch failed') || err.message.includes('Failed to fetch')) {
+          errorMessage = 'Unable to connect to flight search service. Please check your internet connection.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
+      setError(errorMessage);
+      toast.error(errorMessage);
+
+      // Show mock data option
+      toast.info('You can still browse sample flights below', { duration: 5000 });
+
+      // Optionally show sample flights for testing
+      setSearchResults(allFlights);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   // Filter logic
-  const filteredFlights = allFlights.filter((flight) => {
+  // Use searchResults if we have searched, otherwise empty or initial mock data
+  const flightsToDisplay = hasSearched ? searchResults : []; // Or show popular flights initially?
+
+  const filteredFlights = flightsToDisplay.filter((flight) => {
     // Price filter
     if (flight.price < priceRange[0] || flight.price > priceRange[1]) {
       return false;
@@ -560,7 +697,7 @@ export default function FlightBooking() {
   return (
     <div className="relative min-h-screen">
       {/* Full-Screen Hero Video Section - Covers entire viewport including navbar area */}
-      <div className="relative h-screen w-full overflow-hidden">
+      <div className="relative h-[85vh] w-full overflow-hidden">
         {/* YouTube Video - Full Screen */}
         <div className="pointer-events-none absolute inset-0 h-full w-full">
           <iframe
@@ -671,7 +808,7 @@ export default function FlightBooking() {
       {/* Content */}
       <div
         id="search-section"
-        className="relative z-10 mx-auto max-w-[1400px] bg-gradient-to-b from-gray-50 to-white px-4 py-8 sm:px-6 lg:px-8"
+        className="relative z-10 mx-auto max-w-[1400px] scroll-mt-24 bg-gradient-to-b from-gray-50 to-white px-4 py-8 sm:px-6 lg:px-8"
       >
         {/* Search Section */}
         <Card className="mb-8 bg-white/95 shadow-xl backdrop-blur-sm">
@@ -800,7 +937,7 @@ export default function FlightBooking() {
                           </PopoverContent>
                         </Popover>
                       </div>
-                      
+
                       {/* Arrow Separator - Perfectly centered using flexbox */}
                       <div className="hidden md:flex items-center justify-center pb-2">
                         <button
@@ -813,90 +950,90 @@ export default function FlightBooking() {
                           <ArrowLeftRight className="size-5 text-blue-600 transition-transform duration-200 group-hover:scale-110 group-active:rotate-180" />
                         </button>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor={`to-${flight.id}`}>To</Label>
                         <Popover
-                            open={multiCityPopovers[flight.id]?.toOpen || false}
-                            onOpenChange={(open) =>
-                              setMultiCityPopoverOpen(flight.id, 'toOpen', open)
-                            }
+                          open={multiCityPopovers[flight.id]?.toOpen || false}
+                          onOpenChange={(open) =>
+                            setMultiCityPopoverOpen(flight.id, 'toOpen', open)
+                          }
+                        >
+                          <PopoverTrigger asChild>
+                            <Input
+                              id={`to-${flight.id}`}
+                              placeholder="Airport or City"
+                              value={flight.to}
+                              onChange={(e) => {
+                                updateMultiCityFlight(
+                                  flight.id,
+                                  'to',
+                                  e.target.value
+                                );
+                                setMultiCityPopoverOpen(
+                                  flight.id,
+                                  'toOpen',
+                                  true
+                                );
+                              }}
+                              onFocus={() =>
+                                setMultiCityPopoverOpen(
+                                  flight.id,
+                                  'toOpen',
+                                  true
+                                )
+                              }
+                            />
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-[300px] p-0"
+                            align="start"
                           >
-                            <PopoverTrigger asChild>
-                              <Input
-                                id={`to-${flight.id}`}
-                                placeholder="Airport or City"
+                            <Command>
+                              <CommandInput
+                                placeholder="Search cities..."
                                 value={flight.to}
-                                onChange={(e) => {
-                                  updateMultiCityFlight(
-                                    flight.id,
-                                    'to',
-                                    e.target.value
-                                  );
-                                  setMultiCityPopoverOpen(
-                                    flight.id,
-                                    'toOpen',
-                                    true
-                                  );
-                                }}
-                                onFocus={() =>
-                                  setMultiCityPopoverOpen(
-                                    flight.id,
-                                    'toOpen',
-                                    true
-                                  )
+                                onValueChange={(value) =>
+                                  updateMultiCityFlight(flight.id, 'to', value)
                                 }
                               />
-                            </PopoverTrigger>
-                            <PopoverContent
-                              className="w-[300px] p-0"
-                              align="start"
-                            >
-                              <Command>
-                                <CommandInput
-                                  placeholder="Search cities..."
-                                  value={flight.to}
-                                  onValueChange={(value) =>
-                                    updateMultiCityFlight(flight.id, 'to', value)
-                                  }
-                                />
-                                <CommandList>
-                                  <CommandEmpty>No city found.</CommandEmpty>
-                                  <CommandGroup>
-                                    {filterCities(flight.to).map((city) => (
-                                      <CommandItem
-                                        key={city.code}
-                                        value={`${city.name} (${city.code})`}
-                                        onSelect={() => {
-                                          updateMultiCityFlight(
-                                            flight.id,
-                                            'to',
-                                            `${city.name} (${city.code})`
-                                          );
-                                          setMultiCityPopoverOpen(
-                                            flight.id,
-                                            'toOpen',
-                                            false
-                                          );
-                                        }}
-                                      >
-                                        <div className="flex flex-col">
-                                          <span className="font-medium">
-                                            {city.name} ({city.code})
-                                          </span>
-                                          <span className="text-xs text-gray-500">
-                                            {city.country}
-                                          </span>
-                                        </div>
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
+                              <CommandList>
+                                <CommandEmpty>No city found.</CommandEmpty>
+                                <CommandGroup>
+                                  {filterCities(flight.to).map((city) => (
+                                    <CommandItem
+                                      key={city.code}
+                                      value={`${city.name} (${city.code})`}
+                                      onSelect={() => {
+                                        updateMultiCityFlight(
+                                          flight.id,
+                                          'to',
+                                          `${city.name} (${city.code})`
+                                        );
+                                        setMultiCityPopoverOpen(
+                                          flight.id,
+                                          'toOpen',
+                                          false
+                                        );
+                                      }}
+                                    >
+                                      <div className="flex flex-col">
+                                        <span className="font-medium">
+                                          {city.name} ({city.code})
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                          {city.country}
+                                        </span>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <DateSelector
                           label="Travel date"
@@ -1089,7 +1226,7 @@ export default function FlightBooking() {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  
+
                   {/* Arrow Separator - Perfectly centered using flexbox */}
                   <div className="hidden md:flex items-center justify-center pb-2">
                     <button
@@ -1102,7 +1239,7 @@ export default function FlightBooking() {
                       <ArrowLeftRight className="size-5 text-blue-600 transition-transform duration-200 group-hover:scale-110 group-active:rotate-180" />
                     </button>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="to">To</Label>
                     <Popover open={toOpen} onOpenChange={setToOpen}>
@@ -1195,163 +1332,151 @@ export default function FlightBooking() {
         </Card>
 
         {hasSearched && (
-        <div className="flex gap-8">
-          {/* Filters Sidebar */}
-          <div className="hidden w-72 flex-shrink-0 lg:block">
-            <Card className="sticky top-20">
-              <CardContent className="p-6">
-                <div className="mb-6 flex items-center gap-2">
-                  <Filter className="size-5" />
-                  <h3>Filters</h3>
-                </div>
-
-                <div className="space-y-6">
-                  {/* Price Range */}
-                  <div>
-                    <Label className="mb-3 block">Price Range</Label>
-                    <Slider
-                      value={priceRange}
-                      onValueChange={setPriceRange}
-                      max={2000}
-                      step={50}
-                      className="mb-2"
-                    />
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>${priceRange[0]}</span>
-                      <span>${priceRange[1]}</span>
-                    </div>
+          <div className="flex gap-8">
+            {/* Filters Sidebar */}
+            <div className="hidden w-72 flex-shrink-0 lg:block">
+              <Card className="sticky top-20">
+                <CardContent className="p-6">
+                  <div className="mb-6 flex items-center gap-2">
+                    <Filter className="size-5" />
+                    <h3>Filters</h3>
                   </div>
 
-                  {/* Stops */}
-                  <div>
-                    <Label className="mb-3 block">Number of Stops</Label>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="nonstop"
-                          checked={selectedStops.includes('nonstop')}
-                          onCheckedChange={(checked) =>
-                            handleStopsChange('nonstop', checked as boolean)
-                          }
-                        />
-                        <Label htmlFor="nonstop" className="cursor-pointer">
-                          Non-stop
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="1stop"
-                          checked={selectedStops.includes('1stop')}
-                          onCheckedChange={(checked) =>
-                            handleStopsChange('1stop', checked as boolean)
-                          }
-                        />
-                        <Label htmlFor="1stop" className="cursor-pointer">
-                          1 Stop
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="2stops"
-                          checked={selectedStops.includes('2stops')}
-                          onCheckedChange={(checked) =>
-                            handleStopsChange('2stops', checked as boolean)
-                          }
-                        />
-                        <Label htmlFor="2stops" className="cursor-pointer">
-                          2+ Stops
-                        </Label>
+                  <div className="space-y-6">
+                    {/* Price Range */}
+                    <div>
+                      <Label className="mb-3 block">Price Range</Label>
+                      <Slider
+                        value={priceRange}
+                        onValueChange={setPriceRange}
+                        max={2000}
+                        step={50}
+                        className="mb-2"
+                      />
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>${priceRange[0]}</span>
+                        <span>${priceRange[1]}</span>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Airlines */}
-                  <div>
-                    <Label className="mb-3 block">Airlines</Label>
-                    <div className="space-y-2">
-                      {[
-                        'Emirates',
-                        'Qatar Airways',
-                        'Singapore Airlines',
-                        'British Airways',
-                        'Etihad Airways',
-                      ].map((airline) => (
-                        <div
-                          key={airline}
-                          className="flex items-center space-x-2"
-                        >
+                    {/* Stops */}
+                    <div>
+                      <Label className="mb-3 block">Number of Stops</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
                           <Checkbox
-                            id={airline}
-                            checked={selectedAirlines.includes(airline)}
+                            id="nonstop"
+                            checked={selectedStops.includes('nonstop')}
                             onCheckedChange={(checked) =>
-                              handleAirlineChange(airline, checked as boolean)
+                              handleStopsChange('nonstop', checked as boolean)
                             }
                           />
-                          <Label
-                            htmlFor={airline}
-                            className="cursor-pointer text-sm"
-                          >
-                            {airline}
+                          <Label htmlFor="nonstop" className="cursor-pointer">
+                            Non-stop
                           </Label>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Departure Time */}
-                  <div>
-                    <Label className="mb-3 block">Departure Time</Label>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="morning"
-                          checked={selectedTimes.includes('morning')}
-                          onCheckedChange={(checked) =>
-                            handleTimeChange('morning', checked as boolean)
-                          }
-                        />
-                        <Label htmlFor="morning" className="cursor-pointer">
-                          Morning (6AM - 12PM)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="afternoon"
-                          checked={selectedTimes.includes('afternoon')}
-                          onCheckedChange={(checked) =>
-                            handleTimeChange('afternoon', checked as boolean)
-                          }
-                        />
-                        <Label htmlFor="afternoon" className="cursor-pointer">
-                          Afternoon (12PM - 6PM)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="evening"
-                          checked={selectedTimes.includes('evening')}
-                          onCheckedChange={(checked) =>
-                            handleTimeChange('evening', checked as boolean)
-                          }
-                        />
-                        <Label htmlFor="evening" className="cursor-pointer">
-                          Evening (6PM - 12AM)
-                        </Label>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="1stop"
+                            checked={selectedStops.includes('1stop')}
+                            onCheckedChange={(checked) =>
+                              handleStopsChange('1stop', checked as boolean)
+                            }
+                          />
+                          <Label htmlFor="1stop" className="cursor-pointer">
+                            1 Stop
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="2stops"
+                            checked={selectedStops.includes('2stops')}
+                            onCheckedChange={(checked) =>
+                              handleStopsChange('2stops', checked as boolean)
+                            }
+                          />
+                          <Label htmlFor="2stops" className="cursor-pointer">
+                            2+ Stops
+                          </Label>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={resetFilters}
-                  >
-                    Reset Filters
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                    {/* Airlines */}
+                    <div>
+                      <Label className="mb-3 block">Airlines</Label>
+                      <div className="space-y-2">
+                        {[
+                          'Emirates',
+                          'Qatar Airways',
+                          'Singapore Airlines',
+                          'British Airways',
+                          'Etihad Airways',
+                        ].map((airline) => (
+                          <div
+                            key={airline}
+                            className="flex items-center space-x-2"
+                          >
+                            <Checkbox
+                              id={airline}
+                              checked={selectedAirlines.includes(airline)}
+                              onCheckedChange={(checked) =>
+                                handleAirlineChange(airline, checked as boolean)
+                              }
+                            />
+                            <Label
+                              htmlFor={airline}
+                              className="cursor-pointer text-sm"
+                            >
+                              {airline}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Departure Time */}
+                    <div>
+                      <Label className="mb-3 block">Departure Time</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="morning"
+                            checked={selectedTimes.includes('morning')}
+                            onCheckedChange={(checked) =>
+                              handleTimeChange('morning', checked as boolean)
+                            }
+                          />
+                          <Label htmlFor="morning" className="cursor-pointer">
+                            Morning (6AM - 12PM)
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="afternoon"
+                            checked={selectedTimes.includes('afternoon')}
+                            onCheckedChange={(checked) =>
+                              handleTimeChange('afternoon', checked as boolean)
+                            }
+                          />
+                          <Label htmlFor="afternoon" className="cursor-pointer">
+                            Afternoon (12PM - 6PM)
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="evening"
+                            checked={selectedTimes.includes('evening')}
+                            onCheckedChange={(checked) =>
+                              handleTimeChange('evening', checked as boolean)
+                            }
+                          />
+                          <Label htmlFor="evening" className="cursor-pointer">
+                            Evening (6PM - 12AM)
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
 
           {/* Flight Results */}
           <div className="flex-1">
@@ -1386,96 +1511,132 @@ export default function FlightBooking() {
               </Select>
             </div>
 
-            <div className="space-y-4">
-              {sortedFlights.map((flight) => (
-                <Card
-                  key={flight.id}
-                  className="transition-shadow hover:shadow-lg"
-                >
-                  <CardContent className="p-6">
-                    <div className="flex flex-col gap-6 lg:flex-row">
-                      <div className="flex-1">
-                        <div className="mb-4 flex items-center gap-3">
-                          <div className="h-16 w-16 overflow-hidden rounded-lg border border-gray-200">
-                            <img
-                              src={flight.logo}
-                              alt={flight.airline}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                          <div>
-                            <h3 className="text-lg">{flight.airline}</h3>
-                            <p className="text-sm text-gray-500">
-                              {flight.cabin}
-                            </p>
-                          </div>
-                        </div>
+            {/* Flight Results */}
+            <div className="flex-1">
+              <div className="mb-6 flex items-center justify-between">
+                <p className="text-gray-600">
+                  {sortedFlights.length} flights found
+                </p>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="price">Lowest Price</SelectItem>
+                    <SelectItem value="duration">Shortest Duration</SelectItem>
+                    <SelectItem value="departure">Departure Time</SelectItem>
+                    <SelectItem value="arrival">Arrival Time</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                        <div className="grid grid-cols-3 gap-4">
-                          <div>
-                            <p className="text-2xl">{flight.departure}</p>
-                            <p className="text-sm text-gray-600">
-                              {flight.from}
-                            </p>
-                          </div>
-                          <div className="text-center">
-                            <div className="mb-1 flex items-center justify-center gap-2">
-                              <div className="h-px flex-1 bg-gray-300" />
-                              <Plane className="size-4 text-gray-400" />
-                              <div className="h-px flex-1 bg-gray-300" />
+              <div className="space-y-4">
+                {error && (
+                  <Card className="bg-red-50 border-red-200">
+                    <CardContent className="p-6 text-center text-red-600">
+                      <p>{error}</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {isSearching ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-red-600" />
+                    <p className="mt-4 text-gray-500">Searching for best flights...</p>
+                  </div>
+                ) : (
+                  <>
+                    {sortedFlights.map((flight) => (
+                      <Card
+                        key={flight.id}
+                        className="transition-shadow hover:shadow-lg"
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex flex-col gap-6 lg:flex-row">
+                            <div className="flex-1">
+                              <div className="mb-4 flex items-center gap-3">
+                                <div className="h-16 w-16 overflow-hidden rounded-lg border border-gray-200">
+                                  <img
+                                    src={flight.logo}
+                                    alt={flight.airline}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                                <div>
+                                  <h3 className="text-lg">{flight.airline}</h3>
+                                  <p className="text-sm text-gray-500">
+                                    {flight.cabin}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                  <p className="text-2xl">{flight.departure}</p>
+                                  <p className="text-sm text-gray-600">
+                                    {flight.from}
+                                  </p>
+                                </div>
+                                <div className="text-center">
+                                  <div className="mb-1 flex items-center justify-center gap-2">
+                                    <div className="h-px flex-1 bg-gray-300" />
+                                    <Plane className="size-4 text-gray-400" />
+                                    <div className="h-px flex-1 bg-gray-300" />
+                                  </div>
+                                  <p className="text-sm text-gray-600">
+                                    {flight.duration}
+                                  </p>
+                                  <Badge variant="outline" className="mt-1">
+                                    {flight.stops}
+                                  </Badge>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-2xl">{flight.arrival}</p>
+                                  <p className="text-sm text-gray-600">{flight.to}</p>
+                                </div>
+                              </div>
                             </div>
-                            <p className="text-sm text-gray-600">
-                              {flight.duration}
-                            </p>
-                            <Badge variant="outline" className="mt-1">
-                              {flight.stops}
-                            </Badge>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-2xl">{flight.arrival}</p>
-                            <p className="text-sm text-gray-600">{flight.to}</p>
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="flex flex-col items-end justify-between lg:border-l lg:pl-6">
-                        <div className="text-right">
-                          <p className="mb-1 text-sm text-gray-500">
-                            Price per person
-                          </p>
-                          <p className="text-3xl text-blue-600">
-                            ${flight.price}
-                          </p>
-                        </div>
-                        <Button
-                          size="lg"
-                          className="mt-4 w-full lg:mt-0 lg:w-auto"
-                          onClick={() => handleSelectFlight(flight)}
-                        >
-                          Select Flight
-                          <ArrowRight className="ml-2 size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                            <div className="flex flex-col items-end justify-between lg:border-l lg:pl-6">
+                              <div className="text-right">
+                                <p className="mb-1 text-sm text-gray-500">
+                                  Price per person
+                                </p>
+                                <p className="text-3xl text-blue-600">
+                                  ${flight.price}
+                                </p>
+                              </div>
+                              <Button
+                                size="lg"
+                                className="mt-4 w-full lg:mt-0 lg:w-auto"
+                                onClick={() => handleSelectFlight(flight)}
+                              >
+                                Select Flight
+                                <ArrowRight className="ml-2 size-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </>
+                )}
 
-              {sortedFlights.length === 0 && (
-                <Card>
-                  <CardContent className="p-12 text-center">
-                    <Plane className="mx-auto mb-4 size-12 text-gray-400" />
-                    <h3 className="mb-2">No flights found</h3>
-                    <p className="mb-4 text-gray-600">
-                      Try adjusting your filters to see more results
-                    </p>
-                    <Button onClick={resetFilters}>Reset Filters</Button>
-                  </CardContent>
-                </Card>
-              )}
+                {!isSearching && !error && sortedFlights.length === 0 && (
+                  <Card>
+                    <CardContent className="p-12 text-center">
+                      <Plane className="mx-auto mb-4 size-12 text-gray-400" />
+                      <h3 className="mb-2">No flights found</h3>
+                      <p className="mb-4 text-gray-600">
+                        Try adjusting your filters to see more results
+                      </p>
+                      <Button onClick={resetFilters}>Reset Filters</Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
           </div>
-        </div>
         )}
       </div>
 
