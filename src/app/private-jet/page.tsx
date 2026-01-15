@@ -10,7 +10,7 @@ export default function PrivateJetPage() {
   useEffect(() => {
     // Load the private jet site content directly into the page
     // This ensures all scripts and styles work correctly
-    window.location.href = '/private-jet/index.html';
+    window.location.href = 'https://d30mgvfwc9sz4j.cloudfront.net/private-jet/index.html';
   }, []);
 
   return (

@@ -26,7 +26,7 @@ function Character() {
   return (
     <div className="relative h-32 w-32 transition-transform duration-100">
       <img
-        src={`/character/${frame}.png`}
+        src={`https://d30mgvfwc9sz4j.cloudfront.net/character/${frame}.png`}
         alt="Character"
         className="h-full w-full object-contain"
       />

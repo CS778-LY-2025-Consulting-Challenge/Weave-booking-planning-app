@@ -65,8 +65,11 @@ const TripsSection = () => {
               className="bg-slate-900 absolute inset-0 h-full w-full object-cover"
               autoPlay
               muted
+              loop
               playsInline
+              preload="metadata"
               onEnded={handleVideoEnd}
+              onError={(e) => console.error('Video playback error:', e)}
             >
               <source src={selectedTrip.video} type="video/mp4" />
             </video>

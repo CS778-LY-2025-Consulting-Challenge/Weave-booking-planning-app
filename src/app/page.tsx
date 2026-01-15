@@ -660,7 +660,7 @@ export default function Home() {
                     </button>
                     <button
                       className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-8 py-4 text-sm tracking-wider text-gray-900 uppercase transition-all duration-300 hover:border-gray-400"
-                      onClick={() => router.push('/journeys')}
+                      onClick={() => router.push('/journeys/1?media=360&day=1')}
                     >
                       View 360° Examples
                     </button>

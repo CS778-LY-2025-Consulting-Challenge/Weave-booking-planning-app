@@ -32,7 +32,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface Flight {
-  id: number;
+  id: string;
   airline: string;
   from: string;
   to: string;
@@ -170,34 +170,75 @@ export function FlightBookingFlow({
     return true;
   };
 
-  const validatePayment = () => {
-    if (
-      !booking.payment.cardholderName ||
-      !booking.payment.cardNumber ||
-      !booking.payment.expiry ||
-      !booking.payment.cvv
-    ) {
-      toast.error('Please fill in all payment details');
-      return false;
-    }
-    if (booking.payment.cardNumber.length !== 16) {
-      toast.error('Card number must be 16 digits');
-      return false;
-    }
-    if (booking.payment.cvv.length !== 3) {
-      toast.error('CVV must be 3 digits');
-      return false;
-    }
-    return true;
-  };
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  const handleConfirmBooking = () => {
-    if (!validatePayment()) return;
+  const handleConfirmBooking = async () => {
+    setIsProcessingPayment(true);
 
-    const bookingRef = `WV${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    setBooking({ ...booking, bookingReference: bookingRef });
-    setStep(5);
-    toast.success('Booking confirmed!');
+    try {
+      console.log('[Flight Booking] Initiating Stripe checkout...');
+
+      // Generate booking reference before creating checkout session
+      const bookingRef = `WV${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+      // Save booking data to localStorage BEFORE redirecting to Stripe
+      const bookingData = {
+        bookingReference: bookingRef,
+        flight: booking.flight,
+        passengers: booking.passengers,
+        extras: booking.extras,
+        totalPrice: prices.total,
+        status: 'pending',
+        bookingDate: new Date().toISOString(),
+        stripeSessionId: '', // Initialize stripeSessionId
+      };
+
+      // Create Stripe checkout session for flight (without full booking data in metadata)
+      const response = await fetch('/api/payment/create-flight-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          flightId: booking.flight?.id,
+          airline: booking.flight?.airline,
+          from: booking.flight?.from,
+          to: booking.flight?.to,
+          departure: booking.flight?.departure,
+          arrival: booking.flight?.arrival,
+          passengers: totalPassengers,
+          totalPrice: prices.total,
+          userId: 'user-123', // Replace with actual user ID from auth
+          bookingReference: bookingRef, // Include booking reference for tracking
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      console.log('[Flight Booking] Stripe session created:', data.sessionId);
+
+      // Add Stripe session ID to booking data
+      bookingData.stripeSessionId = data.sessionId;
+
+      const existingBookings = JSON.parse(localStorage.getItem('flightBookings') || '[]');
+      existingBookings.push(bookingData);
+      localStorage.setItem('flightBookings', JSON.stringify(existingBookings));
+
+      // Redirect to Stripe checkout
+      if (data.url) {
+        toast.success('Redirecting to payment...');
+        window.location.href = data.url;
+        return;
+      } else {
+        throw new Error('No checkout URL received from Stripe');
+      }
+    } catch (error) {
+      console.error('[Flight Booking] Error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to process payment. Please try again.');
+      setIsProcessingPayment(false);
+    }
   };
 
   return (
@@ -689,85 +730,12 @@ export function FlightBookingFlow({
               </CardContent>
             </Card>
 
-            <Card className="border-gray-200">
+            <Card className="border-gray-200 bg-gray-50">
               <CardContent className="p-6">
-                <h4 className="mb-4 font-semibold">Card Information</h4>
-                <div className="space-y-4">
-                  <div>
-                    <Label className="mb-2 block">Cardholder Name *</Label>
-                    <Input
-                      placeholder="John Doe"
-                      value={booking.payment.cardholderName}
-                      onChange={(e) =>
-                        setBooking({
-                          ...booking,
-                          payment: {
-                            ...booking.payment,
-                            cardholderName: e.target.value,
-                          },
-                        })
-                      }
-                      className="border-gray-300"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="mb-2 block">Card Number *</Label>
-                    <Input
-                      placeholder="1234 5678 9012 3456"
-                      maxLength={16}
-                      value={booking.payment.cardNumber}
-                      onChange={(e) =>
-                        setBooking({
-                          ...booking,
-                          payment: {
-                            ...booking.payment,
-                            cardNumber: e.target.value.replace(/\s/g, ''),
-                          },
-                        })
-                      }
-                      className="border-gray-300"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="mb-2 block">Expiry Date *</Label>
-                      <Input
-                        placeholder="MM/YY"
-                        value={booking.payment.expiry}
-                        onChange={(e) =>
-                          setBooking({
-                            ...booking,
-                            payment: {
-                              ...booking.payment,
-                              expiry: e.target.value,
-                            },
-                          })
-                        }
-                        className="border-gray-300"
-                      />
-                    </div>
-                    <div>
-                      <Label className="mb-2 block">CVV *</Label>
-                      <Input
-                        placeholder="123"
-                        maxLength={3}
-                        value={booking.payment.cvv}
-                        onChange={(e) =>
-                          setBooking({
-                            ...booking,
-                            payment: {
-                              ...booking.payment,
-                              cvv: e.target.value,
-                            },
-                          })
-                        }
-                        className="border-gray-300"
-                      />
-                    </div>
-                  </div>
-                </div>
+                <h4 className="mb-2 font-semibold">Secure Stripe Checkout</h4>
+                <p className="text-sm text-gray-600">
+                  You will be redirected to Stripe to complete payment securely.
+                </p>
               </CardContent>
             </Card>
 
@@ -777,6 +745,7 @@ export function FlightBookingFlow({
                 variant="outline"
                 className="flex-1"
                 onClick={() => setStep(3)}
+                disabled={isProcessingPayment}
               >
                 <ChevronLeft className="mr-2 size-4" />
                 Back
@@ -784,9 +753,19 @@ export function FlightBookingFlow({
               <Button
                 className="flex-1"
                 onClick={handleConfirmBooking}
+                disabled={isProcessingPayment}
               >
-                <CreditCard className="mr-2 size-4" />
-                Pay & Confirm Booking
+                {isProcessingPayment ? (
+                  <>
+                    <div className="mr-2 size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="mr-2 size-4" />
+                    Proceed to Stripe Checkout
+                  </>
+                )}
               </Button>
             </div>
           </motion.div>

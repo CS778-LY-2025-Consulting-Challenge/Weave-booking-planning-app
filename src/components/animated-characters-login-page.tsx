@@ -9,6 +9,7 @@ import { Eye, EyeOff, Mail, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { useSignIn } from "@clerk/nextjs";
 
 
 interface PupilProps {
@@ -183,6 +184,7 @@ const EyeBall = ({
 function LoginPage() {
   const { setIsAuthenticated, setUserType, setGuideInfo } = useAuth();
   const router = useRouter();
+  const { isLoaded, signIn, setActive } = useSignIn();
   const [loginMode, setLoginMode] = useState<'traveler' | 'guide'>('traveler');
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -313,58 +315,63 @@ function LoginPage() {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-
-    // Simulate API delay (quick)
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Basic validation - just check if fields are not empty
-    if (email.trim() && password.trim()) {
-      console.log(`✅ ${loginMode === 'guide' ? 'Guide' : 'Traveler'} login successful!`);
-      
-      // Set authentication state
-      setIsAuthenticated(true);
-      setUserType(loginMode);
-      
-      if (loginMode === 'guide') {
-        // Extract name from email or use a default
-        const name = email.split('@')[0];
-        setGuideInfo(
-          `guide-${Math.random().toString(36).substr(2, 9)}`,
-          email,
-          name
-        );
-        // Store guide appointments for this demo
-        const demoAppointments = [
-          {
-            id: '1',
-            guideEmail: email,
-            travelerName: 'Sarah Johnson',
-            journeyName: 'Tokyo 5-Day Adventure',
-            dateTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-            meetingType: 'video call',
-            status: 'confirmed',
-          },
-          {
-            id: '2',
-            guideEmail: email,
-            travelerName: 'Michael Chen',
-            journeyName: 'Kyoto Heritage Walk',
-            dateTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-            meetingType: 'in-person',
-            status: 'confirmed',
-          },
-        ];
-        localStorage.setItem('guideAppointments', JSON.stringify(demoAppointments));
-        router.push("/guide-dashboard");
-      } else {
-        router.push("/dashboard");
-      }
-    } else {
-      setError("Please enter both email and password.");
-      console.log("❌ Login failed");
+    if (!isLoaded || !signIn) {
+      setError("Authentication is still loading. Please try again.");
+      setIsLoading(false);
+      return;
     }
 
-    setIsLoading(false);
+    try {
+      const result = await signIn.create({ identifier: email, password });
+
+      if (result.status === "complete") {
+        await setActive?.({ session: result.createdSessionId });
+
+        setIsAuthenticated(true);
+        setUserType(loginMode);
+
+        if (loginMode === 'guide') {
+          const name = email.split('@')[0];
+          setGuideInfo(
+            `guide-${Math.random().toString(36).substr(2, 9)}`,
+            email,
+            name
+          );
+        }
+
+        router.push(loginMode === 'guide' ? "/guide-dashboard" : "/dashboard");
+      } else {
+        setError("Additional verification is required to finish signing in.");
+      }
+    } catch (err: any) {
+      const message = err?.errors?.[0]?.message ?? "Unable to sign in. Please check your email and password.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError("");
+    setIsLoading(true);
+
+    if (!isLoaded || !signIn) {
+      setError("Authentication is still loading. Please try again.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      await signIn.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: loginMode === 'guide' ? "/guide-dashboard" : "/dashboard",
+      });
+    } catch (err: any) {
+      const message = err?.errors?.[0]?.message ?? "Google sign-in failed. Please try again.";
+      setError(message);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -670,6 +677,19 @@ function LoginPage() {
               {isLoading ? "Signing in..." : "Log in"}
             </Button>
           </form>
+
+          <div className="mt-6">
+            <Button
+              variant="outline"
+              className="w-full h-12 bg-background border-border/60 hover:bg-accent"
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+            >
+              <Mail className="mr-2 size-5" />
+              {loginMode === 'guide' ? 'Sign up as a Guide' : 'Log in with Google'}
+            </Button>
+          </div>
 
               {/* Sign Up Link */}
               <div className="text-center mt-8">

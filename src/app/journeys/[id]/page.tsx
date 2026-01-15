@@ -29,13 +29,14 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useParams, useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import JourneyBookingFlow from '@/components/JourneyBookingFlow';
 
 export default function JourneyDetails() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentDay, setCurrentDay] = useState(0);
   const [isBookOpen, setIsBookOpen] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
@@ -49,6 +50,7 @@ export default function JourneyDetails() {
     title: string;
   } | null>(null);
   const pageFlipRef = useRef<BookFlipRef>(null);
+  const autoOpenHandled = useRef(false);
 
   // Per-journey data keyed by URL id
   const journeysData: Record<string, any> = {
@@ -79,11 +81,11 @@ export default function JourneyDetails() {
           ],
           images: [
             { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800', caption: 'Mount Cook vista' },
-            { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800', caption: 'Aotearoa landscapes' },
+            { url: '/images/new-zealand-1.jpg', caption: 'Aotearoa landscapes' },
             { url: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800', caption: 'Pastoral farmland' },
           ],
           videos: [
-            { url: 'https://www.youtube.com/embed/0Hy8Ck_pXqo', caption: 'New Zealand intro', thumbnail: 'https://img.youtube.com/vi/0Hy8Ck_pXqo/hqdefault.jpg' },
+            { url: '/images/new zealand video.mp4', caption: 'New Zealand intro', thumbnail: '/images/new zealand.jpg' },
           ],
           video360Url: 'https://cloudflare1.360gigapixels.com/pano/milanrademakers/01906841_DSC-1437-Panorama-jpg/equirect_crop_3_1/6.jpg',
           has360: true,
@@ -528,7 +530,39 @@ export default function JourneyDetails() {
     },
   };
 
-  const journey = journeysData[(id as string) || '1'] ?? journeysData['1'];
+  const journey = useMemo(
+    () => journeysData[(id as string) || '1'] ?? journeysData['1'],
+    [id]
+  );
+
+  useEffect(() => {
+    if (!journey || autoOpenHandled.current) return;
+
+    const mediaType = searchParams.get('media');
+    const requestedDay = Math.max(
+      0,
+      Math.min(
+        (Number(searchParams.get('day')) || 1) - 1,
+        journey.days.length - 1
+      )
+    );
+
+    if (mediaType === '360') {
+      autoOpenHandled.current = true;
+      setIsBookOpen(true);
+      setCurrentDay(requestedDay);
+      pageFlipRef.current?.turnToPage(requestedDay * 2);
+
+      const targetDay = journey.days[requestedDay];
+      if (targetDay?.has360 && targetDay.video360Url) {
+        setSelectedMedia({
+          type: '360',
+          url: targetDay.video360Url,
+          title: targetDay.title,
+        });
+      }
+    }
+  }, [journey, searchParams]);
 
   const handleCopyJourney = () => {
     alert('Journey copied to your dashboard! You can now customize it.');
@@ -1247,13 +1281,32 @@ export default function JourneyDetails() {
               style={{ height: '500px' }}
             >
               <div className="h-full w-full">
-                <iframe
-                  src={selectedMedia?.url}
-                  className="h-full w-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+                {selectedMedia?.url && (selectedMedia.url.includes('.mp4') || selectedMedia.url.includes('.webm') || selectedMedia.url.startsWith('/')) ? (
+                  // Local video file or MP4/WebM - use video element
+                  <video
+                    src={selectedMedia.url}
+                    controls
+                    autoPlay
+                    preload="metadata"
+                    playsInline
+                    className="h-full w-full"
+                    onError={(e) => {
+                      console.error('Video load error:', e);
+                      // Fallback to showing error message
+                    }}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  // YouTube or external embed URL - use iframe
+                  <iframe
+                    src={selectedMedia?.url}
+                    className="h-full w-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                )}
               </div>
             </div>
           </DialogContent>

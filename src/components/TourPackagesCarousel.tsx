@@ -21,7 +21,7 @@ const TOUR_PACKAGES: TourPackage[] = [
     rating: '★★★★★ (245 reviews)',
     days: 10,
     nights: 9,
-    image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&h=1000&fit=crop&q=80'
+    image: '/images/paris.jpg'
   },
   {
     name: 'Tokyo Adventure',
@@ -30,7 +30,7 @@ const TOUR_PACKAGES: TourPackage[] = [
     rating: '★★★★★ (189 reviews)',
     days: 12,
     nights: 11,
-    image: 'https://images.unsplash.com/photo-1540959375944-7049f642e9bc?w=800&h=1000&fit=crop&q=80'
+    image: '/images/Tokyo.jpg'
   },
   {
     name: 'Swiss Alps Escape',
@@ -39,7 +39,7 @@ const TOUR_PACKAGES: TourPackage[] = [
     rating: '★★★★★ (312 reviews)',
     days: 8,
     nights: 7,
-    image: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&h=1000&fit=crop&q=80'
+    image: '/images/swiss alps.jpg'
   },
   {
     name: 'Bali Tropical',
@@ -48,7 +48,7 @@ const TOUR_PACKAGES: TourPackage[] = [
     rating: '★★★★★ (428 reviews)',
     days: 7,
     nights: 6,
-    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&h=1000&fit=crop&q=80'
+    image: '/images/bali.jpg'
   },
   {
     name: 'New York City',
@@ -57,7 +57,7 @@ const TOUR_PACKAGES: TourPackage[] = [
     rating: '★★★★★ (567 reviews)',
     days: 7,
     nights: 6,
-    image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&h=1000&fit=crop&q=80'
+    image: '/images/new york.jpg'
   },
   {
     name: 'Dubai Luxury',
@@ -66,7 +66,7 @@ const TOUR_PACKAGES: TourPackage[] = [
     rating: '★★★★★ (234 reviews)',
     days: 6,
     nights: 5,
-    image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=1000&fit=crop&q=80'
+    image: '/images/dubai.jpg'
   },
   {
     name: 'Barcelona Culture',
@@ -75,7 +75,7 @@ const TOUR_PACKAGES: TourPackage[] = [
     rating: '★★★★★ (356 reviews)',
     days: 7,
     nights: 6,
-    image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&h=1000&fit=crop&q=80'
+    image: '/images/barcelona.jpg'
   },
   {
     name: 'Rome Historical',
@@ -84,7 +84,7 @@ const TOUR_PACKAGES: TourPackage[] = [
     rating: '★★★★★ (478 reviews)',
     days: 9,
     nights: 8,
-    image: 'https://images.unsplash.com/photo-1552832860-cfac2e94b122?w=800&h=1000&fit=crop&q=80'
+    image: '/images/rome.jpg'
   },
 ];
 
@@ -169,6 +169,12 @@ export default function TourPackagesCarousel() {
       const button = document.createElement('button');
       button.className = 'tpc-card__button';
       button.textContent = 'BOOK NOW';
+        // Stop carousel drag from hijacking click, then navigate to packages
+        button.addEventListener('pointerdown', (e) => e.stopPropagation());
+        button.addEventListener('click', (e) => {
+          e.stopPropagation();
+          window.location.href = '/packages';
+        });
 
       const arrow = document.createElement('span');
       arrow.className = 'tpc-card__arrow';
