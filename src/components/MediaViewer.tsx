@@ -159,9 +159,13 @@ export default function MediaViewer({
                       src={currentMedia.url}
                       controls
                       autoPlay
+                      preload="metadata"
+                      playsInline
                       className="max-h-[80vh] w-auto rounded-lg"
                       onPlay={() => setIsPlaying(true)}
                       onPause={() => setIsPlaying(false)}
+                      onError={(e) => console.error('Video error:', e)}
+                      onLoadedMetadata={() => console.log('Video metadata loaded')}
                     >
                       Your browser does not support the video tag.
                     </video>

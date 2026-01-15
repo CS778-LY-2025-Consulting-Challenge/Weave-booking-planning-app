@@ -145,7 +145,7 @@ export default function FlightBooking() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<Flight[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Initialize dates as null to avoid hydration mismatch
   const [departureDate, setDepartureDate] = useState<Date | null>(null);
   const [returnDate, setReturnDate] = useState<Date | null>(null);
@@ -156,7 +156,7 @@ export default function FlightBooking() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const nextWeek = new Date(tomorrow);
     nextWeek.setDate(tomorrow.getDate() + 7);
-    
+
     setDepartureDate(tomorrow);
     setReturnDate(nextWeek);
   }, []);
@@ -1350,20 +1350,12 @@ export default function FlightBooking() {
                         </div>
                       </div>
                     </div>
-
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={resetFilters}
-                    >
-                      Reset Filters
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Flight Results */}
+
             <div className="flex-1">
               <div className="mb-6 flex items-center justify-between">
                 <p className="text-gray-600">

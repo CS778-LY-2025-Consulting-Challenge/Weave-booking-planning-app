@@ -20,7 +20,7 @@ export function PagCharacter() {
         const PAG = await PAGInit();
         if (!mounted || !canvasRef.current) return;
 
-        const response = await fetch('/character.pag');
+        const response = await fetch('https://d30mgvfwc9sz4j.cloudfront.net/character.pag');
         const buffer = await response.arrayBuffer();
         const pagFile = await PAG.PAGFile.load(buffer);
 
