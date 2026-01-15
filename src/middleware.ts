@@ -18,6 +18,7 @@ const isPublicRoute = createRouteMatcher([
   '/apply-guide(.*)',
   '/ai-planner(.*)',
   '/api/update-user-type(.*)',
+  '/api/serpapi(.*)',
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

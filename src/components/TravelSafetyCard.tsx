@@ -109,11 +109,11 @@ export default function TravelSafetyCard({ destination, dates }: TravelSafetyCar
     const updated = new Date(timestamp);
     const diffMs = now.getTime() - updated.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    
+
     if (diffHours < 1) return 'Just now';
     if (diffHours === 1) return '1 hour ago';
     if (diffHours < 24) return `${diffHours} hours ago`;
-    
+
     const diffDays = Math.floor(diffHours / 24);
     if (diffDays === 1) return '1 day ago';
     return `${diffDays} days ago`;
@@ -175,7 +175,7 @@ export default function TravelSafetyCard({ destination, dates }: TravelSafetyCar
                 <div className="text-sm font-semibold text-slate-700">{destination}</div>
                 <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${getRiskConfig(safetyData.riskLevel).bg} ${getRiskConfig(safetyData.riskLevel).border}`}>
                   <span className={getRiskConfig(safetyData.riskLevel).color}>
-                    {React.cloneElement(getRiskConfig(safetyData.riskLevel).icon as React.ReactElement, { className: 'h-5 w-5' })}
+                    {React.cloneElement(getRiskConfig(safetyData.riskLevel).icon as React.ReactElement<{ className?: string }>, { className: 'h-5 w-5' })}
                   </span>
                   <span className={`text-sm font-semibold ${getRiskConfig(safetyData.riskLevel).color}`}>
                     {getRiskConfig(safetyData.riskLevel).label}
