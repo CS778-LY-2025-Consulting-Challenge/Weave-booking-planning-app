@@ -50,7 +50,7 @@ import { FlightBookingFlow } from '@/components/FlightBookingFlow';
 import { toast } from 'sonner';
 
 interface Flight {
-  id: number;
+  id: string;
   airline: string;
   from: string;
   to: string;
@@ -185,7 +185,7 @@ export default function FlightBooking() {
 
   const allFlights: Flight[] = [
     {
-      id: 1,
+      id: '1',
       airline: 'Emirates',
       from: 'New York (JFK)',
       to: 'Dubai (DXB)',
@@ -199,7 +199,7 @@ export default function FlightBooking() {
       departureTime: 'morning',
     },
     {
-      id: 2,
+      id: '2',
       airline: 'Singapore Airlines',
       from: 'New York (JFK)',
       to: 'Dubai (DXB)',
@@ -213,7 +213,7 @@ export default function FlightBooking() {
       departureTime: 'morning',
     },
     {
-      id: 3,
+      id: '3',
       airline: 'Qatar Airways',
       from: 'New York (JFK)',
       to: 'Dubai (DXB)',
@@ -227,7 +227,7 @@ export default function FlightBooking() {
       departureTime: 'morning',
     },
     {
-      id: 4,
+      id: '4',
       airline: 'Etihad Airways',
       from: 'New York (JFK)',
       to: 'Dubai (DXB)',
@@ -241,7 +241,7 @@ export default function FlightBooking() {
       departureTime: 'afternoon',
     },
     {
-      id: 5,
+      id: '5',
       airline: 'British Airways',
       from: 'New York (JFK)',
       to: 'Dubai (DXB)',
