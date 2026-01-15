@@ -28,6 +28,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
+import { Trip } from '@/types/expense';
 
 interface Journey {
   id: number;
@@ -58,6 +59,8 @@ export default function Dashboard() {
   const router = useRouter();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [savedPackages, setSavedPackages] = useState<SavedPackage[]>([]);
+  const [budgetTrips, setBudgetTrips] = useState<Trip[]>([]);
+  const [budgetTripsLoading, setBudgetTripsLoading] = useState(true);
 
   // Authentication check - redirect to auth if not signed in
   useEffect(() => {
@@ -89,6 +92,39 @@ export default function Dashboard() {
     if (saved) {
       setSavedPackages(JSON.parse(saved));
     }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadBudgetTrips = async () => {
+      setBudgetTripsLoading(true);
+      try {
+        const response = await fetch('/api/trips');
+        if (!response.ok) {
+          throw new Error('Failed to load trips');
+        }
+        const data = await response.json();
+        if (isMounted) {
+          setBudgetTrips(data.trips ?? []);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setBudgetTrips([]);
+        }
+        toast.error('Failed to load budget trips');
+      } finally {
+        if (isMounted) {
+          setBudgetTripsLoading(false);
+        }
+      }
+    };
+
+    loadBudgetTrips();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const [journeys, setJourneys] = useState<Journey[]>([
@@ -450,6 +486,64 @@ export default function Dashboard() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Trip Budgets</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {budgetTripsLoading ? (
+                  <p className="text-sm text-gray-500">Loading trips...</p>
+                ) : budgetTrips.length === 0 ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-500">
+                      No trips yet. Create one to start tracking budgets.
+                    </p>
+                    <Button
+                      className="w-full"
+                      variant="outline"
+                      onClick={() => router.push('/trips/new')}
+                    >
+                      <Plus className="mr-2 size-4" />
+                      Create Trip
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {budgetTrips.map((trip) => (
+                      <div
+                        key={trip.id}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 p-3"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">{trip.name}</p>
+                          {trip.destination && (
+                            <p className="text-xs text-gray-500">
+                              {trip.destination}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => router.push(`/trips/${trip.id}/budget`)}
+                        >
+                          Budget
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      className="w-full"
+                      variant="ghost"
+                      onClick={() => router.push('/trips/new')}
+                    >
+                      <Plus className="mr-2 size-4" />
+                      New Trip
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Profile</CardTitle>
