@@ -4,16 +4,11 @@ import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 
 export default function TrendingDestinations() {
-  const [bestInTravelSrc, setBestInTravelSrc] = useState(
-    'https://d30mgvfwc9sz4j.cloudfront.net/best-in-travel/index.html'
-  );
+  const [bestInTravelSrc] = useState('/best-in-travel/index.html');
   const [iframeHeight, setIframeHeight] = useState<number | undefined>(undefined);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  useEffect(() => {
-    // Use CDN URL for best-in-travel
-    setBestInTravelSrc('https://d30mgvfwc9sz4j.cloudfront.net/best-in-travel/index.html');
-  }, []);
+
 
   useEffect(() => {
     const handleIframeLoad = () => {
@@ -121,7 +116,6 @@ export default function TrendingDestinations() {
               height: iframeHeight ? `${iframeHeight}px` : '1500px',
               minHeight: '600px',
             }}
-            scrolling="no"
             referrerPolicy="no-referrer"
             ref={iframeRef}
           />
