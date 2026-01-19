@@ -26,9 +26,12 @@ import {
   Utensils,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useUser } from '@clerk/nextjs';
+import { saveTrip } from '@/lib/savedTrips';
 
 interface DayActivity {
   time: string;
@@ -89,6 +92,7 @@ interface PackageData {
   activities: DestinationActivity[];
 }
 
+
 export default function PackageDetails() {
   const { id } = useParams();
   const router = useRouter();
@@ -96,6 +100,9 @@ export default function PackageDetails() {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [selectedMediaArray, setSelectedMediaArray] = useState<DayMedia[]>([]);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
+  const { user } = useUser();
+  const userId = user?.id;
+  const [adding, setAdding] = useState(false);
 
   // Package data with comprehensive details
   const packagesData: { [key: string]: PackageData } = {
@@ -2164,7 +2171,7 @@ export default function PackageDetails() {
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="mb-4 text-[80px] font-bold text-gray-800">404</h1>
             <div 
-              className="mx-auto mb-8 h-[400px] bg-center bg-no-repeat"
+              className="mx-auto mb-8 h-100 bg-center bg-no-repeat"
               style={{
                 backgroundImage: 'url(https://cdn.dribbble.com/users/285475/screenshots/2083086/dribbble_1.gif)',
                 backgroundSize: 'cover'
@@ -2199,6 +2206,33 @@ export default function PackageDetails() {
     );
   };
 
+  const handleAddToJourneys = async () => {
+    if (!userId) {
+      toast.error('You must be signed in to save journeys.');
+      return;
+    }
+    setAdding(true);
+    try {
+      // Save only essential package info for the trip
+      await saveTrip(userId, {
+        destination: packageData.destination,
+        date: new Date().toISOString().slice(0, 10),
+        packageId: packageData.id,
+        name: packageData.name,
+        image: packageData.image,
+        duration: packageData.duration,
+        price: packageData.price,
+        type: packageData.type,
+        description: packageData.description,
+      });
+      toast.success('Package added to your journeys!');
+    } catch (err) {
+      toast.error('Failed to add to journeys.');
+    } finally {
+      setAdding(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section with Package Image */}
@@ -2208,7 +2242,7 @@ export default function PackageDetails() {
           alt={packageData.name}
           className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
 
         {/* Back Button */}
         <Button
@@ -2280,7 +2314,7 @@ export default function PackageDetails() {
                     <Card>
                       <CardContent className="p-6">
                         <div className="mb-4 flex items-center gap-3">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-r from-blue-600 to-purple-600 text-white">
                             {day.day}
                           </div>
                           <div>
@@ -2299,7 +2333,7 @@ export default function PackageDetails() {
                                 key={actIndex}
                                 className="flex gap-4 border-b pb-4 last:border-b-0 last:pb-0"
                               >
-                                <div className="flex-shrink-0">
+                                <div className="shrink-0">
                                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
                                     <Icon className="size-5 text-blue-600" />
                                   </div>
@@ -2360,7 +2394,7 @@ export default function PackageDetails() {
                                       </div>
                                     </div>
                                   )}
-                                  <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 via-black/0 to-black/0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                                  <div className="absolute inset-0 flex items-end bg-linear-to-t from-black/70 via-black/0 to-black/0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                                     <p className="p-3 text-xs text-white">
                                       {media.caption}
                                     </p>
@@ -2454,7 +2488,7 @@ export default function PackageDetails() {
                     <Card>
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
-                          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-purple-600">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-linear-to-r from-blue-600 to-purple-600">
                             <Plane className="size-6 text-white" />
                           </div>
                           <div className="flex-1">
@@ -2647,7 +2681,7 @@ export default function PackageDetails() {
                     <div className="space-y-2">
                       {packageData.includes.map((item, index) => (
                         <div key={index} className="flex items-start gap-2">
-                          <Check className="mt-0.5 size-4 flex-shrink-0 text-green-600" />
+                          <Check className="mt-0.5 size-4 shrink-0 text-green-600" />
                           <span className="text-sm text-gray-600">{item}</span>
                         </div>
                       ))}
@@ -2667,10 +2701,19 @@ export default function PackageDetails() {
                   </div>
 
                   <Button
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    className="w-full bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                     onClick={() => { localStorage.setItem('selectedPackageId', String(packageData.id)); router.push(`/packages/${packageData.id}/book`); }}
                   >
                     Book This Package
+                  </Button>
+
+                  <Button
+                    variant="secondary"
+                    className="mt-3 w-full"
+                    onClick={handleAddToJourneys}
+                    disabled={adding}
+                  >
+                    {adding ? 'Adding...' : 'Add to Journeys'}
                   </Button>
 
                   <Button
