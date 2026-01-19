@@ -108,7 +108,7 @@ const TripsSection = () => {
 
       <div className="relative z-10 h-full px-6 py-8">
         <motion.div
-          className="mx-auto flex h-full max-w-7xl flex-col justify-between"
+          className="mx-auto flex h-full flex-col justify-between gap-4"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -138,6 +138,42 @@ const TripsSection = () => {
             onTripSelect={handleTripSelect}
           />
 
+          <div className="pointer-events-none flex items-center justify-center gap-6">
+            <button
+              onClick={() =>
+                window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })
+              }
+              className="group pointer-events-auto cursor-pointer rounded-3xl border border-white/15 bg-white/5 px-8 py-5 shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-white/25 hover:bg-white/10 hover:shadow-xl"
+            >
+              <div className="flex items-center gap-8">
+                <Compass className="h-6 w-6 text-white/90 transition-transform duration-300 group-hover:rotate-45" />
+                <div className="text-left">
+                  <p className="text-lg font-medium text-white">
+                    Start Journey
+                  </p>
+                  <p className="text-sm text-white/50">Begin your adventure</p>
+                </div>
+              </div>
+            </button>
+
+            <Link
+              href="/destinations"
+              className="group pointer-events-auto cursor-pointer rounded-3xl border border-white/15 bg-white/5 px-8 py-5 shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-white/25 hover:bg-white/10 hover:shadow-xl"
+            >
+              <div className="flex items-center gap-4">
+                <MapPin className="h-6 w-6 text-white/90 transition-transform duration-300 group-hover:scale-110" />
+                <div className="text-left">
+                  <p className="text-lg font-medium text-white">
+                    Browse Destinations
+                  </p>
+                  <p className="text-sm text-white/50">
+                    Explore amazing places
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </div>
+
           {/* Statistics indicators */}
           <motion.div
             className="mx-auto grid max-w-6xl grid-cols-2 gap-8 md:grid-cols-4"
@@ -166,7 +202,7 @@ const TripsSection = () => {
                 <div className="text-xs tracking-[0.5em] text-white/60 uppercase">
                   {stat.label}
                 </div>
-                <div className="mt-3 text-2xl font-semibold md:text-3xl">
+                <div className="mt-3 text-2xl font-semibold whitespace-pre md:text-3xl">
                   {stat.value}
                 </div>
                 <div className="mx-auto mt-3 h-px w-16 bg-white/30" />
@@ -174,38 +210,6 @@ const TripsSection = () => {
             ))}
           </motion.div>
         </motion.div>
-
-        <div className="pointer-events-none absolute top-0 right-0 bottom-0 left-0 flex items-center justify-start gap-6 xl:pt-44 xl:pl-64">
-          <button
-            onClick={() =>
-              window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })
-            }
-            className="group pointer-events-auto cursor-pointer rounded-3xl border border-white/15 bg-white/5 px-8 py-5 shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-white/25 hover:bg-white/10 hover:shadow-xl"
-          >
-            <div className="flex items-center gap-8">
-              <Compass className="h-6 w-6 text-white/90 transition-transform duration-300 group-hover:rotate-45" />
-              <div className="text-left">
-                <p className="text-lg font-medium text-white">Start Journey</p>
-                <p className="text-sm text-white/50">Begin your adventure</p>
-              </div>
-            </div>
-          </button>
-
-          <Link
-            href="/destinations"
-            className="group pointer-events-auto cursor-pointer rounded-3xl border border-white/15 bg-white/5 px-8 py-5 shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-white/25 hover:bg-white/10 hover:shadow-xl"
-          >
-            <div className="flex items-center gap-4">
-              <MapPin className="h-6 w-6 text-white/90 transition-transform duration-300 group-hover:scale-110" />
-              <div className="text-left">
-                <p className="text-lg font-medium text-white">
-                  Browse Destinations
-                </p>
-                <p className="text-sm text-white/50">Explore amazing places</p>
-              </div>
-            </div>
-          </Link>
-        </div>
       </div>
     </div>
   );

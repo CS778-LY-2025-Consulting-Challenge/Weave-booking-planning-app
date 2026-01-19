@@ -1,8 +1,10 @@
+import { cn } from '@/lib/utils';
 import clsx from 'clsx';
 import { motion, useAnimation, useMotionValue } from 'framer-motion';
 import { HeartIcon } from 'lucide-react';
 import {
   forwardRef,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -24,6 +26,7 @@ export interface Trip {
 }
 
 interface TripCarouselProps {
+  className?: string;
   trips: Trip[];
   onTripSelect?: (trip: Trip) => void;
 }
@@ -33,12 +36,13 @@ export interface TripCarouselRef {
 }
 
 const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
-  ({ trips, onTripSelect }, ref) => {
+  ({ className, trips, onTripSelect }, ref) => {
     const [orderedTrips, setOrderedTrips] = useState(trips);
     const [selectedId, setSelectedId] = useState(trips[0].id);
     const [isDragging, setIsDragging] = useState(false);
     const [hiddenIds, setHiddenIds] = useState<number[]>([]);
     const [isAnimating, setIsAnimating] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
     const constraintsRef = useRef<HTMLDivElement>(null);
     const x = useMotionValue(0);
     const controls = useAnimation();
@@ -93,9 +97,31 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
       },
     }));
 
+    // Auto-play: zhangjiajie stays 30s, others stay 5s, pause on hover
+    useEffect(() => {
+      if (isAnimating || isHovered) return;
+
+      const currentTrip = orderedTrips[0];
+      const isZhangjiajie =
+        currentTrip?.title?.toLowerCase().includes('zhangjiajie') ||
+        currentTrip?.location?.toLowerCase().includes('zhangjiajie');
+      const delay = isZhangjiajie ? 30000 : 5000;
+
+      const timer = setTimeout(() => {
+        if (orderedTrips.length > 1 && !isAnimating && !isHovered) {
+          handleCardClick(orderedTrips[1]);
+        }
+      }, delay);
+
+      return () => clearTimeout(timer);
+    }, [orderedTrips, isAnimating, isHovered]);
+
     return (
       <div
-        className="relative flex h-[500px] w-full items-center overflow-hidden"
+        className={cn(
+          'relative flex w-full items-center overflow-hidden py-4',
+          className
+        )}
         ref={constraintsRef}
       >
         <motion.div
@@ -117,6 +143,8 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
                 key={trip.id}
                 className="h-80 w-60 flex-shrink-0"
                 onClick={() => !isHidden && handleCardClick(trip)}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
                 whileHover={!isHidden ? { scale: 1.05 } : {}}
                 animate={{
                   opacity: isHidden ? 0 : 1,
@@ -148,7 +176,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
                       {trip.location}
                     </p>
 
-                    <div className="flex items-center justify-between">
+                    {/* <div className="flex items-center justify-between">
                       <div className="flex gap-4">
                         <div className="flex flex-col items-center">
                           <span className="mb-1 text-[10px] text-white/60">
@@ -174,7 +202,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
                           {trip.likes}
                         </span>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </motion.div>
