@@ -1,8 +1,10 @@
+import { cn } from '@/lib/utils';
 import clsx from 'clsx';
 import { motion, useAnimation, useMotionValue } from 'framer-motion';
 import { HeartIcon } from 'lucide-react';
 import {
   forwardRef,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -24,6 +26,7 @@ export interface Trip {
 }
 
 interface TripCarouselProps {
+  className?: string;
   trips: Trip[];
   onTripSelect?: (trip: Trip) => void;
 }
@@ -33,7 +36,7 @@ export interface TripCarouselRef {
 }
 
 const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
-  ({ trips, onTripSelect }, ref) => {
+  ({ className, trips, onTripSelect }, ref) => {
     const [orderedTrips, setOrderedTrips] = useState(trips);
     const [selectedId, setSelectedId] = useState(trips[0].id);
     const [isDragging, setIsDragging] = useState(false);
@@ -93,9 +96,25 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
       },
     }));
 
+    // Auto-play: automatically rotate to next slide every 5 seconds
+    useEffect(() => {
+      if (isAnimating) return;
+
+      const timer = setInterval(() => {
+        if (orderedTrips.length > 1 && !isAnimating) {
+          handleCardClick(orderedTrips[1]);
+        }
+      }, 5000);
+
+      return () => clearInterval(timer);
+    }, [orderedTrips, isAnimating]);
+
     return (
       <div
-        className="relative flex h-[500px] w-full items-center overflow-hidden"
+        className={cn(
+          'relative flex w-full items-center overflow-hidden py-4',
+          className
+        )}
         ref={constraintsRef}
       >
         <motion.div
@@ -148,7 +167,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
                       {trip.location}
                     </p>
 
-                    <div className="flex items-center justify-between">
+                    {/* <div className="flex items-center justify-between">
                       <div className="flex gap-4">
                         <div className="flex flex-col items-center">
                           <span className="mb-1 text-[10px] text-white/60">
@@ -174,7 +193,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
                           {trip.likes}
                         </span>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </motion.div>
