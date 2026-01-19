@@ -42,6 +42,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
     const [isDragging, setIsDragging] = useState(false);
     const [hiddenIds, setHiddenIds] = useState<number[]>([]);
     const [isAnimating, setIsAnimating] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
     const constraintsRef = useRef<HTMLDivElement>(null);
     const x = useMotionValue(0);
     const controls = useAnimation();
@@ -96,18 +97,24 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
       },
     }));
 
-    // Auto-play: automatically rotate to next slide every 5 seconds
+    // Auto-play: zhangjiajie stays 30s, others stay 5s, pause on hover
     useEffect(() => {
-      if (isAnimating) return;
+      if (isAnimating || isHovered) return;
 
-      const timer = setInterval(() => {
-        if (orderedTrips.length > 1 && !isAnimating) {
+      const currentTrip = orderedTrips[0];
+      const isZhangjiajie =
+        currentTrip?.title?.toLowerCase().includes('zhangjiajie') ||
+        currentTrip?.location?.toLowerCase().includes('zhangjiajie');
+      const delay = isZhangjiajie ? 30000 : 5000;
+
+      const timer = setTimeout(() => {
+        if (orderedTrips.length > 1 && !isAnimating && !isHovered) {
           handleCardClick(orderedTrips[1]);
         }
-      }, 5000);
+      }, delay);
 
-      return () => clearInterval(timer);
-    }, [orderedTrips, isAnimating]);
+      return () => clearTimeout(timer);
+    }, [orderedTrips, isAnimating, isHovered]);
 
     return (
       <div
@@ -136,6 +143,8 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
                 key={trip.id}
                 className="h-80 w-60 flex-shrink-0"
                 onClick={() => !isHidden && handleCardClick(trip)}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
                 whileHover={!isHidden ? { scale: 1.05 } : {}}
                 animate={{
                   opacity: isHidden ? 0 : 1,

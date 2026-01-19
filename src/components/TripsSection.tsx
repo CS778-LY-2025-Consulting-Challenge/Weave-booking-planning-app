@@ -132,7 +132,13 @@ const TripsSection = () => {
             </div>
           </div>
 
-          <div className="pointer-events-none flex items-center justify-start gap-6 xl:pl-64">
+          <TripCarousel
+            ref={carouselRef}
+            trips={upcomingTrips}
+            onTripSelect={handleTripSelect}
+          />
+
+          <div className="pointer-events-none flex items-center justify-center gap-6">
             <button
               onClick={() =>
                 window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })
@@ -167,12 +173,6 @@ const TripsSection = () => {
               </div>
             </Link>
           </div>
-
-          <TripCarousel
-            ref={carouselRef}
-            trips={upcomingTrips}
-            onTripSelect={handleTripSelect}
-          />
 
           {/* Statistics indicators */}
           <motion.div
