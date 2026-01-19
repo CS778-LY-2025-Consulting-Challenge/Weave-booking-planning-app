@@ -26,6 +26,8 @@ import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useUser } from '@clerk/nextjs';
+import { getSavedTrips, saveTrip } from '@/lib/savedTrips';
 
 interface Package {
   id: number;
@@ -40,15 +42,28 @@ interface Package {
 
 export default function Packages() {
   const router = useRouter();
+  const { user } = useUser();
+  const userId = user?.id;
   const [addedPackages, setAddedPackages] = useState<number[]>([]);
   const [isCursorOnContent, setIsCursorOnContent] = useState(false);
+  const [addingId, setAddingId] = useState<number | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('savedPackages');
-    if (saved) {
-      setAddedPackages(JSON.parse(saved).map((pkg: any) => pkg.id));
-    }
-  }, []);
+    const fetchSaved = async () => {
+      if (!userId) return;
+      try {
+        const trips = await getSavedTrips(userId);
+        // trips is an object with keys as trip IDs, values as trip data
+        const packageIds = Object.values(trips || {})
+          .map((trip: any) => trip.packageId)
+          .filter((id) => typeof id === 'number');
+        setAddedPackages(packageIds);
+      } catch (e) {
+        setAddedPackages([]);
+      }
+    };
+    fetchSaved();
+  }, [userId]);
 
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
@@ -164,14 +179,31 @@ export default function Packages() {
     },
   ];
 
-  const handleAddToJourneys = (pkgId: number) => {
-    const updatedPackages = [...addedPackages, pkgId];
-    setAddedPackages(updatedPackages);
-    localStorage.setItem(
-      'savedPackages',
-      JSON.stringify(packages.filter((pkg) => updatedPackages.includes(pkg.id)))
-    );
-    toast.success('Package added to your journeys!');
+  const handleAddToJourneys = async (pkg: Package) => {
+    if (!userId) {
+      toast.error('You must be signed in to save journeys.');
+      return;
+    }
+    setAddingId(pkg.id);
+    try {
+      await saveTrip(userId, {
+        destination: pkg.destination,
+        date: new Date().toISOString().slice(0, 10),
+        packageId: pkg.id,
+        name: pkg.name,
+        image: pkg.image,
+        duration: pkg.duration,
+        price: pkg.price,
+        type: pkg.type,
+        description: pkg.includes?.join(', '),
+      });
+      setAddedPackages((prev) => [...prev, pkg.id]);
+      toast.success('Package added to your journeys!');
+    } catch (e) {
+      toast.error('Failed to add to journeys.');
+    } finally {
+      setAddingId(null);
+    }
   };
 
   const handleBookNow = (pkg: Package) => {
@@ -226,7 +258,7 @@ export default function Packages() {
             allowFullScreen
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
 
         {/* Hero Content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center sm:px-6 lg:px-8">
@@ -245,7 +277,7 @@ export default function Packages() {
             </p>
             <Button
               size="lg"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-2xl hover:from-blue-700 hover:to-purple-700"
+              className="bg-linear-to-r from-blue-600 to-purple-600 text-white shadow-2xl hover:from-blue-700 hover:to-purple-700"
               onClick={() => {
                 document
                   .getElementById('packages-grid')
@@ -272,7 +304,7 @@ export default function Packages() {
           transition={{ duration: 0.6 }}
           className="mb-12"
         >
-          <Card className="hover:shadow-3xl group relative overflow-hidden border-none bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 shadow-2xl transition-all duration-500">
+          <Card className="hover:shadow-3xl group relative overflow-hidden border-none bg-linear-to-br from-indigo-600 via-purple-600 to-pink-600 shadow-2xl transition-all duration-500">
             {/* Animated Background Elements */}
             <div className="absolute inset-0 opacity-20">
               <div className="absolute top-10 left-10 h-32 w-32 animate-pulse rounded-full bg-white blur-3xl" />
@@ -415,7 +447,7 @@ export default function Packages() {
                   alt={pkg.name}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
                 <Badge className="absolute top-4 right-4 bg-white text-gray-900">
                   {pkg.type}
                 </Badge>
@@ -438,7 +470,7 @@ export default function Packages() {
                   <p className="text-sm">Package Includes:</p>
                   {pkg.includes.slice(0, 4).map((item, index) => (
                     <div key={index} className="flex items-start gap-2">
-                      <Check className="mt-0.5 size-4 flex-shrink-0 text-green-600" />
+                      <Check className="mt-0.5 size-4 shrink-0 text-green-600" />
                       <span className="text-sm text-gray-600">{item}</span>
                     </div>
                   ))}
@@ -479,20 +511,22 @@ export default function Packages() {
                             ease: 'easeInOut',
                             repeatDelay: 0.5,
                           }}
-                          className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                          className="absolute inset-y-0 w-1/2 bg-linear-to-r from-transparent via-white/30 to-transparent"
                           style={{ left: 0 }}
                         />
                         <span className="relative z-10">View Details</span>
                       </Button>
                     </motion.div>
                     <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleAddToJourneys(pkg.id)}
-                      disabled={addedPackages.includes(pkg.id)}
+                      variant={addedPackages.includes(pkg.id) ? undefined : 'outline'}
+                      className={`flex-1 ${addedPackages.includes(pkg.id) ? 'bg-gray-300 text-gray-600 cursor-not-allowed hover:bg-gray-300' : ''}`}
+                      onClick={(e) => { e.stopPropagation(); handleAddToJourneys(pkg); }}
+                      disabled={addedPackages.includes(pkg.id) || addingId === pkg.id}
                     >
                       {addedPackages.includes(pkg.id)
                         ? 'Added to Journeys'
+                        : addingId === pkg.id
+                        ? 'Adding...'
                         : 'Add to Journeys'}
                     </Button>
                   </div>
