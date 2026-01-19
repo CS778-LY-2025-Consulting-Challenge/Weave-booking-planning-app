@@ -183,6 +183,25 @@ export default function FlightBooking() {
   const totalPassengers =
     passengerCounts.adults + passengerCounts.children + passengerCounts.infants;
 
+  const FALLBACK_LOGO_URL = 'https://via.placeholder.com/100x30?text=Airline';
+
+  const normalizeLogoUrl = (value: unknown): string | null => {
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith('//')) return `https:${trimmed}`;
+    if (!/^https?:\/\//i.test(trimmed)) return null;
+    return trimmed;
+  };
+
+  const pickLogoUrl = (...candidates: Array<unknown>): string => {
+    for (const candidate of candidates) {
+      const normalized = normalizeLogoUrl(candidate);
+      if (normalized) return normalized;
+    }
+    return FALLBACK_LOGO_URL;
+  };
+
   const allFlights: Flight[] = [
     {
       id: '1',
@@ -351,7 +370,7 @@ export default function FlightBooking() {
               : 'Non-stop',
             cabin: f.travel_class || firstFlight.travel_class || 'Economy',
             price: f.price || 0,
-            logo: f.airline_logo || firstFlight.airline_logo || 'https://via.placeholder.com/100x30?text=Airline',
+            logo: pickLogoUrl(firstFlight.airline_logo, f.airline_logo),
             departureTime: timeOfDay,
           };
         });
@@ -1404,6 +1423,10 @@ export default function FlightBooking() {
                                     src={flight.logo}
                                     alt={flight.airline}
                                     className="h-full w-full object-cover"
+                                    onError={(event) => {
+                                      event.currentTarget.onerror = null;
+                                      event.currentTarget.src = FALLBACK_LOGO_URL;
+                                    }}
                                   />
                                 </div>
                                 <div>
@@ -1504,6 +1527,10 @@ export default function FlightBooking() {
                       src={selectedFlight.logo}
                       alt={selectedFlight.airline}
                       className="h-full w-full object-cover"
+                      onError={(event) => {
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src = FALLBACK_LOGO_URL;
+                      }}
                     />
                   </div>
                   <div>
