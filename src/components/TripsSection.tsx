@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, Compass, MapPin } from 'lucide-react';
+import { CalendarCheck, ChevronDown, Compass, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import TripCarousel, { type Trip, type TripCarouselRef } from './TripCarousel';
@@ -132,83 +132,90 @@ const TripsSection = () => {
             </div>
           </div>
 
-          <TripCarousel
-            ref={carouselRef}
-            trips={upcomingTrips}
-            onTripSelect={handleTripSelect}
-          />
+          <div className="flex flex-col">
+            <TripCarousel
+              ref={carouselRef}
+              trips={upcomingTrips}
+              onTripSelect={handleTripSelect}
+            />
 
-          <div className="pointer-events-none flex items-center justify-center gap-6">
-            <button
-              onClick={() =>
-                window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })
-              }
-              className="group pointer-events-auto cursor-pointer rounded-3xl border border-white/15 bg-white/5 px-8 py-5 shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-white/25 hover:bg-white/10 hover:shadow-xl"
-            >
-              <div className="flex items-center gap-8">
-                <Compass className="h-6 w-6 text-white/90 transition-transform duration-300 group-hover:rotate-45" />
-                <div className="text-left">
-                  <p className="text-lg font-medium text-white">
-                    Start Journey
-                  </p>
-                  <p className="text-sm text-white/50">Begin your adventure</p>
+            <div className="pointer-events-none mx-auto mt-4 mb-8 grid max-w-4xl grid-cols-3 gap-6">
+              <button
+                onClick={() =>
+                  window.scrollTo({
+                    top: window.innerHeight,
+                    behavior: 'smooth',
+                  })
+                }
+                className="group pointer-events-auto cursor-pointer rounded-3xl border border-white/15 bg-white/5 px-8 py-5 shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-white/25 hover:bg-white/10 hover:shadow-xl"
+              >
+                <div className="flex items-center gap-8">
+                  <Compass className="h-6 w-6 text-white/90 transition-transform duration-300 group-hover:rotate-45" />
+                  <div className="text-left">
+                    <p className="text-lg font-medium text-white">
+                      Start Journey
+                    </p>
+                    <p className="text-sm text-white/50">
+                      Begin your adventure
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
 
-            <Link
-              href="/destinations"
-              className="group pointer-events-auto cursor-pointer rounded-3xl border border-white/15 bg-white/5 px-8 py-5 shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-white/25 hover:bg-white/10 hover:shadow-xl"
-            >
-              <div className="flex items-center gap-4">
-                <MapPin className="h-6 w-6 text-white/90 transition-transform duration-300 group-hover:scale-110" />
-                <div className="text-left">
-                  <p className="text-lg font-medium text-white">
-                    Browse Destinations
-                  </p>
-                  <p className="text-sm text-white/50">
-                    Explore amazing places
-                  </p>
+              <Link
+                href="/destinations"
+                className="group pointer-events-auto cursor-pointer rounded-3xl border border-white/15 bg-white/5 px-8 py-5 shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-white/25 hover:bg-white/10 hover:shadow-xl"
+              >
+                <div className="flex items-center gap-4">
+                  <MapPin className="h-6 w-6 text-white/90 transition-transform duration-300 group-hover:scale-110" />
+                  <div className="text-left">
+                    <p className="text-lg font-medium text-white">
+                      Browse Destinations
+                    </p>
+                    <p className="text-sm text-white/50">
+                      Explore amazing places
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </div>
+
+            {/* Statistics indicators */}
+            <motion.div
+              className="mx-auto grid max-w-6xl grid-cols-2 gap-8 md:grid-cols-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              {[
+                { label: 'Distance', value: selectedTrip.distance },
+                {
+                  label: 'Best time to visit',
+                  value: selectedTrip.bestTime,
+                },
+                {
+                  label: 'Loved by travellers',
+                  value: selectedTrip.likes.toLocaleString(),
+                },
+                {
+                  label: 'Region',
+                  value:
+                    selectedTrip.location.split(',')[1]?.trim() ??
+                    selectedTrip.location,
+                },
+              ].map((stat, index) => (
+                <div key={index} className="text-center text-white">
+                  <div className="text-xs tracking-[0.5em] text-white/60 uppercase">
+                    {stat.label}
+                  </div>
+                  <div className="mt-3 text-2xl font-semibold whitespace-pre md:text-3xl">
+                    {stat.value}
+                  </div>
+                  <div className="mx-auto mt-3 h-px w-16 bg-white/30" />
+                </div>
+              ))}
+            </motion.div>
           </div>
-
-          {/* Statistics indicators */}
-          <motion.div
-            className="mx-auto grid max-w-6xl grid-cols-2 gap-8 md:grid-cols-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-          >
-            {[
-              { label: 'Distance', value: selectedTrip.distance },
-              {
-                label: 'Best time to visit',
-                value: selectedTrip.bestTime,
-              },
-              {
-                label: 'Loved by travellers',
-                value: selectedTrip.likes.toLocaleString(),
-              },
-              {
-                label: 'Region',
-                value:
-                  selectedTrip.location.split(',')[1]?.trim() ??
-                  selectedTrip.location,
-              },
-            ].map((stat, index) => (
-              <div key={index} className="text-center text-white">
-                <div className="text-xs tracking-[0.5em] text-white/60 uppercase">
-                  {stat.label}
-                </div>
-                <div className="mt-3 text-2xl font-semibold whitespace-pre md:text-3xl">
-                  {stat.value}
-                </div>
-                <div className="mx-auto mt-3 h-px w-16 bg-white/30" />
-              </div>
-            ))}
-          </motion.div>
         </motion.div>
       </div>
     </div>
@@ -253,6 +260,7 @@ export const upcomingTrips: Trip[] = [
     elevation: '210M',
     bestTime: 'March – May',
     likes: 892,
+    bookingUrl: '/packages/3',
   },
   {
     id: 4,
@@ -289,6 +297,7 @@ export const upcomingTrips: Trip[] = [
     elevation: '540M',
     bestTime: 'December ',
     likes: 765,
+    bookingUrl: '/packages/1',
   },
   {
     id: 7,

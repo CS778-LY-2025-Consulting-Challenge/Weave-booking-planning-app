@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils';
 import clsx from 'clsx';
 import { motion, useAnimation, useMotionValue } from 'framer-motion';
 import { HeartIcon } from 'lucide-react';
+import Link from 'next/link';
 import {
   forwardRef,
   useEffect,
@@ -22,6 +23,7 @@ export interface Trip {
   elevation: string;
   likes: number;
   bestTime: string;
+  bookingUrl?: string;
   customComponent?: () => ReactNode;
 }
 
@@ -119,7 +121,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
     return (
       <div
         className={cn(
-          'relative flex w-full items-center overflow-hidden py-4',
+          'relative mx-auto flex w-full max-w-4xl items-center overflow-hidden py-4',
           className
         )}
         ref={constraintsRef}
@@ -132,7 +134,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
           onDragEnd={() => setTimeout(() => setIsDragging(false), 100)}
           animate={controls}
           style={{ x }}
-          className="flex cursor-grab gap-6 pr-[calc(100%-300px)] pl-[calc(100%-300px)] active:cursor-grabbing"
+          className="flex cursor-grab gap-6 px-8 active:cursor-grabbing"
         >
           {orderedTrips.map((trip) => {
             const isSelected = trip.id === selectedId;
@@ -169,12 +171,19 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
 
                   <div className="absolute right-0 bottom-0 left-0 p-4 text-white">
-                    <h3 className="mb-1 text-lg font-bold tracking-wider">
+                    <h3 className="text-lg font-bold tracking-wider">
                       {trip.title}
                     </h3>
-                    <p className="mb-4 text-xs text-white/80">
+                    <p className="mb-2 text-xs text-white/80">
                       {trip.location}
                     </p>
+                    <Link
+                      href={trip.bookingUrl || '/packages'}
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur-sm transition-all hover:bg-white/30"
+                    >
+                      Book Now
+                    </Link>
 
                     {/* <div className="flex items-center justify-between">
                       <div className="flex gap-4">
