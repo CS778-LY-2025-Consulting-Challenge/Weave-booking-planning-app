@@ -1,7 +1,16 @@
+import { cn } from '@/lib/utils';
 import clsx from 'clsx';
 import { motion, useAnimation, useMotionValue } from 'framer-motion';
 import { HeartIcon } from 'lucide-react';
-import { forwardRef, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
+import Link from 'next/link';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 
 export interface Trip {
   id: number;
@@ -14,10 +23,12 @@ export interface Trip {
   elevation: string;
   likes: number;
   bestTime: string;
+  bookingUrl?: string;
   customComponent?: () => ReactNode;
 }
 
 interface TripCarouselProps {
+  className?: string;
   trips: Trip[];
   onTripSelect?: (trip: Trip) => void;
 }
@@ -27,12 +38,13 @@ export interface TripCarouselRef {
 }
 
 const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
-  ({ trips, onTripSelect }, ref) => {
+  ({ className, trips, onTripSelect }, ref) => {
     const [orderedTrips, setOrderedTrips] = useState(trips);
     const [selectedId, setSelectedId] = useState(trips[0].id);
     const [isDragging, setIsDragging] = useState(false);
     const [hiddenIds, setHiddenIds] = useState<number[]>([]);
     const [isAnimating, setIsAnimating] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
     const constraintsRef = useRef<HTMLDivElement>(null);
     const x = useMotionValue(0);
     const controls = useAnimation();
@@ -87,20 +99,42 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
       },
     }));
 
+    // Auto-play: zhangjiajie stays 30s, others stay 5s, pause on hover
+    useEffect(() => {
+      if (isAnimating || isHovered) return;
+
+      const currentTrip = orderedTrips[0];
+      const isZhangjiajie =
+        currentTrip?.title?.toLowerCase().includes('zhangjiajie') ||
+        currentTrip?.location?.toLowerCase().includes('zhangjiajie');
+      const delay = isZhangjiajie ? 30000 : 5000;
+
+      const timer = setTimeout(() => {
+        if (orderedTrips.length > 1 && !isAnimating && !isHovered) {
+          handleCardClick(orderedTrips[1]);
+        }
+      }, delay);
+
+      return () => clearTimeout(timer);
+    }, [orderedTrips, isAnimating, isHovered]);
+
     return (
       <div
-        className="relative flex h-[500px] w-full items-center overflow-hidden"
+        className={cn(
+          'relative mx-auto flex w-full max-w-4xl items-center overflow-hidden py-4',
+          className
+        )}
         ref={constraintsRef}
       >
         <motion.div
-          drag={!isAnimating && "x"}
+          drag={!isAnimating && 'x'}
           dragConstraints={constraintsRef}
           dragElastic={0.1}
           onDragStart={() => setIsDragging(true)}
           onDragEnd={() => setTimeout(() => setIsDragging(false), 100)}
           animate={controls}
           style={{ x }}
-          className="flex cursor-grab gap-6 pl-[calc(100%-300px)] pr-[calc(100%-300px)] active:cursor-grabbing"
+          className="flex cursor-grab gap-6 px-8 active:cursor-grabbing"
         >
           {orderedTrips.map((trip) => {
             const isSelected = trip.id === selectedId;
@@ -111,6 +145,8 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
                 key={trip.id}
                 className="h-80 w-60 flex-shrink-0"
                 onClick={() => !isHidden && handleCardClick(trip)}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
                 whileHover={!isHidden ? { scale: 1.05 } : {}}
                 animate={{
                   opacity: isHidden ? 0 : 1,
@@ -134,15 +170,22 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
 
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
 
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                    <h3 className="mb-1 text-lg font-bold tracking-wider">
+                  <div className="absolute right-0 bottom-0 left-0 p-4 text-white">
+                    <h3 className="text-lg font-bold tracking-wider">
                       {trip.title}
                     </h3>
-                    <p className="mb-4 text-xs text-white/80">
+                    <p className="mb-2 text-xs text-white/80">
                       {trip.location}
                     </p>
+                    <Link
+                      href={trip.bookingUrl || '/packages'}
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur-sm transition-all hover:bg-white/30"
+                    >
+                      Book Now
+                    </Link>
 
-                    <div className="flex items-center justify-between">
+                    {/* <div className="flex items-center justify-between">
                       <div className="flex gap-4">
                         <div className="flex flex-col items-center">
                           <span className="mb-1 text-[10px] text-white/60">
@@ -168,7 +211,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
                           {trip.likes}
                         </span>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </motion.div>
