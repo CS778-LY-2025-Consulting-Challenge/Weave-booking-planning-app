@@ -29,7 +29,7 @@ import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@clerk/nextjs';
 
 interface WishlistItem {
   id: number;
@@ -44,15 +44,15 @@ interface WishlistItem {
 }
 
 export default function Wishlist() {
-  const { isAuthenticated } = useAuth();
+  const { isLoaded, isSignedIn } = useUser();
   const router = useRouter();
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isLoaded && !isSignedIn) {
       router.push('/auth');
     }
-  }, [isAuthenticated, router]);
+  }, [isLoaded, isSignedIn, router]);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareLink, setShareLink] = useState(
     'https://weave.travel/wishlist/abc123xyz'

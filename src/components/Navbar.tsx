@@ -13,7 +13,7 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
+import { UserButton, SignedIn, SignedOut, useClerk } from '@clerk/nextjs';
 import AnimatedLogoutButton from './AnimatedLogoutButton';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/button';
@@ -25,6 +25,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { signOut } = useClerk();
 
   // Check if we're on the Home page
   const isHomePage = pathname === '/';
@@ -109,13 +110,19 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isHomePage, isFlightsPage, isHotelsPage, isDestinationsPage, isJourneysPage, isPackagesPage, lastScrollY]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log('Logging out...');
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
     setDropdownOpen(false);
+    try {
+      await signOut();
+    } catch (e) {
+      // Fallback: proceed even if Clerk signOut fails
+      console.warn('Clerk signOut failed, proceeding with local logout');
+    }
     router.push('/');
   };
 
@@ -213,6 +220,13 @@ export default function Navbar() {
                             <LayoutDashboard className="size-4" />
                             Dashboard
                           </button>
+                          <button
+                            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10"
+                            onClick={() => { setDropdownOpen(false); router.push('/wishlist'); }}
+                          >
+                            <Heart className="size-4" />
+                            My Wishlist
+                          </button>
                         </div>
                       </div>
                     )}
@@ -227,7 +241,19 @@ export default function Navbar() {
                         userButtonBox: 'flex-row-reverse',
                       }
                     }}
-                  />
+                  >
+                    <style jsx global>{`
+                      .cl-userButtonPopoverCard [data-localization-key="userButton.action__signOut"] {
+                        display: none !important;
+                      }
+                    `}</style>
+                    <UserButton.MenuItems>
+                      <UserButton.Action
+                        label="Sign out"
+                        onClick={handleLogout}
+                      />
+                    </UserButton.MenuItems>
+                  </UserButton>
                 </div>
               </SignedIn>
               <SignedOut>
