@@ -116,7 +116,7 @@ const TripsSection = () => {
           <div className="flex flex-col gap-6 text-white md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-5xl font-bold tracking-tight">Weave</h1>
-              <h1 className="text-3xl font-bold tracking-tight">
+              <h1 className="text-2xl font-normal tracking-tight">
                 Your one stop shop for everything travel
               </h1>
             </div>
