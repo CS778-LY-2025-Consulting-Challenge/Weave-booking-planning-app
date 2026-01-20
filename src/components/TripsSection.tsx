@@ -139,7 +139,7 @@ const TripsSection = () => {
               onTripSelect={handleTripSelect}
             />
 
-            <div className="pointer-events-none mx-auto mt-4 mb-8 grid max-w-4xl grid-cols-3 gap-6">
+            <div className="pointer-events-none mx-auto mt-4 mb-8 grid max-w-4xl grid-cols-2 gap-6">
               <button
                 onClick={() =>
                   window.scrollTo({
