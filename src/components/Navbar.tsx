@@ -213,13 +213,6 @@ export default function Navbar() {
                             <LayoutDashboard className="size-4" />
                             Dashboard
                           </button>
-                          <button
-                            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10"
-                            onClick={() => { setDropdownOpen(false); router.push('/trips/saved'); }}
-                          >
-                            <Heart className="size-4" />
-                            Saved Trips
-                          </button>
                         </div>
                       </div>
                     )}

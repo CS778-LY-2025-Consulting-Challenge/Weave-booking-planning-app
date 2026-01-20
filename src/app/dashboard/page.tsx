@@ -24,11 +24,13 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Trip } from '@/types/expense';
+import { getSavedTrips, saveTrip, updateTrip, deleteTrip } from '@/lib/savedTrips';
 
 interface Journey {
   id: number;
@@ -58,7 +60,12 @@ export default function Dashboard() {
   const { isLoaded, isSignedIn, user } = useUser();
   const router = useRouter();
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [savedPackages, setSavedPackages] = useState<SavedPackage[]>([]);
+  // Saved Journeys (Firebase)
+  const [savedTrips, setSavedTrips] = useState<Record<string, any>>({});
+  const [savedLoading, setSavedLoading] = useState(true);
+  const [newTrip, setNewTrip] = useState({ destination: '', date: '' });
+  const [editTripId, setEditTripId] = useState<string | null>(null);
+  const [editTrip, setEditTrip] = useState({ destination: '', date: '' });
   const [budgetTrips, setBudgetTrips] = useState<Trip[]>([]);
   const [budgetTripsLoading, setBudgetTripsLoading] = useState(true);
 
@@ -86,13 +93,46 @@ export default function Dashboard() {
     }
   }, [isLoaded, isSignedIn, user, router]);
 
-  // Load saved packages from localStorage
+
+  // Load saved trips from Firebase
   useEffect(() => {
-    const saved = localStorage.getItem('savedPackages');
-    if (saved) {
-      setSavedPackages(JSON.parse(saved));
-    }
-  }, []);
+    if (!user?.id) return;
+    setSavedLoading(true);
+    getSavedTrips(user.id).then((data) => {
+      setSavedTrips(data || {});
+      setSavedLoading(false);
+    });
+  }, [user?.id]);
+
+  // CRUD Handlers for Saved Journeys
+  const handleAddTrip = async () => {
+    if (!user?.id || !newTrip.destination || !newTrip.date) return;
+    await saveTrip(user.id, newTrip);
+    setNewTrip({ destination: '', date: '' });
+    const data = await getSavedTrips(user.id);
+    setSavedTrips(data || {});
+  };
+
+  const handleEditTrip = (id: string, trip: any) => {
+    setEditTripId(id);
+    setEditTrip({ ...trip });
+  };
+
+  const handleUpdateTrip = async () => {
+    if (!user?.id || !editTripId) return;
+    await updateTrip(user.id, editTripId, editTrip);
+    setEditTripId(null);
+    setEditTrip({ destination: '', date: '' });
+    const data = await getSavedTrips(user.id);
+    setSavedTrips(data || {});
+  };
+
+  const handleDeleteTrip = async (tripId: string) => {
+    if (!user?.id) return;
+    await deleteTrip(user.id, tripId);
+    const data = await getSavedTrips(user.id);
+    setSavedTrips(data || {});
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -180,14 +220,7 @@ export default function Dashboard() {
   const pastJourneys = journeys.filter((j) => j.type === 'past');
   const copiedJourneys = journeys.filter((j) => j.type === 'copied');
 
-  const savedJourneys = copiedJourneys.length;
 
-  const handleRemovePackage = (packageId: number) => {
-    const updated = savedPackages.filter((pkg) => pkg.id !== packageId);
-    setSavedPackages(updated);
-    localStorage.setItem('savedPackages', JSON.stringify(updated));
-    toast.success('Package removed from journeys');
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
@@ -244,7 +277,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">Saved Journeys</p>
-                  <p className="text-3xl">{savedJourneys}</p>
+                  <p className="text-3xl">{Object.keys(savedTrips).length}</p>
                 </div>
                 <div className="rounded-full bg-purple-100 p-3">
                   <Calendar className="size-6 text-purple-600" />
@@ -297,19 +330,13 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="upcoming">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-                    <TabsTrigger value="past">Past</TabsTrigger>
-                    <TabsTrigger value="copied">Copied</TabsTrigger>
-                    <TabsTrigger value="packages">
-                      Packages
-                      {savedPackages.length > 0 && (
-                        <Badge className="ml-2 bg-blue-600 text-white">
-                          {savedPackages.length}
-                        </Badge>
-                      )}
-                    </TabsTrigger>
+
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="upcoming">Upcoming Journeys</TabsTrigger>
+                    <TabsTrigger value="past">Past Journeys</TabsTrigger>
+                    <TabsTrigger value="saved">Saved Journeys</TabsTrigger>
                   </TabsList>
+
 
                   <TabsContent value="upcoming" className="space-y-4">
                     {upcomingJourneys.map((journey) => (
@@ -366,6 +393,7 @@ export default function Dashboard() {
                     ))}
                   </TabsContent>
 
+
                   <TabsContent value="past" className="space-y-4">
                     {pastJourneys.map((journey) => (
                       <Card key={journey.id}>
@@ -401,84 +429,93 @@ export default function Dashboard() {
                     ))}
                   </TabsContent>
 
-                  <TabsContent value="copied" className="space-y-4">
-                    {copiedJourneys.map((journey) => (
-                      <Card key={journey.id}>
-                        <CardContent className="p-4">
-                          <div className="mb-3 flex items-start justify-between">
-                            <div>
-                              <h3 className="text-lg">{journey.destination}</h3>
-                              <p className="text-sm text-gray-500">
-                                {new Date(
-                                  journey.startDate
-                                ).toLocaleDateString()}{' '}
-                                -{' '}
-                                {new Date(journey.endDate).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm">
-                                <Edit className="size-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="size-4 text-red-600" />
-                              </Button>
-                            </div>
-                          </div>
-                          {journey.cities && (
-                            <div className="space-y-2">
-                              <p className="text-sm">
-                                Cities: {journey.cities.join(' → ')}
-                              </p>
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                <Button variant="outline" size="sm">
-                                  Change Dates
-                                </Button>
-                                <Button variant="outline" size="sm">
-                                  Edit Destinations
-                                </Button>
-                                <Button variant="outline" size="sm">
-                                  Modify Activities
-                                </Button>
+
+                  <TabsContent value="saved" className="space-y-4">
+                    <div className="max-w-2xl mx-auto p-2">
+                      <h2 className="text-xl font-bold mb-4 text-center">Saved Journeys</h2>
+                      {/* Add Trip Form */}
+                      <div className="mb-6 flex flex-col md:flex-row gap-4 items-center justify-center">
+                        <input
+                          type="text"
+                          placeholder="Destination"
+                          className="border rounded px-3 py-2 w-48"
+                          value={newTrip.destination}
+                          onChange={e => setNewTrip({ ...newTrip, destination: e.target.value })}
+                        />
+                        <input
+                          type="date"
+                          className="border rounded px-3 py-2 w-40"
+                          value={newTrip.date}
+                          onChange={e => setNewTrip({ ...newTrip, date: e.target.value })}
+                        />
+                        <button
+                          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                          onClick={handleAddTrip}
+                        >
+                          Add Journey
+                        </button>
+                      </div>
+                      {/* Trips List */}
+                      <ul className="space-y-4">
+                        {savedLoading && <li className="text-center text-gray-500">Loading...</li>}
+                        {!savedLoading && Object.entries(savedTrips).length === 0 && (
+                          <li className="text-center text-gray-500">No saved journeys yet.</li>
+                        )}
+                        {Object.entries(savedTrips).map(([id, trip]) => (
+                          <li key={id} className="border rounded p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 shadow">
+                            {editTripId === id ? (
+                              <div className="flex flex-col md:flex-row gap-2 md:items-center w-full">
+                                <input
+                                  type="text"
+                                  className="border rounded px-2 py-1 w-40"
+                                  value={editTrip.destination}
+                                  onChange={e => setEditTrip({ ...editTrip, destination: e.target.value })}
+                                />
+                                <input
+                                  type="date"
+                                  className="border rounded px-2 py-1 w-32"
+                                  value={editTrip.date}
+                                  onChange={e => setEditTrip({ ...editTrip, date: e.target.value })}
+                                />
+                                <button
+                                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                                  onClick={handleUpdateTrip}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500"
+                                  onClick={() => setEditTripId(null)}
+                                >
+                                  Cancel
+                                </button>
                               </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
+                            ) : (
+                              <div className="flex flex-col md:flex-row gap-2 md:items-center w-full justify-between">
+                                <span className="font-semibold">{trip.destination}</span>
+                                <span className="text-gray-600">{trip.date}</span>
+                                <div className="flex gap-2 mt-2 md:mt-0">
+                                  <button
+                                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                                    onClick={() => handleEditTrip(id, trip)}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                                    onClick={() => handleDeleteTrip(id)}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </TabsContent>
 
-                  <TabsContent value="packages" className="space-y-4">
-                    {savedPackages.map((pkg) => (
-                      <Card key={pkg.id}>
-                        <CardContent className="p-4">
-                          <div className="mb-3 flex items-start justify-between">
-                            <div>
-                              <h3 className="text-lg">{pkg.name}</h3>
-                              <p className="text-sm text-gray-500">
-                                {pkg.destination} - {pkg.duration}
-                              </p>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm">
-                                <Edit className="size-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemovePackage(pkg.id)}
-                              >
-                                <Trash2 className="size-4 text-red-600" />
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Badge variant="default">{pkg.price} USD</Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
