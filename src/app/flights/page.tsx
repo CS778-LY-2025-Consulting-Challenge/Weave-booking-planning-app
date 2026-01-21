@@ -2,6 +2,7 @@
 
 import { DateSelector } from '@/components/DateSelector';
 import { PassengerSelector } from '@/components/PassengerSelector';
+import { CitySearchInput } from '@/components/CitySearchInput';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,12 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+
 import {
   ArrowLeftRight,
   ArrowRight,
@@ -135,8 +131,20 @@ export default function FlightBooking() {
   const [hasSearched, setHasSearched] = useState(false);
   const [fromInput, setFromInput] = useState('');
   const [toInput, setToInput] = useState('');
-  const [fromOpen, setFromOpen] = useState(false);
-  const [toOpen, setToOpen] = useState(false);
+
+
+
+  const searchAirports = async (query: string): Promise<City[]> => {
+    try {
+      const response = await fetch(`/api/locations/search?q=${encodeURIComponent(query)}`);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (err) {
+      console.error('Failed to search airports:', err);
+      return [];
+    }
+  };
+
   const [passengerCounts, setPassengerCounts] = useState({
     adults: 1,
     children: 0,
@@ -167,12 +175,7 @@ export default function FlightBooking() {
     { id: '2', from: '', to: '', date: null },
   ]);
 
-  const [multiCityPopovers, setMultiCityPopovers] = useState<{
-    [key: string]: { fromOpen: boolean; toOpen: boolean };
-  }>({
-    '1': { fromOpen: false, toOpen: false },
-    '2': { fromOpen: false, toOpen: false },
-  });
+
 
   // Filter states
   const [selectedStops, setSelectedStops] = useState<string[]>([]);
@@ -487,16 +490,7 @@ export default function FlightBooking() {
     fetchFlights();
   };
 
-  const filterCities = (searchValue: string): City[] => {
-    if (!searchValue) return CITIES;
-    const search = searchValue.toLowerCase();
-    return CITIES.filter(
-      (city) =>
-        city.name.toLowerCase().includes(search) ||
-        city.code.toLowerCase().includes(search) ||
-        city.country.toLowerCase().includes(search)
-    );
-  };
+
 
   const resetFilters = () => {
     setPriceRange([0, 2000]);
@@ -505,6 +499,26 @@ export default function FlightBooking() {
     setSelectedTimes([]);
     setSortBy('price');
     setHasSearched(false);
+  };
+
+  const clearForm = () => {
+    setFromInput('');
+    setToInput('');
+    // Reset dates to default
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const nextWeek = new Date(tomorrow);
+    nextWeek.setDate(tomorrow.getDate() + 7);
+    setDepartureDate(tomorrow);
+    setReturnDate(nextWeek);
+
+    setPassengerCounts({ adults: 1, children: 0, infants: 0 });
+    // Reset multi city
+    setMultiCityFlights([
+      { id: '1', from: '', to: '', date: null },
+      { id: '2', from: '', to: '', date: null },
+    ]);
+    resetFilters();
   };
 
   const handleSelectFlight = (flight: Flight) => {
@@ -518,10 +532,6 @@ export default function FlightBooking() {
       ...multiCityFlights,
       { id: newId, from: '', to: '', date: null },
     ]);
-    setMultiCityPopovers({
-      ...multiCityPopovers,
-      [newId]: { fromOpen: false, toOpen: false },
-    });
   };
 
   const removeMultiCityFlight = (id: string) => {
@@ -529,22 +539,10 @@ export default function FlightBooking() {
       setMultiCityFlights(
         multiCityFlights.filter((flight) => flight.id !== id)
       );
-      const newPopovers = { ...multiCityPopovers };
-      delete newPopovers[id];
-      setMultiCityPopovers(newPopovers);
     }
   };
 
-  const setMultiCityPopoverOpen = (
-    id: string,
-    field: 'fromOpen' | 'toOpen',
-    value: boolean
-  ) => {
-    setMultiCityPopovers((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], [field]: value },
-    }));
-  };
+
 
   const updateMultiCityFlight = (
     id: string,
@@ -707,17 +705,23 @@ export default function FlightBooking() {
           <CardContent className="p-6">
             <div className="mb-6 flex items-center justify-between">
               <h2>Search Flights</h2>
-              <Tabs
-                value={tripType}
-                onValueChange={setTripType}
-                className="w-auto"
-              >
-                <TabsList>
-                  <TabsTrigger value="roundtrip">Return</TabsTrigger>
-                  <TabsTrigger value="oneway">One-way</TabsTrigger>
-                  <TabsTrigger value="multicity">Multi-city</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" size="sm" onClick={clearForm} className="text-muted-foreground hover:text-foreground">
+                  <X className="mr-2 size-4" />
+                  Clear all
+                </Button>
+                <Tabs
+                  value={tripType}
+                  onValueChange={setTripType}
+                  className="w-auto"
+                >
+                  <TabsList>
+                    <TabsTrigger value="roundtrip">Return</TabsTrigger>
+                    <TabsTrigger value="oneway">One-way</TabsTrigger>
+                    <TabsTrigger value="multicity">Multi-city</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
             </div>
 
             {tripType === 'multicity' ? (
@@ -748,86 +752,15 @@ export default function FlightBooking() {
                     </div>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto_1fr_1fr] md:items-end">
                       <div className="space-y-2">
-                        <Label htmlFor={`from-${flight.id}`}>From</Label>
-                        <Popover
-                          open={multiCityPopovers[flight.id]?.fromOpen || false}
-                          onOpenChange={(open) =>
-                            setMultiCityPopoverOpen(flight.id, 'fromOpen', open)
-                          }
-                        >
-                          <PopoverTrigger asChild>
-                            <Input
-                              id={`from-${flight.id}`}
-                              placeholder="Airport or City"
-                              value={flight.from}
-                              onChange={(e) => {
-                                updateMultiCityFlight(
-                                  flight.id,
-                                  'from',
-                                  e.target.value
-                                );
-                                setMultiCityPopoverOpen(
-                                  flight.id,
-                                  'fromOpen',
-                                  true
-                                );
-                              }}
-                              onFocus={() =>
-                                setMultiCityPopoverOpen(
-                                  flight.id,
-                                  'fromOpen',
-                                  true
-                                )
-                              }
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent
-                            className="w-[300px] p-0"
-                            align="start"
-                          >
-                            <Command>
-                              <CommandInput
-                                placeholder="Search cities..."
-                                value={flight.from}
-                                onValueChange={(value) =>
-                                  updateMultiCityFlight(flight.id, 'from', value)
-                                }
-                              />
-                              <CommandList>
-                                <CommandEmpty>No city found.</CommandEmpty>
-                                <CommandGroup>
-                                  {filterCities(flight.from).map((city) => (
-                                    <CommandItem
-                                      key={city.code}
-                                      value={`${city.name} (${city.code})`}
-                                      onSelect={() => {
-                                        updateMultiCityFlight(
-                                          flight.id,
-                                          'from',
-                                          `${city.name} (${city.code})`
-                                        );
-                                        setMultiCityPopoverOpen(
-                                          flight.id,
-                                          'fromOpen',
-                                          false
-                                        );
-                                      }}
-                                    >
-                                      <div className="flex flex-col">
-                                        <span className="font-medium">
-                                          {city.name} ({city.code})
-                                        </span>
-                                        <span className="text-xs text-gray-500">
-                                          {city.country}
-                                        </span>
-                                      </div>
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                        <CitySearchInput
+                          id={`from-${flight.id}`}
+                          label="From"
+                          value={flight.from}
+                          onChange={(value) => updateMultiCityFlight(flight.id, 'from', value)}
+                          cities={CITIES}
+                          onSearch={searchAirports}
+                          placeholder="Airport or City"
+                        />
                       </div>
 
                       {/* Arrow Separator - Perfectly centered using flexbox */}
@@ -844,86 +777,15 @@ export default function FlightBooking() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor={`to-${flight.id}`}>To</Label>
-                        <Popover
-                          open={multiCityPopovers[flight.id]?.toOpen || false}
-                          onOpenChange={(open) =>
-                            setMultiCityPopoverOpen(flight.id, 'toOpen', open)
-                          }
-                        >
-                          <PopoverTrigger asChild>
-                            <Input
-                              id={`to-${flight.id}`}
-                              placeholder="Airport or City"
-                              value={flight.to}
-                              onChange={(e) => {
-                                updateMultiCityFlight(
-                                  flight.id,
-                                  'to',
-                                  e.target.value
-                                );
-                                setMultiCityPopoverOpen(
-                                  flight.id,
-                                  'toOpen',
-                                  true
-                                );
-                              }}
-                              onFocus={() =>
-                                setMultiCityPopoverOpen(
-                                  flight.id,
-                                  'toOpen',
-                                  true
-                                )
-                              }
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent
-                            className="w-[300px] p-0"
-                            align="start"
-                          >
-                            <Command>
-                              <CommandInput
-                                placeholder="Search cities..."
-                                value={flight.to}
-                                onValueChange={(value) =>
-                                  updateMultiCityFlight(flight.id, 'to', value)
-                                }
-                              />
-                              <CommandList>
-                                <CommandEmpty>No city found.</CommandEmpty>
-                                <CommandGroup>
-                                  {filterCities(flight.to).map((city) => (
-                                    <CommandItem
-                                      key={city.code}
-                                      value={`${city.name} (${city.code})`}
-                                      onSelect={() => {
-                                        updateMultiCityFlight(
-                                          flight.id,
-                                          'to',
-                                          `${city.name} (${city.code})`
-                                        );
-                                        setMultiCityPopoverOpen(
-                                          flight.id,
-                                          'toOpen',
-                                          false
-                                        );
-                                      }}
-                                    >
-                                      <div className="flex flex-col">
-                                        <span className="font-medium">
-                                          {city.name} ({city.code})
-                                        </span>
-                                        <span className="text-xs text-gray-500">
-                                          {city.country}
-                                        </span>
-                                      </div>
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                        <CitySearchInput
+                          id={`to-${flight.id}`}
+                          label="To"
+                          value={flight.to}
+                          onChange={(value) => updateMultiCityFlight(flight.id, 'to', value)}
+                          cities={CITIES}
+                          onSearch={searchAirports}
+                          placeholder="Airport or City"
+                        />
                       </div>
 
                       <div className="space-y-2">
@@ -1077,46 +939,15 @@ export default function FlightBooking() {
               <>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto_1fr] md:items-end">
                   <div className="space-y-2">
-                    <Label htmlFor="from">From</Label>
-                    <Popover open={fromOpen} onOpenChange={setFromOpen}>
-                      <PopoverTrigger asChild>
-                        <Input
-                          id="from"
-                          placeholder="New York (JFK)"
-                          value={fromInput}
-                          onChange={(e) => {
-                            setFromInput(e.target.value);
-                            setFromOpen(true);
-                          }}
-                          onFocus={() => setFromOpen(true)}
-                        />
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[300px] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Search cities..." value={fromInput} onValueChange={setFromInput} />
-                          <CommandList>
-                            <CommandEmpty>No city found.</CommandEmpty>
-                            <CommandGroup>
-                              {filterCities(fromInput).map((city) => (
-                                <CommandItem
-                                  key={city.code}
-                                  value={`${city.name} (${city.code})`}
-                                  onSelect={() => {
-                                    setFromInput(`${city.name} (${city.code})`);
-                                    setFromOpen(false);
-                                  }}
-                                >
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">{city.name} ({city.code})</span>
-                                    <span className="text-xs text-gray-500">{city.country}</span>
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                    <CitySearchInput
+                      id="from"
+                      label="From"
+                      value={fromInput}
+                      onChange={setFromInput}
+                      cities={CITIES}
+                      onSearch={searchAirports}
+                      placeholder="New York (JFK)"
+                    />
                   </div>
 
                   {/* Arrow Separator - Perfectly centered using flexbox */}
@@ -1133,46 +964,15 @@ export default function FlightBooking() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="to">To</Label>
-                    <Popover open={toOpen} onOpenChange={setToOpen}>
-                      <PopoverTrigger asChild>
-                        <Input
-                          id="to"
-                          placeholder="Dubai (DXB)"
-                          value={toInput}
-                          onChange={(e) => {
-                            setToInput(e.target.value);
-                            setToOpen(true);
-                          }}
-                          onFocus={() => setToOpen(true)}
-                        />
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[300px] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Search cities..." value={toInput} onValueChange={setToInput} />
-                          <CommandList>
-                            <CommandEmpty>No city found.</CommandEmpty>
-                            <CommandGroup>
-                              {filterCities(toInput).map((city) => (
-                                <CommandItem
-                                  key={city.code}
-                                  value={`${city.name} (${city.code})`}
-                                  onSelect={() => {
-                                    setToInput(`${city.name} (${city.code})`);
-                                    setToOpen(false);
-                                  }}
-                                >
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">{city.name} ({city.code})</span>
-                                    <span className="text-xs text-gray-500">{city.country}</span>
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                    <CitySearchInput
+                      id="to"
+                      label="To"
+                      value={toInput}
+                      onChange={setToInput}
+                      cities={CITIES}
+                      onSearch={searchAirports}
+                      placeholder="Dubai (DXB)"
+                    />
                   </div>
                 </div>
 
@@ -1512,119 +1312,119 @@ export default function FlightBooking() {
             <h3 className="text-3xl font-bold text-gray-900">Featured Destinations</h3>
             <p className="mt-2 text-gray-600">Explore our premium flight packages to incredible destinations</p>
           </div>
-          
+
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  country: 'UNITED ARAB EMIRATES',
-                  city: 'Dubai',
-                  image: '/images/dubai-flight.jpg',
-                  bookUntil: '05 Feb 26',
-                  cabin: 'Economy Class Return',
-                  price: 'NZD 1999',
-                },
-                {
-                  country: 'JAPAN',
-                  city: 'Tokyo',
-                  image: '/images/tokyo-flight.jpg',
-                  bookUntil: '05 Feb 26',
-                  cabin: 'Economy Class Return',
-                  price: 'NZD 3299',
-                },
-                {
-                  country: 'AUSTRALIA',
-                  city: 'Sydney',
-                  image: '/images/sydeny-flight.jpg',
-                  bookUntil: '05 Feb 26',
-                  cabin: 'Economy Class Return',
-                  price: 'NZD 2199',
-                },
-                {
-                  country: 'SPAIN',
-                  city: 'Barcelona',
-                  image: '/images/barcelona-flight.jpg',
-                  bookUntil: '05 Feb 26',
-                  cabin: 'Business Class Return',
-                  price: 'NZD 9599',
-                },
-                {
-                  country: 'THAILAND',
-                  city: 'Bangkok',
-                  image: '/images/bangkok-flight.jpg',
-                  bookUntil: '05 Feb 26',
-                  cabin: 'Business Class Return',
-                  price: 'NZD 8299',
-                },
-                {
-                  country: 'SINGAPORE',
-                  city: 'Singapore',
-                  image: '/images/singapore-flight.jpg',
-                  bookUntil: '05 Feb 26',
-                  cabin: 'Business Class Return',
-                  price: 'NZD 10449',
-                },
-              ].map((destination, index) => (
-                <motion.div
-                  key={index}
-                  whileHover={{ y: -8 }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                  onClick={() => setFromInput(destination.city)}
-                  className="group cursor-pointer"
-                >
-                  <div className="relative overflow-hidden rounded-lg bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">
-                    {/* Image Container */}
-                    <div className="relative h-48 overflow-hidden bg-gray-200">
-                      <motion.img
-                        src={destination.image}
-                        alt={destination.city}
-                        className="h-full w-full object-cover"
-                        whileHover={{ scale: 1.08 }}
-                        transition={{ duration: 0.4 }}
-                      />
-                      <div className="absolute inset-0 bg-black/10 transition-all duration-300 group-hover:bg-black/20" />
-                    </div>
-
-                    {/* Content Container */}
-                    <div className="p-5">
-                      {/* Country Label */}
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          {destination.country}
-                        </span>
-                      </div>
-
-                      {/* City Name */}
-                      <h3 className="mb-4 text-2xl font-bold text-gray-900">
-                        {destination.city}
-                      </h3>
-
-                      {/* Book Until */}
-                      <div className="mb-3 text-sm text-blue-600 font-medium">
-                        Book until {destination.bookUntil}
-                      </div>
-
-                      {/* Cabin Type */}
-                      <div className="mb-4 text-sm text-gray-600">
-                        {destination.cabin}
-                      </div>
-
-                      {/* Price */}
-                      <div className="border-t pt-4">
-                        <div className="text-sm text-gray-600">from</div>
-                        <div className="text-xl font-bold text-gray-900">
-                          {destination.price}
-                          <span className="text-xs text-gray-500">*</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Hover Overlay - Premium Glow */}
-                    <div className="absolute -inset-2 rounded-lg bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 opacity-0 blur transition-opacity duration-300 group-hover:opacity-20 -z-10" />
+            {[
+              {
+                country: 'UNITED ARAB EMIRATES',
+                city: 'Dubai',
+                image: '/images/dubai-flight.jpg',
+                bookUntil: '05 Feb 26',
+                cabin: 'Economy Class Return',
+                price: 'NZD 1999',
+              },
+              {
+                country: 'JAPAN',
+                city: 'Tokyo',
+                image: '/images/tokyo-flight.jpg',
+                bookUntil: '05 Feb 26',
+                cabin: 'Economy Class Return',
+                price: 'NZD 3299',
+              },
+              {
+                country: 'AUSTRALIA',
+                city: 'Sydney',
+                image: '/images/sydeny-flight.jpg',
+                bookUntil: '05 Feb 26',
+                cabin: 'Economy Class Return',
+                price: 'NZD 2199',
+              },
+              {
+                country: 'SPAIN',
+                city: 'Barcelona',
+                image: '/images/barcelona-flight.jpg',
+                bookUntil: '05 Feb 26',
+                cabin: 'Business Class Return',
+                price: 'NZD 9599',
+              },
+              {
+                country: 'THAILAND',
+                city: 'Bangkok',
+                image: '/images/bangkok-flight.jpg',
+                bookUntil: '05 Feb 26',
+                cabin: 'Business Class Return',
+                price: 'NZD 8299',
+              },
+              {
+                country: 'SINGAPORE',
+                city: 'Singapore',
+                image: '/images/singapore-flight.jpg',
+                bookUntil: '05 Feb 26',
+                cabin: 'Business Class Return',
+                price: 'NZD 10449',
+              },
+            ].map((destination, index) => (
+              <motion.div
+                key={index}
+                whileHover={{ y: -8 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                onClick={() => setFromInput(destination.city)}
+                className="group cursor-pointer"
+              >
+                <div className="relative overflow-hidden rounded-lg bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">
+                  {/* Image Container */}
+                  <div className="relative h-48 overflow-hidden bg-gray-200">
+                    <motion.img
+                      src={destination.image}
+                      alt={destination.city}
+                      className="h-full w-full object-cover"
+                      whileHover={{ scale: 1.08 }}
+                      transition={{ duration: 0.4 }}
+                    />
+                    <div className="absolute inset-0 bg-black/10 transition-all duration-300 group-hover:bg-black/20" />
                   </div>
-                </motion.div>
-              ))}
-            </div>
+
+                  {/* Content Container */}
+                  <div className="p-5">
+                    {/* Country Label */}
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        {destination.country}
+                      </span>
+                    </div>
+
+                    {/* City Name */}
+                    <h3 className="mb-4 text-2xl font-bold text-gray-900">
+                      {destination.city}
+                    </h3>
+
+                    {/* Book Until */}
+                    <div className="mb-3 text-sm text-blue-600 font-medium">
+                      Book until {destination.bookUntil}
+                    </div>
+
+                    {/* Cabin Type */}
+                    <div className="mb-4 text-sm text-gray-600">
+                      {destination.cabin}
+                    </div>
+
+                    {/* Price */}
+                    <div className="border-t pt-4">
+                      <div className="text-sm text-gray-600">from</div>
+                      <div className="text-xl font-bold text-gray-900">
+                        {destination.price}
+                        <span className="text-xs text-gray-500">*</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hover Overlay - Premium Glow */}
+                  <div className="absolute -inset-2 rounded-lg bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 opacity-0 blur transition-opacity duration-300 group-hover:opacity-20 -z-10" />
+                </div>
+              </motion.div>
+            ))}
           </div>
+        </div>
       </div>
 
       {/* Booking Confirmation Dialog */}
