@@ -821,7 +821,7 @@ export default function Guides() {
               <h3 className="mb-4 text-2xl">Find your guide</h3>
               <p className="leading-relaxed text-gray-600">
                 Browse verified local experts with unique specialties and
-                authentic insights
+                authentic insights.
               </p>
             </div>
 
@@ -831,7 +831,7 @@ export default function Guides() {
               </div>
               <h3 className="mb-4 text-2xl">Start chatting free</h3>
               <p className="leading-relaxed text-gray-600">
-                Get 5 minutes free to ask questions and plan your perfect trip
+                Get 5 minutes free to ask questions and plan your perfect trip.
               </p>
             </div>
 
@@ -842,7 +842,7 @@ export default function Guides() {
               <h3 className="mb-4 text-2xl">Experience the real destination</h3>
               <p className="leading-relaxed text-gray-600">
                 Get personalized recommendations and insider tips for an
-                authentic journey
+                authentic journey.
               </p>
             </div>
           </div>
@@ -861,7 +861,7 @@ export default function Guides() {
             </h2>
             <p className="text-xl text-white/80">
               Every guide is verified and passionate about sharing their home
-              with you
+              with you.
             </p>
           </div>
 
@@ -873,7 +873,7 @@ export default function Guides() {
               <h3 className="mb-4 text-2xl">Verified experts</h3>
               <p className="leading-relaxed text-white/70">
                 All guides are verified locals with deep knowledge and passion
-                for their destinations
+                for their destinations.
               </p>
             </div>
 
@@ -884,7 +884,7 @@ export default function Guides() {
               <h3 className="mb-4 text-2xl">Direct communication</h3>
               <p className="leading-relaxed text-white/70">
                 Chat, call, or video chat directly with your guide before and
-                during your trip
+                during your trip.
               </p>
             </div>
 
@@ -895,7 +895,7 @@ export default function Guides() {
               <h3 className="mb-4 text-2xl">Authentic experiences</h3>
               <p className="leading-relaxed text-white/70">
                 Go beyond tourist traps and discover the real heart of each
-                destination
+                destination.
               </p>
             </div>
           </div>
