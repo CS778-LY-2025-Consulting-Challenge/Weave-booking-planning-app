@@ -79,6 +79,7 @@ type DayPlan = {
     rating?: number;
     reviewCount?: number;
     costEstimate?: string;
+    imageUrl?: string;
   }>;
 };
 
@@ -605,7 +606,7 @@ export default function AIPlanner() {
       const activities = dayPlan.activities
         .filter((act) => act.coords && act.coords.lat && act.coords.lng)
         .map((act) => ({
-          name: act.title || act.activity || 'Activity',
+          name: act.title || 'Activity',
           lat: act.coords!.lat,
           lng: act.coords!.lng,
           type: act.type
@@ -2192,7 +2193,7 @@ export default function AIPlanner() {
             return day.activities
               .filter(activity => activity.coords?.lat && activity.coords?.lng)
               .map(activity => ({
-                name: activity.title || activity.activity || '',
+                name: activity.title || '',
                 lat: activity.coords!.lat,
                 lng: activity.coords!.lng,
                 type: activity.type,
@@ -2217,7 +2218,7 @@ export default function AIPlanner() {
                 if (index + 1 === selectedDay) {
                   // Create a map from activity name to original activity
                   const activityMap = new Map(
-                    day.activities.map(act => [act.title || act.activity || '', act])
+                    day.activities.map(act => [act.title || '', act])
                   );
                   
                   // Reorder based on the new order, preserving full activity data
@@ -2228,7 +2229,7 @@ export default function AIPlanner() {
                   // Add any activities that weren't in the reordered list (shouldn't happen, but safe)
                   const reorderedNames = new Set(reorderedActivities.map(a => a.name));
                   const remaining = day.activities.filter(
-                    act => !reorderedNames.has(act.title || act.activity || '')
+                    act => !reorderedNames.has(act.title || '')
                   );
                   
                   return {
@@ -2245,7 +2246,7 @@ export default function AIPlanner() {
               const updatedDayPlans = plannerState.dayPlans.map((day, index) => {
                 if (index + 1 === selectedDay) {
                   const activityMap = new Map(
-                    day.activities.map(act => [act.title || act.activity || '', act])
+                    day.activities.map(act => [act.title || '', act])
                   );
                   
                   const reordered = reorderedActivities
@@ -2254,7 +2255,7 @@ export default function AIPlanner() {
                   
                   const reorderedNames = new Set(reorderedActivities.map(a => a.name));
                   const remaining = day.activities.filter(
-                    act => !reorderedNames.has(act.title || act.activity || '')
+                    act => !reorderedNames.has(act.title || '')
                   );
                   
                   return {

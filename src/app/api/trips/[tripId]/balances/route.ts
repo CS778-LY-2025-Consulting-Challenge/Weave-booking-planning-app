@@ -51,18 +51,16 @@ export async function GET(
         // Format for response
         const balances = participants.map(p => ({
             userId: p.userId,
-            userName: p.name,
-            email: p.email,
+            userName: p.name ?? '',
+            userEmail: p.email ?? '',
+            email: p.email, // keep existing field for response compatibility
+            totalPaid: 0,
+            totalOwed: 0,
             balance: balancesMap.get(p.userId) || 0,
         }));
 
-        // Calculate simplified settlements
-        // We can reuse the utility function if we adapt the types
-        const settlements = calculateSettlements(balances.map(b => ({
-            ...b,
-            totalPaid: 0, // Not needed for settlement algo
-            totalOwed: 0, // Not needed for settlement algo
-        })));
+        // Calculate simplified settlements using the normalized UserBalance shape
+        const settlements = calculateSettlements(balances);
 
         return NextResponse.json({
             balances,
