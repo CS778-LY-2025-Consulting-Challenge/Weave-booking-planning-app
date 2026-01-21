@@ -8,7 +8,7 @@ import {
   Menu,
   Plane,
   Settings,
-  User,
+  User as UserIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -193,13 +193,31 @@ export default function Navbar() {
             <div className="flex items-center gap-4">
               <SignedIn>
                 <div className="flex items-center gap-4">
-                  <Link
-                    href="/user-profile"
-                    className="text-sm text-white transition-all duration-300 hover:scale-105 hover:text-gray-200"
-                  >
-                    Profile
-                  </Link>
-                  <UserButton 
+                  {/* User Dropdown */}
+                  <div className="relative">
+                    <button
+                      className="flex items-center gap-1 text-sm text-white transition-all duration-300 hover:scale-105 hover:text-gray-200 px-3 py-2 rounded-md bg-black/30 border border-white/20"
+                      onClick={() => setDropdownOpen((open) => !open)}
+                    >
+                      <UserIcon className="size-4" />
+                      User
+                      <ChevronDown className="size-4" />
+                    </button>
+                    {dropdownOpen && (
+                      <div ref={dropdownRef} className="absolute right-0 mt-2 w-44 rounded-md bg-black/90 border border-white/20 shadow-lg z-50">
+                        <div className="py-1">
+                          <button
+                            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10"
+                            onClick={() => { setDropdownOpen(false); router.push('/dashboard'); }}
+                          >
+                            <LayoutDashboard className="size-4" />
+                            Dashboard
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <UserButton
                     afterSignOutUrl="/"
                     appearance={{
                       elements: {

@@ -43,6 +43,9 @@ export interface HotelResult {
     phone: string;
     email: string;
   };
+  // SerpAPI specific fields for hotel details
+  property_token?: string;
+  serpapi_property_details_link?: string;
 }
 
 export interface Room {

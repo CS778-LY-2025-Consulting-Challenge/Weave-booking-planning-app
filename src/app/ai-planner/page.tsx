@@ -1610,7 +1610,7 @@ export default function AIPlanner() {
                   {/* Static Charizard Image */}
                   <div className="relative mb-6 flex h-48 w-48 items-center justify-center overflow-hidden">
                     <img 
-                      src="/charizard/charizard-static.png" 
+                      src="https://d30mgvfwc9sz4j.cloudfront.net/charizard/charizard-static.png" 
                       alt="Charizard" 
                       className="h-full w-full object-contain"
                     />
@@ -1640,7 +1640,7 @@ export default function AIPlanner() {
                   {/* Animated Charizard */}
                   <div className="relative mb-6 flex h-48 w-48 items-center justify-center overflow-hidden">
                     <img 
-                      src="/charizard/charizard-animated.gif" 
+                      src="https://d30mgvfwc9sz4j.cloudfront.net/charizard/charizard-animated.gif" 
                       alt="Charizard thinking" 
                       className="h-full w-full object-contain"
                     />

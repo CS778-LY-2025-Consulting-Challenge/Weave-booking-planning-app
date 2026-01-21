@@ -8,6 +8,8 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import Image from 'next/image';
 
+import { HotelResult } from '@/types/hotel';
+
 // Country code to name mapping
 const COUNTRY_MAP: Record<string, string> = {
   'US': 'United States',
@@ -41,23 +43,27 @@ const getCountryName = (countryCode: string): string => {
 // Default fallback image - a simpler, more reliable URL
 const DEFAULT_HOTEL_IMAGE = 'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?w=600&h=500&fit=crop';
 
-export interface HotelResult {
-  id: string;
-  name: string;
-  location: string;
-  city: string;
-  country: string;
-  rating: number;
-  reviews: number;
-  pricePerNight: number;
-  image: string;
-  description?: string;
-  amenities?: string[];
-  guests?: number;
-  // SerpAPI specific fields for hotel details
-  property_token?: string;
-  serpapi_property_details_link?: string;
+// Pool of high-quality, realistic hotel images
+const HOTEL_IMAGE_POOL = [
+  'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?w=800&h=600&fit=crop&q=80', // Luxury hotel lobby
+  'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop&q=80', // Hotel bedroom
+  'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop&q=80', // Modern hotel room
+  'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&h=600&fit=crop&q=80', // Hotel exterior
+  'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&h=600&fit=crop&q=80', // Boutique hotel
+  'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&h=600&fit=crop&q=80', // Hotel with pool
+  'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop&q=80', // Hotel suite
+  'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop&q=80', // Beach resort
+  'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop&q=80', // City hotel
+  'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&h=600&fit=crop&q=80', // Mountain resort
+];
+
+// Function to get a consistent fallback image based on hotel ID
+function getFallbackImage(hotelId: string): string {
+  const index = Math.abs(hotelId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % HOTEL_IMAGE_POOL.length;
+  return HOTEL_IMAGE_POOL[index];
 }
+
+
 
 interface HotelResultsProps {
   hotels: HotelResult[];
@@ -67,20 +73,39 @@ interface HotelResultsProps {
 }
 
 // Image display component with better error handling
-function HotelImageDisplay({ 
-  src, 
-  alt, 
-  hotelName 
-}: { 
+function HotelImageDisplay({
+  src,
+  alt,
+  hotelName,
+  hotelId
+}: {
   src: string
   alt: string
   hotelName: string
+  hotelId: string
 }) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentImageSrc, setCurrentImageSrc] = useState(src);
 
   // Validate and clean image URL
-  const validatedSrc = src && src.startsWith('http') ? src : DEFAULT_HOTEL_IMAGE;
+  const validatedSrc = currentImageSrc && currentImageSrc.startsWith('http') ? currentImageSrc : getFallbackImage(hotelId);
+
+  const handleImageError = () => {
+    console.warn(`Image failed to load: ${currentImageSrc}`);
+
+    // If the current image failed and it's not already a fallback, try the fallback
+    if (currentImageSrc !== getFallbackImage(hotelId)) {
+      console.log(`Switching to fallback image for hotel: ${hotelName}`);
+      setCurrentImageSrc(getFallbackImage(hotelId));
+      setImageError(false);
+      setIsLoading(true);
+    } else {
+      // Even the fallback failed, show placeholder
+      setImageError(true);
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="relative h-96 sm:h-[450px] md:h-[500px] lg:h-[550px] overflow-hidden bg-gray-200 flex-shrink-0">
@@ -91,31 +116,27 @@ function HotelImageDisplay({
           </div>
         </div>
       )}
-      
+
       {imageError ? (
         <div className="h-full w-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center">
-          <div className="text-center">
+          <div className="text-center p-4">
             <ImageOff className="size-12 text-gray-500 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">{hotelName}</p>
+            <p className="text-sm text-gray-600 font-semibold">{hotelName}</p>
+            <p className="text-xs text-gray-500 mt-1">Image unavailable</p>
           </div>
         </div>
       ) : (
         <img
           src={validatedSrc}
           alt={alt}
-          className={`h-full w-full object-cover transition-all duration-700 ${
-            isLoading ? 'blur-sm' : 'blur-0'
-          }`}
+          className={`h-full w-full object-cover transition-all duration-700 ${isLoading ? 'blur-sm' : 'blur-0'
+            }`}
           loading="lazy"
           onLoad={() => setIsLoading(false)}
-          onError={() => {
-            console.warn(`Image failed to load: ${validatedSrc}`);
-            setImageError(true);
-            setIsLoading(false);
-          }}
+          onError={handleImageError}
         />
       )}
-      
+
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
     </div>
   );
@@ -216,10 +237,11 @@ export function HotelResults({
           >
             <Card className="group overflow-hidden border-0 transition-all duration-500 hover:shadow-2xl h-full flex flex-col">
               <div className="relative overflow-hidden flex-shrink-0">
-                <HotelImageDisplay 
-                  src={hotel.image} 
+                <HotelImageDisplay
+                  src={hotel.image}
                   alt={hotel.name}
                   hotelName={hotel.name}
+                  hotelId={hotel.id}
                 />
                 <button
                   onClick={() => toggleLike(hotel.id)}
@@ -227,11 +249,10 @@ export function HotelResults({
                   aria-label={likedHotels.has(hotel.id) ? 'Unlike' : 'Like'}
                 >
                   <Heart
-                    className={`size-5 ${
-                      likedHotels.has(hotel.id)
-                        ? 'fill-red-500 text-red-500'
-                        : 'text-gray-400'
-                    }`}
+                    className={`size-5 ${likedHotels.has(hotel.id)
+                      ? 'fill-red-500 text-red-500'
+                      : 'text-gray-400'
+                      }`}
                   />
                 </button>
                 {hotel.rating >= 4.5 && (

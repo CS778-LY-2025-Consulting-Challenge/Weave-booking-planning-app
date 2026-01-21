@@ -4,26 +4,11 @@ import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 
 export default function TrendingDestinations() {
-  const [bestInTravelSrc, setBestInTravelSrc] = useState(
-    '/best-in-travel/index.html'
-  );
+  const [bestInTravelSrc] = useState('/best-in-travel/index.html');
   const [iframeHeight, setIframeHeight] = useState<number | undefined>(undefined);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  useEffect(() => {
-    // Prefer local file; if missing, fallback to remote (may have its own scroll)
-    fetch('/best-in-travel/index.html', { method: 'HEAD' })
-      .then((res) => {
-        if (res.ok) {
-          setBestInTravelSrc('/best-in-travel/index.html');
-        } else {
-          setBestInTravelSrc('https://www.lonelyplanet.com/best-in-travel');
-        }
-      })
-      .catch(() => {
-        setBestInTravelSrc('https://www.lonelyplanet.com/best-in-travel');
-      });
-  }, []);
+
 
   useEffect(() => {
     const handleIframeLoad = () => {
@@ -131,7 +116,6 @@ export default function TrendingDestinations() {
               height: iframeHeight ? `${iframeHeight}px` : '1500px',
               minHeight: '600px',
             }}
-            scrolling="no"
             referrerPolicy="no-referrer"
             ref={iframeRef}
           />

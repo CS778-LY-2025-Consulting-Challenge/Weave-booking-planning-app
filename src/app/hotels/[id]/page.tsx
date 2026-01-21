@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MapPin, 
-  Star, 
-  Wifi, 
-  Phone, 
-  Mail, 
-  Check, 
+import {
+  MapPin,
+  Star,
+  Wifi,
+  Phone,
+  Mail,
+  Check,
   Heart,
   ChevronLeft,
   Loader2,
@@ -20,6 +21,52 @@ import {
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
 import { HotelResult, Room } from '@/types/hotel';
+
+// Fallback image for when API images fail
+// Fallback images pool for when API images fail
+const FALLBACK_IMAGES = [
+  'https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?q=80&w=1080&auto=format&fit=crop', // Lobby
+  'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1080&auto=format&fit=crop', // Resort
+  'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=1080&auto=format&fit=crop', // Room
+  'https://images.unsplash.com/photo-1596436889106-be35e843f974?q=80&w=1080&auto=format&fit=crop', // Pool
+  'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=1080&auto=format&fit=crop', // Luxury Room
+  'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=1080&auto=format&fit=crop', // Exterior
+];
+
+// Get a deterministic fallback image based on a seed (e.g. index/filename)
+const getFallbackImage = (seed: string | number) => {
+  const index = Math.abs(String(seed).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % FALLBACK_IMAGES.length;
+  return FALLBACK_IMAGES[index];
+};
+
+// Safe Image Component that handles errors by showing a fallback
+const SafeImage = ({ src, alt, className, priority = false }: { src: string, alt: string, className?: string, priority?: boolean }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  // Reset state when src prop changes
+  useEffect(() => {
+    setImgSrc(src);
+    setHasError(false);
+  }, [src]);
+
+  return (
+    <img
+      src={hasError ? getFallbackImage(src) : imgSrc}
+      alt={alt}
+      className={className}
+      loading={priority ? "eager" : "lazy"}
+      referrerPolicy="no-referrer" // Fix for Google hosted images 403
+      onError={(e) => {
+        if (!hasError) {
+          // console.warn(`Image failed to load: ${src}, switching to fallback`);
+          setHasError(true);
+          setImgSrc(getFallbackImage(src));
+        }
+      }}
+    />
+  );
+};
 
 // Country code to name mapping
 const COUNTRY_MAP: Record<string, string> = {
@@ -55,7 +102,8 @@ export default function HotelDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
-  
+  const { user } = useUser();
+
   const [hotel, setHotel] = useState<HotelResult | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,10 +117,14 @@ export default function HotelDetailsPage() {
   const checkOutDate = searchParams.get('checkOut') || '';
   const guests = parseInt(searchParams.get('guests') || '2');
   const hotelId = params.id as string;
-  
+
   // Extract hotel name and location from search params (passed from hotel card)
   const hotelName = searchParams.get('name') || '';
   const location = searchParams.get('location') || '';
+
+  // Extract SerpAPI specific fields
+  const propertyToken = searchParams.get('property_token') || '';
+  const detailsLink = searchParams.get('details_link') || '';
 
   useEffect(() => {
     const fetchHotelDetails = async () => {
@@ -94,15 +146,29 @@ export default function HotelDetailsPage() {
           return;
         }
 
-        console.log('[Hotel Details] Fetching details for:', { hotelId, hotelName, location });
+        console.log('[Hotel Details] Fetching details for:', { hotelId, hotelName, location, propertyToken });
 
-        // Call Amadeus details endpoint
+        // Call hotel details endpoint with SerpAPI fields
         const params = new URLSearchParams({
           hotelId,
           checkInDate,
           checkOutDate,
           guests: guests.toString(),
         });
+
+        // Add SerpAPI specific fields if available
+        if (propertyToken) {
+          params.append('property_token', propertyToken);
+        }
+        if (detailsLink) {
+          params.append('details_link', detailsLink);
+        }
+        if (hotelName) {
+          params.append('hotelName', hotelName);
+        }
+        if (location) {
+          params.append('location', location);
+        }
 
         const response = await fetch(`/api/hotels/details?${params.toString()}`);
         const data = await response.json();
@@ -120,46 +186,77 @@ export default function HotelDetailsPage() {
           return;
         }
 
-        const property = data?.data?.hotel || data?.hotel || data;
-        if (!property) {
-          throw new Error('No hotel data found');
+        // Extract hotel data from response
+        const property = data?.data || data?.properties?.[0] || data;
+        if (!property || !property.name) {
+          throw new Error('No hotel data found in response');
         }
 
-        const images = property.media || property.images || [];
-        const mainImage =
-          images[0]?.uri ||
-          images[0]?.url ||
+        console.log('[Hotel Details] Processing hotel data:', {
+          name: property.name,
+          imageCount: property?.images?.length || 0
+        });
+
+        // Extract images from SerpAPI response
+        let images: string[] = [];
+        if (property.images && Array.isArray(property.images)) {
+          images = property.images
+            .map((img: any) => img?.original_image || img?.thumbnail || img)
+            .filter((url: any) => url && typeof url === 'string' && url.startsWith('http'))
+            .slice(0, 6); // Get up to 6 images
+
+          console.log(`[Hotel Details] Found ${images.length} images from API`);
+        }
+
+        // Use the first image or fallback
+        const mainImage = images[0] || property.thumbnail || property.image ||
           'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80';
 
-        const allImages = images
-          .map((img: any) => img?.uri || img?.url)
-          .filter(Boolean)
-          .slice(0, 4);
+        const allImages = images.length > 0 ? images : [mainImage];
 
-        const pricePerNight = Math.round(
-          (property.offers?.[0]?.price?.total || property.offers?.[0]?.price?.base || 180) /
-            Math.max(
-              1,
-              Math.ceil(
-                (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) /
-                  (1000 * 60 * 60 * 24)
-              )
-            )
-        );
+        // Determine price per night correctly
+        let pricePerNight = 180; // Default fallback
+
+        if (property.rate_per_night) {
+          // If explicit rate_per_night exists, use it directly (don't divide by nights)
+          const rate = property.rate_per_night.extracted_lowest || property.rate_per_night.lowest;
+          if (rate) {
+            pricePerNight = Math.round(Number(rate));
+          }
+        } else if (property.total_rate) {
+          // If only total_rate exists, divide by nights
+          const total = property.total_rate.extracted_lowest || property.total_rate.lowest;
+          const nights = Math.max(1, Math.ceil(
+            (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 60 * 60 * 24)
+          ));
+          if (total) {
+            pricePerNight = Math.round(Number(total) / nights);
+          }
+        } else if (property.price || property.offer?.price?.total || property.offers?.[0]?.price?.total) {
+          // Fallback to other price fields, treating them as per-night or total depending on context
+          // Usually offers are total price for the stay
+          const total = property.price || property.offer?.price?.total || property.offers?.[0]?.price?.total;
+          const nights = Math.max(1, Math.ceil(
+            (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 60 * 60 * 24)
+          ));
+          if (total) {
+            pricePerNight = Math.round(Number(total) / nights);
+          }
+        }
 
         const transformedHotel: HotelResult = {
-          id: property.hotelId || hotelId,
+          id: property.property_token || property.hotelId || hotelId,
           name: property.name || hotelName || 'Hotel',
-          location: property.address?.lines?.join(', ') || property.address?.cityName || location || 'Unknown',
-          city: property.address?.cityName || location.split(',')[0] || 'Unknown',
-          country: property.address?.countryCode || 'Unknown',
-          rating: property.rating ? parseFloat(property.rating) : 4.0,
-          reviews: property.reviews || 0,
+          location: property.address?.lines?.join(', ') || property.description || property.address?.cityName || location || 'Unknown',
+          city: property.address?.cityName || property.city || location.split(',')[0] || 'Unknown',
+          country: property.address?.countryCode || property.country || property.address?.countryName || 'Unknown',
+          rating: property.rating ? parseFloat(property.rating) : property.overall_rating ? parseFloat(property.overall_rating) : 4.0,
+          reviews: property.reviews || property.total_reviews || 0,
           pricePerNight,
           image: mainImage,
-          images: allImages.length > 0 ? allImages : [mainImage],
+          images: allImages,
           description: property.description || 'Experience luxury and comfort at this hotel.',
-          amenities: property.amenities || ['WiFi', 'Restaurant', 'Gym'],
+          amenities: property.amenities || property.essential_info || ['WiFi', 'Restaurant', 'Gym'],
           guests,
           rooms: [
             {
@@ -202,12 +299,12 @@ export default function HotelDetailsPage() {
     };
 
     fetchHotelDetails();
-  }, [hotelId, checkInDate, checkOutDate, guests, hotelName, location]);
+  }, [hotelId, checkInDate, checkOutDate, guests, hotelName, location, propertyToken, detailsLink]);
 
   // Helper function to create fallback hotel data
   const createFallbackHotel = (id: string, name: string, loc: string): HotelResult => {
     const basePrice = 150 + Math.floor(Math.random() * 200);
-    
+
     return {
       id: id || 'fallback-hotel',
       name: name || 'Luxury Hotel',
@@ -299,7 +396,7 @@ export default function HotelDetailsPage() {
         pricePerNight: selectedRoom.price,
         nights: Math.ceil(
           (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) /
-            (1000 * 60 * 60 * 24)
+          (1000 * 60 * 60 * 24)
         ),
         status: 'confirmed',
         bookingDate: new Date().toISOString(),
@@ -309,7 +406,7 @@ export default function HotelDetailsPage() {
       // Try Stripe payment flow first (even for mock data)
       try {
         console.log('[Booking] Creating Stripe checkout session...');
-        
+
         const response = await fetch('/api/payment/create-checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -323,7 +420,7 @@ export default function HotelDetailsPage() {
             checkOutDate,
             guests,
             totalPrice: calculateTotalPrice(),
-            userId: 'user-123', // Replace with actual user ID from auth
+            userId: user?.id || 'guest',
           }),
         });
 
@@ -337,7 +434,7 @@ export default function HotelDetailsPage() {
             const existingBookings = JSON.parse(localStorage.getItem('hotelBookings') || '[]');
             existingBookings.push({ ...bookingData, stripeSessionId: data.sessionId, status: 'pending' });
             localStorage.setItem('hotelBookings', JSON.stringify(existingBookings));
-            
+
             toast.success('Redirecting to payment...');
             window.location.href = data.url;
             return;
@@ -355,13 +452,13 @@ export default function HotelDetailsPage() {
       localStorage.setItem('hotelBookings', JSON.stringify(existingBookings));
 
       toast.success('Booking confirmed successfully!');
-      
+
       setTimeout(() => {
         router.push(`/booking-confirmation?bookingId=${bookingData.bookingId}`);
       }, 1500);
     } catch (error) {
       console.error('Booking error:', error);
-      
+
       // Final fallback: Create mock booking
       const bookingData = {
         bookingId: `BOOK-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -377,19 +474,19 @@ export default function HotelDetailsPage() {
         pricePerNight: selectedRoom.price,
         nights: Math.ceil(
           (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) /
-            (1000 * 60 * 60 * 24)
+          (1000 * 60 * 60 * 24)
         ),
         status: 'confirmed',
         bookingDate: new Date().toISOString(),
         isMockBooking: true,
       };
-      
+
       const existingBookings = JSON.parse(localStorage.getItem('hotelBookings') || '[]');
       existingBookings.push(bookingData);
       localStorage.setItem('hotelBookings', JSON.stringify(existingBookings));
 
       toast.success('Booking confirmed successfully!');
-      
+
       setTimeout(() => {
         router.push(`/booking-confirmation?bookingId=${bookingData.bookingId}`);
       }, 1500);
@@ -421,8 +518,8 @@ export default function HotelDetailsPage() {
       {/* Header */}
       <div className="border-b border-gray-200 bg-white px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => router.back()}
             className="gap-2"
           >
@@ -478,25 +575,24 @@ export default function HotelDetailsPage() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {/* Main large image - spans 2 columns on desktop */}
               <div className="md:col-span-2 lg:col-span-2 rounded-lg overflow-hidden h-96 sm:h-[450px] md:h-[500px] lg:h-[600px] shadow-lg">
-                <img
+                <SafeImage
                   src={hotel.images[0]}
                   alt={`${hotel.name} main`}
                   className="h-full w-full object-cover hover:scale-105 transition-transform duration-700"
-                  loading="eager"
+                  priority={true}
                 />
               </div>
-              
+
               {/* Secondary images grid */}
               {hotel.images.slice(1).map((img, idx) => (
                 <div
                   key={idx}
                   className="rounded-lg overflow-hidden h-80 sm:h-96 shadow-lg"
                 >
-                  <img
+                  <SafeImage
                     src={img}
                     alt={`${hotel.name} ${idx + 2}`}
                     className="h-full w-full object-cover hover:scale-105 transition-transform duration-700"
-                    loading="lazy"
                   />
                 </div>
               ))}
@@ -582,11 +678,10 @@ export default function HotelDetailsPage() {
                   <div
                     key={room.id}
                     onClick={() => setSelectedRoom(room)}
-                    className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
-                      selectedRoom?.id === room.id
-                        ? 'border-blue-600 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${selectedRoom?.id === room.id
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
                   >
                     <div className="flex items-start justify-between">
                       <div>
@@ -632,9 +727,9 @@ export default function HotelDetailsPage() {
                       <span>
                         {checkInDate && checkOutDate
                           ? Math.ceil(
-                              (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) /
-                              (1000 * 60 * 60 * 24)
-                            )
+                            (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) /
+                            (1000 * 60 * 60 * 24)
+                          )
                           : 0}
                       </span>
                     </div>

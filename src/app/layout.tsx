@@ -2,6 +2,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import Providers from '@/components/Providers';
 import { StripeProvider } from '@/components/StripeProvider';
 import { AuthProvider } from '@/context/AuthContext';
+import { GlobalErrorHandler } from '@/components/GlobalErrorHandler';
 import type { Metadata } from 'next';
 import { Cormorant_Garamond, Inter } from 'next/font/google';
 import './index.css';
@@ -35,6 +36,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
         <body suppressHydrationWarning className={inter.className}>
+          <GlobalErrorHandler />
           <AuthProvider>
             <Providers>{children}</Providers>
           </AuthProvider>

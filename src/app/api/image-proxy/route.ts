@@ -31,11 +31,18 @@ export async function GET(request: Request) {
       return Response.redirect(redirectUrl, 302);
     }
 
-    // Fallback: redirect to S3 signed URL (avoids server-side fetch issues)
-    console.log('[image-proxy] Getting signed URL for:', s3Path);
-    const signedUrl = await getSignedUrlForFile(s3Path, 3600);
-    console.log('[image-proxy] Generated signed URL, redirecting');
-    return Response.redirect(signedUrl, 302);
+    // If bucket is configured, redirect to S3 signed URL (avoids server-side fetch issues)
+    const bucketName = process.env.NEXT_PUBLIC_AWS_S3_BUCKET || "";
+    if (bucketName && bucketName.trim() !== '') {
+      console.log('[image-proxy] Getting signed URL for:', s3Path);
+      const signedUrl = await getSignedUrlForFile(s3Path, 3600);
+      console.log('[image-proxy] Generated signed URL, redirecting');
+      return Response.redirect(signedUrl, 302);
+    }
+    
+    // Fallback: redirect to public URL (for local dev with no S3)
+    const requestUrl = new URL(request.url);
+    return Response.redirect(`${requestUrl.origin}/${s3Path}`, 302);
   } catch (error) {
     console.error('[image-proxy] Error:', error);
     return Response.json(

@@ -169,6 +169,12 @@ export default function TourPackagesCarousel() {
       const button = document.createElement('button');
       button.className = 'tpc-card__button';
       button.textContent = 'BOOK NOW';
+        // Stop carousel drag from hijacking click, then navigate to packages
+        button.addEventListener('pointerdown', (e) => e.stopPropagation());
+        button.addEventListener('click', (e) => {
+          e.stopPropagation();
+          window.location.href = '/packages';
+        });
 
       const arrow = document.createElement('span');
       arrow.className = 'tpc-card__arrow';

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
-const SERPAPI_BASE_URL = 'https://serpapi.com/search.json';
+// @ts-ignore
+const SerpApi = require('google-search-results-nodejs');
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    
+
     const location = searchParams.get('location') || searchParams.get('q') || '';
     const checkIn = searchParams.get('checkInDate') || '';
     const checkOut = searchParams.get('checkOutDate') || '';
@@ -20,49 +21,42 @@ export async function GET(request: NextRequest) {
     }
 
     if (!SERPAPI_API_KEY) {
-      console.error('[SerpAPI Hotels] API key not configured');
+      console.error('[SerpAPI Hotels] API key not configured. Env var present:', !!process.env.SERPAPI_API_KEY);
       return NextResponse.json(
         { error: 'SerpAPI key not configured' },
         { status: 500 }
       );
     }
 
-    // Build SerpAPI Google Hotels query
-    const query = `hotels in ${location}`;
-    
-    const params = new URLSearchParams({
+    // Build SerpAPI Google Hotels query variables
+    const params = {
       engine: 'google_hotels',
-      q: query,
+      q: `hotels in ${location}`,
       check_in_date: checkIn,
       check_out_date: checkOut,
       adults: guests,
       currency: 'USD',
       gl: 'us',
       hl: 'en',
-      api_key: SERPAPI_API_KEY,
+    };
+
+    console.log(`[SerpAPI Hotels] Fetching via SDK for location: ${location}`);
+
+    // Wrap SDK callback in Promise
+    const data = await new Promise((resolve, reject) => {
+      const search = new SerpApi.GoogleSearch(SERPAPI_API_KEY);
+      search.json(params, (json: any) => {
+        if (json.error) {
+          reject(new Error(json.error));
+        } else {
+          resolve(json);
+        }
+      });
     });
 
-    const url = `${SERPAPI_BASE_URL}?${params.toString()}`;
-    console.log(`[SerpAPI Hotels] Fetching from: ${url.replace(SERPAPI_API_KEY, 'HIDDEN')}`);
-
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[SerpAPI Hotels] API error:', response.status, errorText);
-      return NextResponse.json(
-        { error: `SerpAPI error: ${response.status}` },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
+    // @ts-ignore
     console.log(`[SerpAPI Hotels] Successfully fetched ${data?.properties?.length || 0} hotels`);
-    
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('[SerpAPI Hotels] Error:', error);

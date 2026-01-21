@@ -35,7 +35,8 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import { HotelSearch, HotelSearchParams } from '@/components/HotelSearch';
-import { HotelResults, HotelResult } from '@/components/HotelResults';
+import { HotelResults } from '@/components/HotelResults';
+import { HotelResult } from '@/types/hotel';
 import { searchHotels } from '@/services/hotelService';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -135,7 +136,7 @@ export default function HotelBooking() {
     try {
       const results = await searchHotels(params);
       setSearchResults(results);
-      
+
       if (results.length > 0) {
         toast.success(`Found ${results.length} hotels matching your criteria`);
       } else {
@@ -372,13 +373,12 @@ export default function HotelBooking() {
                                     {dayInfo.day}
                                   </div>
                                   <div
-                                    className={`text-xs ${
-                                      isSelected
+                                    className={`text-xs ${isSelected
                                         ? 'text-amber-200'
                                         : inRange
                                           ? 'text-amber-600'
                                           : 'text-gray-500'
-                                    }`}
+                                      }`}
                                   >
                                     ${dayInfo.price}
                                   </div>
@@ -454,7 +454,7 @@ export default function HotelBooking() {
                   name: hotel.name,
                   location: hotel.city || hotel.location,
                 });
-                
+
                 // Add SerpAPI fields if available
                 if (hotel.property_token) {
                   params.append('property_token', hotel.property_token);
@@ -462,7 +462,7 @@ export default function HotelBooking() {
                 if (hotel.serpapi_property_details_link) {
                   params.append('details_link', hotel.serpapi_property_details_link);
                 }
-                
+
                 router.push(`/hotels/${encodeURIComponent(hotel.id)}?${params.toString()}`);
               }}
             />

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { searchGoogleFlights, getBestFlights, getIATACode, calculateDuration } from '@/services/googleFlightsService';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -323,29 +324,6 @@ Create a comprehensive, day-by-day itinerary that matches these parameters.
     if (content.transportation && Array.isArray(content.transportation)) {
       console.log('[Itinerary API] Fetching real flight data for', content.transportation.length, 'transportation legs');
       
-      const AVIATIONSTACK_API_KEY = process.env.AVIATIONSTACK_API_KEY || 'a173b1b2eb40369a4b71af4317372896';
-      
-      // Helper function to get IATA code
-      const getIATACode = (cityName: string): string => {
-        const CITY_TO_IATA: Record<string, string> = {
-          'Auckland': 'AKL', 'Tokyo': 'NRT', 'Shanghai': 'PVG', 'Beijing': 'PEK',
-          'Sydney': 'SYD', 'Melbourne': 'MEL', 'Brisbane': 'BNE',
-          'Wellington': 'WLG', 'Christchurch': 'CHC', 'Queenstown': 'ZQN',
-          'New York': 'JFK', 'Los Angeles': 'LAX', 'San Francisco': 'SFO',
-          'London': 'LHR', 'Paris': 'CDG', 'Singapore': 'SIN',
-          'Bangkok': 'BKK', 'Seoul': 'ICN', 'Hong Kong': 'HKG', 'Dubai': 'DXB',
-        };
-        
-        if (CITY_TO_IATA[cityName]) return CITY_TO_IATA[cityName];
-        const lowerCity = cityName.toLowerCase();
-        for (const [city, code] of Object.entries(CITY_TO_IATA)) {
-          if (city.toLowerCase() === lowerCity || cityName.toLowerCase().includes(city.toLowerCase())) {
-            return code;
-          }
-        }
-        return cityName.substring(0, 3).toUpperCase();
-      };
-      
       const enrichedTransportation = await Promise.all(
         content.transportation.map(async (transport: any) => {
           // Only enrich flight transportation
@@ -355,104 +333,74 @@ Create a comprehensive, day-by-day itinerary that matches these parameters.
               const toCode = getIATACode(transport.to);
               const travellers = plannerState.travellers || 2;
 
-              // Call Aviationstack API directly
-              const apiUrl = `https://api.aviationstack.com/v1/flights?access_key=${AVIATIONSTACK_API_KEY}&dep_iata=${fromCode}&arr_iata=${toCode}&limit=3`;
+              // Use Google Flights via SerpAPI
+              const apiResponse = await searchGoogleFlights({
+                from: transport.from,
+                to: transport.to,
+                date: transport.date || plannerState.dates?.start,
+                type: 2, // One-way
+              });
               
-              console.log('[Itinerary API] Calling Aviationstack:', fromCode, '→', toCode);
-              const flightResponse = await fetch(apiUrl);
-
-              if (flightResponse.ok) {
-                const flightData = await flightResponse.json();
-                if (flightData.data && flightData.data.length > 0) {
-                  const flight = flightData.data[0];
-                  const departure = flight.departure;
-                  const arrival = flight.arrival;
-                  const airline = flight.airline;
-                  
-                  // Calculate duration
-                  let duration = transport.duration || '10h 30m';
-                  let depDate: Date | null = null;
-                  let arrDate: Date | null = null;
-                  
-                  if (departure?.scheduled && arrival?.scheduled) {
-                    try {
-                      depDate = new Date(departure.scheduled);
-                      arrDate = new Date(arrival.scheduled);
-                      const diffMs = arrDate.getTime() - depDate.getTime();
-                      const hours = Math.floor(diffMs / (1000 * 60 * 60));
-                      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                      duration = `${hours}h ${minutes}m`;
-                    } catch (e) {
-                      console.warn('[Itinerary API] Duration calculation failed:', e);
-                    }
-                  }
-                  
-                  // Get departure date for this specific flight
-                  const flightDate = depDate 
-                    ? depDate.toISOString().split('T')[0]
-                    : (transport.date || plannerState.dates?.start || content.dates?.start);
-                  
-                  // Generate price estimate (per person)
-                  const route = `${fromCode}-${toCode}`;
-                  const basePrices: Record<string, number> = {
-                    'AKL-NRT': 1200, 'AKL-SYD': 300, 'SYD-NRT': 800,
-                    'NRT-PVG': 500, 'AKL-PVG': 1400,
-                    'NRT-AKL': 1200, 'SYD-AKL': 300, 'PVG-NRT': 500,
-                    'PVG-AKL': 1400,
-                  };
-                  const basePrice = basePrices[route] || 1000;
-                  const price = `NZ$${basePrice.toLocaleString()}`; // Per person price
-                  const totalPrice = basePrice * travellers;
-                  
-                  // Generate booking URL
-                  const bookingUrl = `https://www.google.com/travel/flights?q=${fromCode}+to+${toCode}&date=${flightDate}`;
-                  
-                  // Format time string
-                  const formattedTime = departure?.scheduled && arrival?.scheduled
-                    ? `${new Date(departure.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} - ${new Date(arrival.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`
-                    : transport.time || '10:00 - 14:00';
-                  
-                  console.log('[Itinerary API] Enriched with flight:', {
-                    airline: airline?.name,
-                    code: airline?.iata,
-                    flightNumber: flight.flight?.iata,
-                    duration,
-                    date: flightDate,
-                    time: formattedTime,
-                    from: fromCode,
-                    to: toCode,
-                  });
-                  
-                  return {
-                    ...transport,
-                    fromCode,
-                    toCode,
-                    flightNumber: flight.flight?.iata || `${airline?.iata || 'XX'}100`,
-                    airline: airline?.name || transport.airline || 'Unknown Airline',
-                    airlineCode: airline?.iata || transport.airlineCode || 'XX',
-                    duration: duration, // Always have duration
-                    stops: transport.stops ?? 0,
-                    aircraft: flight.aircraft?.iata || transport.aircraft || 'Unknown',
-                    price, // Per person price
-                    priceEstimate: `NZ$${totalPrice.toLocaleString()}`, // Total price for display
-                    bookingUrl,
-                    time: formattedTime,
-                    date: flightDate, // Use actual flight date
-                  };
-                }
+              const flights = getBestFlights(apiResponse, travellers);
+              
+              if (flights && flights.length > 0) {
+                const flight = flights[0];
+                
+                // Format time string
+                const formattedTime = flight.departure.scheduled && flight.arrival.scheduled
+                  ? `${new Date(flight.departure.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} - ${new Date(flight.arrival.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`
+                  : transport.time || '10:00 - 14:00';
+                
+                // Get departure date
+                const depDate = flight.departure.scheduled ? new Date(flight.departure.scheduled) : null;
+                const flightDate = depDate 
+                  ? depDate.toISOString().split('T')[0]
+                  : (transport.date || plannerState.dates?.start || content.dates?.start);
+                
+                // Generate booking URL
+                const bookingUrl = `https://www.google.com/travel/flights?q=${fromCode}+to+${toCode}&date=${flightDate}`;
+                
+                console.log('[Itinerary API] Enriched with Google Flights:', {
+                  airline: flight.airline,
+                  code: flight.airlineCode,
+                  flightNumber: flight.flightNumber,
+                  duration: flight.duration,
+                  date: flightDate,
+                  time: formattedTime,
+                  from: fromCode,
+                  to: toCode,
+                });
+                
+                return {
+                  ...transport,
+                  fromCode,
+                  toCode,
+                  flightNumber: flight.flightNumber,
+                  airline: flight.airline,
+                  airlineCode: flight.airlineCode,
+                  duration: flight.duration,
+                  stops: flight.stops,
+                  aircraft: flight.aircraft,
+                  price: `NZ$${flight.pricePerPerson.toLocaleString()}`,
+                  priceEstimate: `NZ$${flight.price.toLocaleString()}`,
+                  bookingUrl,
+                  time: formattedTime,
+                  date: flightDate,
+                  carbonEmissions: flight.carbonEmissions,
+                  travelClass: flight.travelClass,
+                };
               }
             } catch (error) {
               console.warn('[Itinerary API] Failed to fetch flight data for', transport.from, '→', transport.to, ':', error);
             }
           }
           
-          // Return original transport if not a flight or if API call failed
           return transport;
         })
       );
 
       content.transportation = enrichedTransportation;
-      console.log('[Itinerary API] Enriched transportation with real flight data');
+      console.log('[Itinerary API] Enriched transportation with Google Flights data');
     }
 
     return NextResponse.json({ data: content });
