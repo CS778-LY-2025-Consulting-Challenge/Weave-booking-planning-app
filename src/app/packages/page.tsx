@@ -379,7 +379,7 @@ export default function Packages() {
               <Button
                 size="lg"
                 className="bg-white text-purple-600 shadow-xl transition-all duration-300 group-hover:scale-110 hover:scale-105 hover:bg-gray-100 hover:shadow-2xl"
-                onClick={() => router.push('/ai-planner')}
+                onClick={() => router.push('/ai-planner-intro')}
               >
                 <Sparkles className="mr-2 size-5" />
                 Start AI Trip Planner

@@ -356,8 +356,23 @@ export default function DailyRouteMap({
         setIsLoading(false);
         setIsRecalculating(false);
       } else {
-        console.error('Directions request failed:', status);
-        setError(`Could not calculate route: ${status}`);
+        console.warn('[DailyRouteMap] Directions request failed:', status);
+        
+        // Provide user-friendly error messages
+        let errorMessage = 'Could not calculate driving route';
+        if (status === 'ZERO_RESULTS') {
+          errorMessage = 'No driving route available between these locations. Activities may be too far apart or in different regions.';
+        } else if (status === 'NOT_FOUND') {
+          errorMessage = 'One or more locations could not be found.';
+        } else if (status === 'INVALID_REQUEST') {
+          errorMessage = 'Invalid route request.';
+        } else if (status === 'OVER_QUERY_LIMIT') {
+          errorMessage = 'Google Maps API quota exceeded. Please try again later.';
+        } else if (status === 'REQUEST_DENIED') {
+          errorMessage = 'Google Maps API access denied.';
+        }
+        
+        setError(errorMessage);
         setIsLoading(false);
         setIsRecalculating(false);
       }

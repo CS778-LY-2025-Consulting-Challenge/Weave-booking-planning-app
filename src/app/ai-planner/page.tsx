@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Sparkles,
   Send,
@@ -371,6 +372,7 @@ const ActivityCard = ({
 };
 
 export default function AIPlanner() {
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       type: 'ai',
@@ -399,6 +401,7 @@ export default function AIPlanner() {
   const [isAttractionDetailOpen, setIsAttractionDetailOpen] = useState(false);
   const [selectedAttraction, setSelectedAttraction] = useState<any>(null);
   const [isAccommodationChangePanelOpen, setIsAccommodationChangePanelOpen] = useState(false);
+  const [activityImageCache, setActivityImageCache] = useState<Record<string, string>>({});
   const [changingAccommodation, setChangingAccommodation] = useState<{
     accommodationIndex: number;
     accommodation: any;
@@ -695,6 +698,94 @@ export default function AIPlanner() {
 
     fetchImage();
   }, [heroCity]);
+
+  // Preload activity images when itinerary changes
+  useEffect(() => {
+    const preloadImages = async () => {
+      if (!activeState?.dayPlans) return;
+      
+      const titlesToPreload = activeState.dayPlans.flatMap(day => 
+        day.activities.map(act => act.title).filter(Boolean) as string[]
+      );
+      
+      console.log('[ImagePreload] Starting preload for', titlesToPreload.length, 'activities');
+      
+      // Preload images in background
+      for (const title of titlesToPreload) {
+        if (title && !activityImageCache[title]) {
+          try {
+            let query = title;
+            const prefixPatterns = [
+              /^(Dinner|Lunch|Breakfast|Brunch)\s+at\s+/i,
+              /^(Visit|Explore|Tour|See|Discover|Experience)\s+/i,
+              /\+.*$/,
+              /\s*\(.*\)$/,
+            ];
+            
+            for (const pattern of prefixPatterns) {
+              query = query.replace(pattern, '');
+            }
+            
+            query = query.split(/[-,]/)[0].trim();
+            const words = query.split(' ').slice(0, 4).join(' ');
+            
+            const res = await fetch(`/api/unsplash/search?city=${encodeURIComponent(words)}`);
+            const data = await res.json();
+            
+            if (data.imageUrl) {
+              setActivityImageCache(prev => ({ ...prev, [title]: data.imageUrl }));
+            }
+          } catch (err) {
+            console.error('[ImagePreload] Error for', title, ':', err);
+          }
+        }
+      }
+    };
+    
+    preloadImages();
+  }, [activeState?.dayPlans, activityImageCache]);
+
+  // Handle initial message from URL parameter
+  useEffect(() => {
+    const initialMessage = searchParams?.get('initialMessage');
+    if (initialMessage && messages.length === 1) {
+      // Only auto-send if we haven't started chatting yet
+      setInput(initialMessage);
+      
+      // Auto-send the message after a brief delay
+      const timer = setTimeout(async () => {
+        const userText = initialMessage.trim();
+        setMessages((prev) => [...prev, { type: 'user', text: userText }]);
+        setInput('');
+        setIsChatting(true);
+        
+        try {
+          const res = await fetch('/api/ai-planner/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              messages: [{
+                type: 'ai',
+                text: "Hey there! I'm Charizard 🔥 Your AI travel co-pilot. Ready to ignite your next adventure? Tell me where you're dreaming of going!",
+              }], 
+              input: userText 
+            }),
+          });
+          const data = await res.json();
+          const reply = data?.reply ?? 'Got it!';
+          const stateUpdate = data?.plannerState ?? {};
+          setMessages((prev) => [...prev, { type: 'ai', text: reply }]);
+          setPlannerState((prev) => ({ ...prev, ...stateUpdate }));
+        } catch (err) {
+          setMessages((prev) => [...prev, { type: 'ai', text: 'Oops, something went wrong.' }]);
+        } finally {
+          setIsChatting(false);
+        }
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, messages.length]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -2197,7 +2288,7 @@ export default function AIPlanner() {
                 lat: activity.coords!.lat,
                 lng: activity.coords!.lng,
                 type: activity.type,
-                imageUrl: activity.imageUrl
+                imageUrl: activity.imageUrl || activityImageCache[activity.title || ''] || undefined
               }));
           })()}
           dayNumber={selectedDay}

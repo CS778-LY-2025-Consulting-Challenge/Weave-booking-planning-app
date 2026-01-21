@@ -294,11 +294,27 @@ export async function POST(request: Request) {
       model: 'gpt-4o-mini',
       messages: messagesToAI as any,
       response_format: { type: 'json_object' },
-      max_tokens: 8000, 
+      max_tokens: 16000, // Increased for longer itineraries
       temperature: 0.7,
     });
 
-    const content = JSON.parse(response.choices[0].message.content || '{}');
+    // More robust JSON parsing with error handling
+    let content;
+    try {
+      const rawContent = response.choices[0].message.content || '{}';
+      console.log('[Chat API] Raw response length:', rawContent.length);
+      content = JSON.parse(rawContent);
+    } catch (parseError: any) {
+      console.error('[Chat API] JSON Parse Error:', parseError);
+      console.error('[Chat API] Response was:', response.choices[0].message.content?.substring(0, 500));
+      return NextResponse.json(
+        { 
+          reply: "I generated a travel plan, but encountered a formatting issue. Please try asking for a shorter itinerary (e.g., 3-4 days) or simplify your request.",
+          error: parseError.message 
+        },
+        { status: 500 }
+      );
+    }
     const plannerState = content.plannerState || {};
 
     console.log('[Chat API] AI response keys:', Object.keys(content));

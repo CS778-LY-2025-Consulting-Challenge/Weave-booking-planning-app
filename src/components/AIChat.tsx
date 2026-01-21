@@ -17,8 +17,8 @@ interface ChatMessage {
 export default function AIChat() {
   const pathname = usePathname();
 
-  // Hide the floating assistant on the dedicated AI Planner page to avoid redundancy
-  if (pathname === '/ai-planner') return null;
+  // Hide the floating assistant on the dedicated AI Planner page and AI Planner Intro page to avoid redundancy
+  if (pathname === '/ai-planner' || pathname === '/ai-planner-intro') return null;
 
   const shouldDelayVisibility = pathname === '/';
   const [hasReachedScrollThreshold, setHasReachedScrollThreshold] = useState(!shouldDelayVisibility);
