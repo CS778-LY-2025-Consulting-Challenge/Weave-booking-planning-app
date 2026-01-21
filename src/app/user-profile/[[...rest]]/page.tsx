@@ -12,6 +12,7 @@ export default function UserProfilePage() {
         </div>
         <div className="rounded-lg bg-white shadow-lg">
           <UserProfile
+            path="/user-profile"
             appearance={{
               elements: {
                 rootBox: 'w-full',

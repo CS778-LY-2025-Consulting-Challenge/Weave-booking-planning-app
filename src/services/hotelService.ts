@@ -1,8 +1,27 @@
-import { HotelResult } from '@/components/HotelResults';
+import { HotelResult } from '@/types/hotel';
+
+// Pool of high-quality, realistic hotel images
+const REALISTIC_HOTEL_IMAGES = [
+  'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?w=800&h=600&fit=crop&q=80', // Luxury hotel lobby
+  'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop&q=80', // Hotel bedroom
+  'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop&q=80', // Modern hotel room
+  'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&h=600&fit=crop&q=80', // Hotel exterior
+  'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&h=600&fit=crop&q=80', // Boutique hotel
+  'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&h=600&fit=crop&q=80', // Hotel with pool
+  'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop&q=80', // Hotel suite
+  'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop&q=80', // Beach resort
+  'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop&q=80', // City hotel
+  'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&h=600&fit=crop&q=80', // Mountain resort
+  'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=800&h=600&fit=crop&q=80', // Luxury hotel restaurant
+  'https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=800&h=600&fit=crop&q=80', // Hotel spa
+  'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop&q=80', // Rooftop pool
+  'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop&q=80', // Hotel balcony view
+  'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800&h=600&fit=crop&q=80', // Hotel reception
+];
 
 /**
  * Enhanced mock hotel data used as a graceful fallback if the real API fails.
- * Now includes hotels from multiple global cities.
+ * Now includes hotels from multiple global cities with realistic images.
  */
 const mockHotels: HotelResult[] = [
   // New York
@@ -15,7 +34,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.8,
     reviews: 2456,
     pricePerNight: 350,
-    image: 'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMHJvb218ZW58MXx8fHwxNzY0NjIyOTgyfDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[0],
+    images: [REALISTIC_HOTEL_IMAGES[0], REALISTIC_HOTEL_IMAGES[1], REALISTIC_HOTEL_IMAGES[2]],
     description: 'Experience luxury in the heart of the city with stunning views and world-class service',
     amenities: ['WiFi', 'Gym', 'Pool', 'Spa', 'Restaurant', '24/7 Room Service', 'Concierge'],
   },
@@ -28,7 +48,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.5,
     reviews: 1823,
     pricePerNight: 280,
-    image: 'https://images.unsplash.com/photo-1758448511255-ac2a24a135d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBib3V0aXF1ZSUyMGhvdGVsJTIwcm9vbXxlbnwxfHx8fDE3NjQ2MjI5ODN8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[4],
+    images: [REALISTIC_HOTEL_IMAGES[4], REALISTIC_HOTEL_IMAGES[5], REALISTIC_HOTEL_IMAGES[6]],
     description: 'Stylish and contemporary design with personalized service and modern amenities',
     amenities: ['WiFi', 'Concierge', 'Bar', 'Coffee Shop', 'Business Center', 'Rooftop Lounge'],
   },
@@ -41,7 +62,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.6,
     reviews: 3012,
     pricePerNight: 320,
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbGVnYW50JTIwaG90ZWwlMjByb29tJTIwdmlldyUyMHN0YXJ8ZW58MXx8fHwxNzY0NjIyOTg0fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[3],
+    images: [REALISTIC_HOTEL_IMAGES[3], REALISTIC_HOTEL_IMAGES[10], REALISTIC_HOTEL_IMAGES[14]],
     description: 'Classic elegance meets modern comfort in a prestigious location with premium service',
     amenities: ['WiFi', 'Fitness Center', 'Spa', 'Fine Dining', 'Valet Parking', 'Business Lounge'],
   },
@@ -55,7 +77,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.7,
     reviews: 2189,
     pricePerNight: 380,
-    image: 'https://images.unsplash.com/photo-1702411200201-3061d0eea802?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaXZlcnNpZGUlMjByZXNvcnQlMjBob3RlbCUyMHZpZXd8ZW58MXx8fHwxNzY0NjIyOTg1fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[1],
+    images: [REALISTIC_HOTEL_IMAGES[1], REALISTIC_HOTEL_IMAGES[11], REALISTIC_HOTEL_IMAGES[12]],
     description: 'Historic charm with contemporary luxury in the heart of West London',
     amenities: ['WiFi', 'Pool', 'Spa', 'Restaurant', 'Concierge', 'Gym', 'Library'],
   },
@@ -68,7 +91,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.4,
     reviews: 1756,
     pricePerNight: 260,
-    image: 'https://images.unsplash.com/photo-1759223198981-661cadbbff36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZXJpdGFnZSUyMGdyYW5kJTIwaG90ZWwlMjByb29tfGVufDF8fHx8MTc2NDYyMjk4Mnww&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[8],
+    images: [REALISTIC_HOTEL_IMAGES[8], REALISTIC_HOTEL_IMAGES[13], REALISTIC_HOTEL_IMAGES[0]],
     description: 'Modern elegance overlooking the Thames with cultural attractions nearby',
     amenities: ['WiFi', 'Business Center', 'Bar', 'Restaurant', '24/7 Room Service', 'Gym'],
   },
@@ -82,7 +106,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.5,
     reviews: 2645,
     pricePerNight: 400,
-    image: 'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZXRyb3BvbGl0YW4lMjB0b3dlciUyMGhvdGVsJTIwcm9vbXxlbnwxfHx8fDE3NjQ2MjI5ODZ8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[6],
+    images: [REALISTIC_HOTEL_IMAGES[6], REALISTIC_HOTEL_IMAGES[2], REALISTIC_HOTEL_IMAGES[10]],
     description: 'Charming hotel in the artistic heart of Paris with Sacré-Cœur views',
     amenities: ['WiFi', 'Gym', 'Restaurant', 'Wine Bar', 'Rooftop Terrace', 'Spa'],
   },
@@ -95,7 +120,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.6,
     reviews: 1924,
     pricePerNight: 420,
-    image: 'https://images.unsplash.com/photo-1758448511255-ac2a24a135d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBib3V0aXF1ZSUyMGhvdGVsJTIwcm9vbXxlbnwxfHx8fDE3NjQ2MjI5ODN8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[4],
+    images: [REALISTIC_HOTEL_IMAGES[4], REALISTIC_HOTEL_IMAGES[11], REALISTIC_HOTEL_IMAGES[3]],
     description: 'Intimate boutique hotel steps from Notre-Dame with authentic Parisian charm',
     amenities: ['WiFi', 'Concierge', 'Café', 'Library', 'Garden Terrace', 'Room Service'],
   },
@@ -109,7 +135,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.7,
     reviews: 3124,
     pricePerNight: 450,
-    image: 'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMHJvb218ZW58MXx8fHwxNzY0NjIyOTgyfDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[9],
+    images: [REALISTIC_HOTEL_IMAGES[9], REALISTIC_HOTEL_IMAGES[12], REALISTIC_HOTEL_IMAGES[13]],
     description: 'Ultra-modern hotel with panoramic Tokyo views and cutting-edge technology',
     amenities: ['WiFi', 'Multiple Restaurants', 'Spa & Onsen', 'Business Center', 'Gym', 'Concierge'],
   },
@@ -122,7 +149,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.4,
     reviews: 892,
     pricePerNight: 320,
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbGVnYW50JTIwaG90ZWwlMjByb29tJTIwdmlldyUyMHN0YXJ8ZW58MXx8fHwxNzY0NjIyOTg0fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[2],
+    images: [REALISTIC_HOTEL_IMAGES[2], REALISTIC_HOTEL_IMAGES[6], REALISTIC_HOTEL_IMAGES[11]],
     description: 'Traditional Japanese hospitality with modern amenities in historic Asakusa',
     amenities: ['WiFi', 'Traditional Onsen', 'Japanese Restaurant', 'Tea Ceremony', 'Garden'],
   },
@@ -136,7 +164,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.8,
     reviews: 2845,
     pricePerNight: 550,
-    image: 'https://images.unsplash.com/photo-1702411200201-3061d0eea802?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaXZlcnNpZGUlMjByZXNvcnQlMjBob3RlbCUyMHZpZXd8ZW58MXx8fHwxNzY0NjIyOTg1fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[7],
+    images: [REALISTIC_HOTEL_IMAGES[7], REALISTIC_HOTEL_IMAGES[12], REALISTIC_HOTEL_IMAGES[5]],
     description: 'Ultra-luxurious hotel with Arabian Gulf views and world-class facilities',
     amenities: ['WiFi', 'Private Beach', 'Multiple Pools', 'Spa', 'Fine Dining', 'Yacht Club'],
   },
@@ -149,7 +178,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.5,
     reviews: 1567,
     pricePerNight: 380,
-    image: 'https://images.unsplash.com/photo-1758448511255-ac2a24a135d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBib3V0aXF1ZSUyMGhvdGVsJTIwcm9vbXxlbnwxfHx8fDE3NjQ2MjI5ODN8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[9],
+    images: [REALISTIC_HOTEL_IMAGES[9], REALISTIC_HOTEL_IMAGES[1], REALISTIC_HOTEL_IMAGES[11]],
     description: 'Luxurious desert escape with authentic Arabian experiences',
     amenities: ['WiFi', 'Desert Safari', 'Camel Riding', 'Traditional Hammam', 'Restaurant'],
   },
@@ -163,7 +193,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.7,
     reviews: 2834,
     pricePerNight: 380,
-    image: 'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMHJvb218ZW58MXx8fHwxNzY0NjIyOTgyfDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[0],
+    images: [REALISTIC_HOTEL_IMAGES[0], REALISTIC_HOTEL_IMAGES[14], REALISTIC_HOTEL_IMAGES[10]],
     description: 'Luxury hotel near the Forbidden City with traditional Chinese architecture and modern amenities',
     amenities: ['WiFi', 'Spa', 'Restaurant', 'Concierge', 'Business Center', 'Gym', 'Tea House'],
   },
@@ -176,7 +207,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.6,
     reviews: 1645,
     pricePerNight: 320,
-    image: 'https://images.unsplash.com/photo-1758448511255-ac2a24a135d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBib3V0aXF1ZSUyMGhvdGVsJTIwcm9vbXxlbnwxfHx8fDE3NjQ2MjI5ODN8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[9],
+    images: [REALISTIC_HOTEL_IMAGES[9], REALISTIC_HOTEL_IMAGES[8], REALISTIC_HOTEL_IMAGES[13]],
     description: 'Mountain resort with breathtaking views of the Great Wall, perfect for nature lovers',
     amenities: ['WiFi', 'Mountain Spa', 'Restaurant', 'Hiking Trails', 'Bonfire Area', 'Library'],
   },
@@ -189,7 +221,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.5,
     reviews: 1923,
     pricePerNight: 290,
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbGVnYW50JTIwaG90ZWwlMjByb29tJTIwdmlldyUyMHN0YXJ8ZW58MXx8fHwxNzY0NjIyOTg0fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[4],
+    images: [REALISTIC_HOTEL_IMAGES[4], REALISTIC_HOTEL_IMAGES[3], REALISTIC_HOTEL_IMAGES[14]],
     description: 'Contemporary boutique hotel in the vibrant Chaoyang business district',
     amenities: ['WiFi', 'Rooftop Bar', 'Gym', 'Restaurant', 'Business Lounge', 'Concierge'],
   },
@@ -203,7 +236,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.7,
     reviews: 2156,
     pricePerNight: 380,
-    image: 'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBiZWFjaCUyMHJlc29ydCUyMHJvb218ZW58MXx8fHwxNzY0NjIyOTgyfDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[7],
+    images: [REALISTIC_HOTEL_IMAGES[7], REALISTIC_HOTEL_IMAGES[5], REALISTIC_HOTEL_IMAGES[12]],
     description: 'Stunning beachfront resort with crystal-clear waters and tropical paradise vibes',
     amenities: ['WiFi', 'Private Beach', 'Snorkeling', 'Spa', 'Restaurant', 'Water Sports', 'Bar'],
   },
@@ -216,7 +250,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.5,
     reviews: 1645,
     pricePerNight: 280,
-    image: 'https://images.unsplash.com/photo-1758448511255-ac2a24a135d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxib3V0aXF1ZSUyMGJlYWNoJTIwaG90ZWwlMjByb29tfGVufDF8fHx8MTc2NDYyMjk4M3ww&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[8],
+    images: [REALISTIC_HOTEL_IMAGES[8], REALISTIC_HOTEL_IMAGES[6], REALISTIC_HOTEL_IMAGES[13]],
     description: 'Cozy boutique hotel in the heart of Suva with local charm and modern comfort',
     amenities: ['WiFi', 'Restaurant', 'Bar', 'Concierge', 'Garden', 'Room Service'],
   },
@@ -229,7 +264,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.8,
     reviews: 3421,
     pricePerNight: 450,
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cm9waWNhbCUyMGlzbGFuZCUyMHJlc29ydCUyMHZpZXd8ZW58MXx8fHwxNzY0NjIyOTg0fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[7],
+    images: [REALISTIC_HOTEL_IMAGES[7], REALISTIC_HOTEL_IMAGES[12], REALISTIC_HOTEL_IMAGES[5]],
     description: 'Exclusive island resort with untouched beaches, pristine reefs, and ultimate relaxation',
     amenities: ['WiFi', 'Private Island', 'Diving', 'Beach Bar', 'Spa', 'Fine Dining', 'Yacht'],
   },
@@ -242,7 +278,8 @@ const mockHotels: HotelResult[] = [
     rating: 4.6,
     reviews: 2734,
     pricePerNight: 420,
-    image: 'https://images.unsplash.com/photo-1702411200201-3061d0eea802?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBiZWFjaCUyMHJlc29ydCUyMHN1bnNldHxlbnwxfHx8fDE3NjQ2MjI5ODV8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: REALISTIC_HOTEL_IMAGES[5],
+    images: [REALISTIC_HOTEL_IMAGES[5], REALISTIC_HOTEL_IMAGES[12], REALISTIC_HOTEL_IMAGES[7]],
     description: 'Luxury beachfront hotel on Denarau Island with sunset views and premium amenities',
     amenities: ['WiFi', 'Beach Access', 'Multiple Pools', 'Spa', 'Fine Dining', 'Water Sports'],
   },
@@ -285,15 +322,7 @@ function pickHotelImage(hotel: any, fallbackLocation: string) {
 }
 
 // Image pool for varied hotel visuals
-const hotelImagePool = [
-  'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80',
-  'https://images.unsplash.com/photo-1758448511255-ac2a24a135d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80',
-  'https://images.unsplash.com/photo-1566073771259-6a8506099945?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80',
-  'https://images.unsplash.com/photo-1702411200201-3061d0eea802?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80',
-  'https://images.unsplash.com/photo-1759223198981-661cadbbff36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80',
-  'https://images.unsplash.com/photo-1746475611952-1b12c680f3bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80',
-  'https://images.unsplash.com/photo-1741852197045-cc35920a3aa0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80',
-];
+const hotelImagePool = REALISTIC_HOTEL_IMAGES;
 
 function getImageForHotel(hotelId: string, fallback?: string): string {
   // Use hotel ID as seed for consistent image assignment
@@ -312,11 +341,11 @@ function mapAmadeusHotelToResult(
   const offers = Array.isArray(item?.offers) ? item.offers : [];
   const offer = offers[0];
   const address = hotel.address || {};
-  
+
   // Extract city and country with better fallbacks
   let city = address.cityName || hotel.cityName || fallbackLocation || 'Unknown';
   let country = address.countryName || hotel.countryName || address.countryCode || hotel.countryCode || 'Unknown';
-  
+
   // Map country codes to full names if we have a code
   const COUNTRY_CODE_MAP: Record<string, string> = {
     'US': 'United States',
@@ -361,7 +390,7 @@ function mapAmadeusHotelToResult(
     'NG': 'Nigeria',
     'EG': 'Egypt',
   };
-  
+
   // If country is a 2-letter code, convert to full name
   if (country && country.length === 2) {
     const fullName = COUNTRY_CODE_MAP[country.toUpperCase()];
@@ -382,12 +411,12 @@ function mapAmadeusHotelToResult(
   const stayNights =
     (offer?.checkInDate && offer?.checkOutDate
       ? Math.max(
-          1,
-          Math.ceil(
-            (new Date(offer.checkOutDate).getTime() - new Date(offer.checkInDate).getTime()) /
-              (1000 * 60 * 60 * 24)
-          )
+        1,
+        Math.ceil(
+          (new Date(offer.checkOutDate).getTime() - new Date(offer.checkInDate).getTime()) /
+          (1000 * 60 * 60 * 24)
         )
+      )
       : safeNights) || safeNights;
 
   // Extract raw price - try multiple fields
@@ -398,7 +427,7 @@ function mapAmadeusHotelToResult(
     offer?.price;
 
   let pricePerNight = 0;
-  
+
   // Parse the price value
   if (typeof rawPrice === 'string') {
     pricePerNight = parseFloat(rawPrice);
@@ -448,22 +477,22 @@ function mapSerpApiResultToHotel(
   // Map SerpAPI Google Hotels response structure to HotelResult
   // SerpAPI returns: { name, images: [{original_image}], overall_rating, reviews, rate_per_night, amenities, etc. }
   const hotelId = item?.property_token || item?.name?.toLowerCase().replace(/\s+/g, '-') || Math.random().toString(36);
-  
+
   // SerpAPI images are in images array with original_image field
   const imageFromApi = item?.images?.[0]?.original_image || item?.images?.[0]?.thumbnail || item?.thumbnail || null;
-  
+
   if (imageFromApi) {
     console.log(`[SerpAPI Mapping] Hotel "${item?.name}": image URL = ${imageFromApi.substring(0, 100)}...`);
   }
-  
+
   const normalizedImage = normalizeImageUrl(imageFromApi || undefined);
   const finalImage = normalizedImage || getImageForHotel(hotelId, placeholderImage(fallbackLocation, item?.name));
-  
+
   // Extract location from GPS coordinates or use fallback
   // SerpAPI doesn't always provide city/country directly, so we'll use the query location
   const city = fallbackLocation || 'Unknown';
   const country = 'Unknown'; // Could be enhanced with reverse geocoding if needed
-  
+
   // Extract price from rate_per_night
   let pricePerNight = 200; // default
   if (item?.rate_per_night?.extracted_lowest) {
@@ -481,13 +510,13 @@ function mapSerpApiResultToHotel(
     }
   }
   pricePerNight = Math.min(Math.max(pricePerNight, 40), 800); // Keep in reasonable range
-  
+
   // Extract rating and reviews
   const rating = item?.overall_rating || item?.rating || 4.0;
   const reviews = item?.reviews || 0;
-  
+
   // Combine amenities (exclude excluded_amenities)
-  const amenities = (item?.amenities || []).filter((a: string) => 
+  const amenities = (item?.amenities || []).filter((a: string) =>
     !(item?.excluded_amenities || []).some((ex: string) => ex.toLowerCase().includes(a.toLowerCase()))
   );
 
@@ -516,19 +545,19 @@ function mapXoteloResultToHotel(
   // Map Xotelo API response structure to HotelResult
   // Xotelo returns: { key, name, image, review_summary: { rating, count }, short_place_name, price_ranges, etc. }
   const hotelId = item?.key || item?.hotel_key || item?.id || Math.random().toString(36);
-  
+
   // Xotelo image is directly on the item object
   // Try multiple possible image fields
   const imageFromApi = item?.image || item?.photo || item?.photo_url || null;
-  
+
   // Log image URL for debugging
   if (imageFromApi) {
     console.log(`[Hotel Mapping] Hotel "${item?.name}": image URL = ${imageFromApi.substring(0, 100)}...`);
   }
-  
+
   const normalizedImage = normalizeImageUrl(imageFromApi);
   const finalImage = normalizedImage || getImageForHotel(hotelId, placeholderImage(fallbackLocation, item?.name));
-  
+
   if (!normalizedImage && imageFromApi) {
     console.warn(`[Hotel Mapping] Image URL rejected for "${item?.name}": ${imageFromApi.substring(0, 100)}`);
   }
@@ -538,7 +567,7 @@ function mapXoteloResultToHotel(
   const placeParts = placeName.split(',').map((p: string) => p.trim()).filter(Boolean);
   const city = placeParts[0] || fallbackLocation || 'Unknown';
   const country = placeParts[placeParts.length - 1] || 'Unknown';
-  
+
   // Extract price from price_ranges or lowestRate
   let pricePerNight = 200; // default
   if (item?.lowestRate && typeof item.lowestRate === 'number') {
@@ -549,7 +578,7 @@ function mapXoteloResultToHotel(
     pricePerNight = item.price_ranges.maximum / Math.max(1, nights);
   }
   pricePerNight = Math.min(Math.max(pricePerNight, 40), 800); // Keep in reasonable range
-  
+
   // Extract rating and reviews from review_summary
   const rating = item?.review_summary?.rating || item?.rating || 4.0;
   const reviews = item?.review_summary?.count || item?.reviews_count || item?.reviews || 0;
@@ -578,37 +607,50 @@ function mapSerpApiGoogleHotelToResult(
 ): HotelResult {
   // Map SerpAPI Google Hotels response structure to HotelResult
   const hotelId = property?.property_token || property?.hotel_id || Math.random().toString(36).substring(7);
-  
+
   // SerpAPI Google Hotels images - prioritize high quality
   let imageFromApi: string | null = null;
-  
+  let imagesArray: string[] = [];
+
   // Try multiple image sources in priority order
   if (property?.images && Array.isArray(property.images) && property.images.length > 0) {
-    // Get the first high-quality image
-    imageFromApi = property.images[0]?.thumbnail || property.images[0]?.original_image || property.images[0];
+    // Get all available images
+    imagesArray = property.images
+      .map((img: any) => img?.original_image || img?.thumbnail || img)
+      .filter((url: any) => url && typeof url === 'string' && url.startsWith('http'))
+      .slice(0, 5); // Get up to 5 images
+
+    imageFromApi = imagesArray[0] || null;
   } else if (property?.thumbnail) {
     imageFromApi = property.thumbnail;
+    imagesArray = [property.thumbnail];
   } else if (property?.image) {
     imageFromApi = property.image;
+    imagesArray = [property.image];
   }
-  
+
   // Log for debugging
   if (imageFromApi && typeof imageFromApi === 'string') {
-    console.log(`[SerpAPI Google Hotels] Hotel "${property?.name}": image = ${imageFromApi.substring(0, 80)}...`);
+    console.log(`[SerpAPI Google Hotels] Hotel "${property?.name}": ${imagesArray.length} images found`);
   } else {
-    console.warn(`[SerpAPI Google Hotels] No image found for hotel "${property?.name}"`);
+    console.warn(`[SerpAPI Google Hotels] No image found for hotel "${property?.name}", using fallback`);
   }
-  
+
   const normalizedImage = imageFromApi ? normalizeImageUrl(imageFromApi) : null;
   const finalImage = normalizedImage || getImageForHotel(hotelId, placeholderImage(fallbackLocation, property?.name));
-  
+
+  // Normalize all images in the array
+  const finalImages = imagesArray.length > 0
+    ? imagesArray.map(img => normalizeImageUrl(img)).filter(Boolean) as string[]
+    : [finalImage, getImageForHotel(hotelId + '1'), getImageForHotel(hotelId + '2')];
+
   // Extract location from GPS coordinates or use fallback
   const city = property?.city || fallbackLocation || 'Unknown';
   const country = property?.country || 'Unknown';
-  
+
   // Extract price from rate_per_night - Google Hotels shows per night prices
   let pricePerNight = 200; // default
-  
+
   if (property?.rate_per_night) {
     if (typeof property.rate_per_night === 'object') {
       // Handle object format: { extracted_lowest: 150, lowest: "$150" }
@@ -630,10 +672,10 @@ function mapSerpApiGoogleHotelToResult(
     }
   } else if (property?.total_rate) {
     // If total rate is provided, divide by nights
-    const totalRate = typeof property.total_rate === 'object' 
+    const totalRate = typeof property.total_rate === 'object'
       ? property.total_rate.extracted_lowest || property.total_rate.lowest
       : property.total_rate;
-    
+
     if (typeof totalRate === 'number') {
       pricePerNight = totalRate / Math.max(1, nights);
     } else if (typeof totalRate === 'string') {
@@ -643,14 +685,14 @@ function mapSerpApiGoogleHotelToResult(
       }
     }
   }
-  
+
   // Keep display prices in a reasonable range (per night)
   pricePerNight = Math.min(Math.max(pricePerNight, 40), 1500);
-  
+
   // Extract rating and reviews
   const rating = property?.overall_rating || property?.rating || 4.0;
   const reviews = property?.reviews || property?.total_reviews || 0;
-  
+
   // Combine amenities
   const amenities = property?.amenities || property?.essential_info || [];
 
@@ -664,6 +706,7 @@ function mapSerpApiGoogleHotelToResult(
     reviews: typeof reviews === 'string' ? parseInt(reviews) : (typeof reviews === 'number' ? reviews : 0),
     pricePerNight: Math.round(pricePerNight),
     image: finalImage,
+    images: finalImages,
     description: property?.description || property?.type || '',
     amenities: Array.isArray(amenities) ? amenities : [],
     guests: guests,
@@ -684,7 +727,7 @@ export async function searchHotels(
     1,
     Math.ceil(
       (new Date(params.checkOutDate).getTime() - new Date(params.checkInDate).getTime()) /
-        (1000 * 60 * 60 * 24)
+      (1000 * 60 * 60 * 24)
     )
   );
 
@@ -693,7 +736,7 @@ export async function searchHotels(
   // Try SerpAPI Google Hotels
   try {
     console.log(`[Hotel Service] Attempting SerpAPI Google Hotels search...`);
-    
+
     const serpQuery = new URLSearchParams({
       location: params.location,
       checkInDate: params.checkInDate,
@@ -702,24 +745,24 @@ export async function searchHotels(
     });
 
     const serpResponse = await fetch(`/api/hotels/search?${serpQuery.toString()}`);
-    
+
     if (serpResponse.ok) {
       const serpData = await serpResponse.json();
-      
+
       // Google Hotels API returns properties array
       const properties = serpData?.properties || [];
-      
+
       if (properties.length > 0) {
         console.log(`[Hotel Service] Successfully fetched ${properties.length} hotels from SerpAPI Google Hotels`);
-        
+
         const mappedHotels = properties.map((property: any) =>
           mapSerpApiGoogleHotelToResult(property, params.location, params.guests, nights)
         );
-        
+
         return mappedHotels;
       }
     }
-    
+
     console.log(`[Hotel Service] SerpAPI Google Hotels returned no results, using mock data...`);
   } catch (error) {
     console.warn('[Hotel Service] SerpAPI Google Hotels failed:', error);
@@ -732,24 +775,24 @@ export async function searchHotels(
 
 function getFallbackHotels(location: string): HotelResult[] {
   const locationLower = location.toLowerCase();
-  
+
   console.log(`[Hotel Service] Filtering mock hotels for location: "${location}"`);
-  
+
   // Try to match exact city or return hotels that contain the location keyword
   const filtered = mockHotels.filter(
-    hotel => 
+    hotel =>
       hotel.city.toLowerCase().includes(locationLower) ||
       hotel.name.toLowerCase().includes(locationLower) ||
       hotel.location.toLowerCase().includes(locationLower) ||
       hotel.country.toLowerCase().includes(locationLower)
   );
-  
+
   // If exact match found, return it
   if (filtered.length > 0) {
     console.log(`[Hotel Service] Found ${filtered.length} matching mock hotels for "${location}"`);
     return filtered;
   }
-  
+
   // If no match, return a mix of hotels from different cities as a catch-all
   console.log(`[Hotel Service] No exact match for "${location}", returning sample hotels from multiple cities`);
   return mockHotels.slice(0, 6);
