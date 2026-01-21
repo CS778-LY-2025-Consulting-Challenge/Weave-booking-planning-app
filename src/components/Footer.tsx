@@ -47,7 +47,7 @@ export default function Footer() {
             <h3 className="text-white mb-4">Contact Info</h3>
             <ul className="space-y-2 text-sm mb-4">
               <li>Email: hello@weave.com</li>
-              <li>Phone: +1 (555) 123-4567</li>
+              <li>Phone: 08001234</li>
               <li>Address: Auckland, New Zealand</li>
             </ul>
             <div className="flex gap-4">
