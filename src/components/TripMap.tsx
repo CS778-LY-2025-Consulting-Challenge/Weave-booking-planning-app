@@ -13,9 +13,16 @@ import PlaceDetailPanel from './PlaceDetailPanel';
 mapboxgl.accessToken =
   'pk.eyJ1IjoibW9vdmFsIiwiYSI6ImNtazJzYmJ1YzA2aDIzcW9xbWlhMGIxencifQ.HicBjVINhGc-IAZVBnsnwg';
 
+interface DayRoute {
+  day: number;
+  activities: Array<{ name: string; lat: number; lng: number; type?: string }>;
+}
+
 interface TripMapProps {
   cityPoints?: Array<{ name: string; lat: number; lng: number }>;
   attractionPoints?: Array<{ name: string; lat: number; lng: number; type?: string; day?: number; rating?: number; reviewCount?: number }>;
+  dayRoutes?: DayRoute[]; // NEW: Daily route data
+  selectedDay?: number | null; // NEW: Which day to highlight (null = show all)
   isDetailPanelOpen: boolean;
   setIsDetailPanelOpen: (isOpen: boolean) => void;
   selectedPlace: any;
@@ -25,6 +32,8 @@ interface TripMapProps {
 const TripMap: React.FC<TripMapProps> = ({ 
   cityPoints = [], 
   attractionPoints = [],
+  dayRoutes = [], // NEW: Default empty array
+  selectedDay = null, // NEW: Default null (show all days)
   isDetailPanelOpen,
   setIsDetailPanelOpen,
   selectedPlace,
@@ -37,6 +46,7 @@ const TripMap: React.FC<TripMapProps> = ({
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const previewCacheRef = useRef<Map<string, any>>(new Map());
+  const routeCacheRef = useRef<Map<string, any>>(new Map()); // NEW: Cache for route data
   const [isMapReady, setIsMapReady] = useState(false);
   const [hoveredData, setHoveredData] = useState<any>(null);
   const [isHoverLoading, setIsHoverLoading] = useState(false);
@@ -65,6 +75,51 @@ const TripMap: React.FC<TripMapProps> = ({
     
     console.log('[TripMap] Extracted place name:', cleanedName, 'from:', activityName);
     return cleanedName.trim();
+  };
+
+  // NEW: Helper function to fetch route from Mapbox Directions API
+  const fetchRoute = async (waypoints: Array<{lat: number; lng: number}>): Promise<any> => {
+    if (waypoints.length < 2) return null;
+    
+    const cacheKey = waypoints.map(w => `${w.lng.toFixed(4)},${w.lat.toFixed(4)}`).join(';');
+    
+    // Check cache first
+    if (routeCacheRef.current.has(cacheKey)) {
+      console.log('[TripMap] Using cached route data');
+      return routeCacheRef.current.get(cacheKey);
+    }
+    
+    try {
+      // Format coordinates for Mapbox API: lng,lat;lng,lat;...
+      const coordinates = waypoints.map(w => `${w.lng},${w.lat}`).join(';');
+      
+      // Use walking profile for city routes (more realistic for tourist activities)
+      const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates}?geometries=geojson&overview=full&access_token=${mapboxgl.accessToken}`;
+      
+      console.log('[TripMap] Fetching route from Mapbox Directions API...');
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        console.warn('[TripMap] Directions API error:', response.status);
+        return null;
+      }
+      
+      const data = await response.json();
+      
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        console.log('[TripMap] Route fetched successfully, distance:', route.distance, 'm');
+        
+        // Cache the result
+        routeCacheRef.current.set(cacheKey, route.geometry);
+        return route.geometry;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('[TripMap] Error fetching route:', error);
+      return null;
+    }
   };
 
   // Safe resize to avoid "Cannot set properties of undefined (width)"
@@ -670,6 +725,124 @@ const TripMap: React.FC<TripMapProps> = ({
         }
       }
 
+      // NEW: Render daily routes (actual walking/driving paths between activities)
+      if (dayRoutes && dayRoutes.length > 0) {
+        console.log('[TripMap Sync] Rendering daily routes:', dayRoutes.length, 'days');
+        
+        // Define colors for each day (cycle through if more than 7 days)
+        const dayColors = [
+          '#ef4444', // Red - Day 1
+          '#f59e0b', // Amber - Day 2
+          '#10b981', // Emerald - Day 3
+          '#3b82f6', // Blue - Day 4
+          '#8b5cf6', // Purple - Day 5
+          '#ec4899', // Pink - Day 6
+          '#06b6d4', // Cyan - Day 7
+        ];
+        
+        // Render routes for each day
+        for (const dayRoute of dayRoutes) {
+          const { day, activities } = dayRoute;
+          
+          // Skip if this day is not selected (when selectedDay is set)
+          if (selectedDay !== null && selectedDay !== day) {
+            console.log(`[TripMap Sync] Skipping Day ${day} (not selected)`);
+            continue;
+          }
+          
+          if (activities.length < 2) {
+            console.log(`[TripMap Sync] Day ${day} has < 2 activities, skipping route`);
+            continue;
+          }
+          
+          const dayColor = dayColors[(day - 1) % dayColors.length];
+          const layerId = `day-${day}-route`;
+          const sourceId = `day-${day}-route-source`;
+          
+          // Fetch route geometry from Mapbox Directions API
+          (async () => {
+            try {
+              const routeGeometry = await fetchRoute(activities);
+              
+              if (!routeGeometry) {
+                console.warn(`[TripMap Sync] No route geometry for Day ${day}`);
+                return;
+              }
+              
+              // Remove existing layer/source if present
+              if (map.getLayer(layerId)) map.removeLayer(layerId);
+              if (map.getSource(sourceId)) map.removeSource(sourceId);
+              
+              // Add source with route geometry
+              map.addSource(sourceId, {
+                type: 'geojson',
+                data: {
+                  type: 'Feature',
+                  properties: { day },
+                  geometry: routeGeometry
+                }
+              });
+              
+              // Add layer with day-specific color
+              map.addLayer({
+                id: layerId,
+                type: 'line',
+                source: sourceId,
+                paint: {
+                  'line-color': dayColor,
+                  'line-width': 4,
+                  'line-opacity': selectedDay === null ? 0.7 : 1.0, // Higher opacity when day is selected
+                },
+                layout: {
+                  'line-cap': 'round',
+                  'line-join': 'round'
+                }
+              });
+              
+              // Add arrow markers along the route to show direction
+              const coordinates = routeGeometry.coordinates;
+              const numArrows = Math.min(3, Math.floor(coordinates.length / 4)); // 3 arrows max
+              
+              for (let i = 1; i <= numArrows; i++) {
+                const idx = Math.floor((coordinates.length / (numArrows + 1)) * i);
+                const coord = coordinates[idx];
+                const prevCoord = coordinates[Math.max(0, idx - 5)];
+                
+                // Calculate bearing for arrow rotation
+                const dLng = coord[0] - prevCoord[0];
+                const dLat = coord[1] - prevCoord[1];
+                const bearing = Math.atan2(dLng, dLat) * (180 / Math.PI);
+                
+                // Create arrow element
+                const arrowEl = document.createElement('div');
+                arrowEl.innerHTML = `
+                  <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(${bearing}deg);">
+                    <path fill="${dayColor}" d="M12 2L4 12h5v10h6V12h5L12 2z" stroke="white" stroke-width="1"/>
+                  </svg>
+                `;
+                arrowEl.style.width = '20px';
+                arrowEl.style.height = '20px';
+                arrowEl.style.pointerEvents = 'none';
+                
+                const arrowMarker = new mapboxgl.Marker({
+                  element: arrowEl,
+                  anchor: 'center'
+                })
+                  .setLngLat(coord)
+                  .addTo(map);
+                
+                markersRef.current.push(arrowMarker);
+              }
+              
+              console.log(`[TripMap Sync] Day ${day} route rendered with ${activities.length} waypoints`);
+              
+            } catch (error) {
+              console.error(`[TripMap Sync] Error rendering Day ${day} route:`, error);
+            }
+          })();
+        }
+      }
+
       // Fit bounds
       const bounds = new mapboxgl.LngLatBounds();
       allPoints.forEach(p => bounds.extend([p.lng, p.lat]));
@@ -683,7 +856,7 @@ const TripMap: React.FC<TripMapProps> = ({
 
     syncMarkersAndRoute();
 
-  }, [cityPoints, attractionPoints, isMapReady]);
+  }, [cityPoints, attractionPoints, dayRoutes, selectedDay, isMapReady]);
 
   // Handle reset to global view
   const handleResetView = () => {

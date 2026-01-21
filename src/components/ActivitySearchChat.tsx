@@ -211,8 +211,8 @@ export default function ActivitySearchChat({
               {query}
             </button>
           ))}
-        </div>
-      </div>
+            </div>
+          </div>
 
       {/* Results Section */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -226,16 +226,16 @@ export default function ActivitySearchChat({
         ) : results.length > 0 ? (
           <>
             <div className="grid grid-cols-1 gap-4">
-              {results.map((result, idx) => (
-                <Card
-                  key={`${result.name}-${idx}`}
+            {results.map((result, idx) => (
+              <Card
+                key={`${result.name}-${idx}`}
                   className={`group cursor-pointer overflow-hidden transition-all hover:shadow-xl ${
-                    selectedResult?.name === result.name
+                  selectedResult?.name === result.name
                       ? 'ring-4 ring-green-500 shadow-xl'
                       : 'hover:ring-2 hover:ring-blue-300'
-                  }`}
-                  onClick={() => onSelectResult(result)}
-                >
+                }`}
+                onClick={() => onSelectResult(result)}
+              >
                   {/* Image Section - 70% height */}
                   <div className="relative h-56 w-full overflow-hidden bg-slate-200">
                     {result.imageUrl ? (
@@ -251,9 +251,9 @@ export default function ActivitySearchChat({
                         {/* Title overlay on image */}
                         <div className="absolute bottom-0 left-0 right-0 p-4">
                           <h4 className="text-lg font-bold text-white mb-1 line-clamp-1 drop-shadow-lg">
-                            {result.name}
-                          </h4>
-                          {result.rating && (
+                        {result.name}
+                      </h4>
+                      {result.rating && (
                             <div className="flex items-center gap-1.5">
                               <div className="flex items-center">
                                 {[...Array(5)].map((_, i) => (
@@ -268,11 +268,11 @@ export default function ActivitySearchChat({
                                 ))}
                               </div>
                               <span className="text-sm font-semibold text-white drop-shadow">
-                                {result.rating}
-                              </span>
+                            {result.rating}
+                          </span>
                               <span className="text-xs text-white/90 drop-shadow">
                                 ({result.reviewCount?.toLocaleString()})
-                              </span>
+                          </span>
                             </div>
                           )}
                         </div>
@@ -280,8 +280,8 @@ export default function ActivitySearchChat({
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
                         <MapPin className="h-12 w-12 text-slate-400" />
-                      </div>
-                    )}
+                        </div>
+                      )}
                     
                     {/* Number badge */}
                     <div className="absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm text-base font-bold text-blue-600 shadow-lg">
@@ -289,13 +289,13 @@ export default function ActivitySearchChat({
                     </div>
 
                     {/* Type badge */}
-                    {result.type && (
+                        {result.type && (
                       <div className="absolute right-3 top-3">
                         <Badge className="bg-white/90 backdrop-blur-sm text-slate-700 capitalize shadow-md">
-                          {result.type}
-                        </Badge>
+                            {result.type}
+                          </Badge>
                       </div>
-                    )}
+                        )}
 
                     {/* Selected checkmark */}
                     {selectedResult?.name === result.name && (
@@ -313,16 +313,16 @@ export default function ActivitySearchChat({
                     <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
                         <div className="flex items-center gap-3">
-                          {result.duration && (
+                        {result.duration && (
                             <span className="flex items-center gap-1 font-medium">
                               <Clock className="h-3.5 w-3.5" />
-                              {result.duration}
-                            </span>
-                          )}
-                          {result.price && (
+                            {result.duration}
+                          </span>
+                        )}
+                        {result.price && (
                             <span className="flex items-center gap-1 font-medium text-green-700">
                               <DollarSign className="h-3.5 w-3.5" />
-                              {result.price}
+                            {result.price}
                             </span>
                           )}
                         </div>
@@ -346,22 +346,22 @@ export default function ActivitySearchChat({
                         <Eye className="h-3.5 w-3.5" />
                         View Details
                       </button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
           </>
         ) : hasSearched ? (
           <div className="flex flex-col items-center justify-center py-12">
             <div className="rounded-full bg-slate-100 p-4 mb-3">
               <Search className="h-8 w-8 text-slate-400" />
-            </div>
+        </div>
             <p className="text-sm font-medium text-slate-700 mb-1">No results found</p>
             <p className="text-xs text-slate-500 text-center max-w-xs">
               Try a different search term or select one of the quick search options above
             </p>
-          </div>
+        </div>
         ) : null}
       </div>
 

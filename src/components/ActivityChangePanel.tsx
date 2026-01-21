@@ -120,14 +120,14 @@ export default function ActivityChangePanel({
                 <div className="mt-1 flex items-center gap-2">
                   {!isAdding && (
                     <SheetDescription className="text-sm">
-                      Current: <span className="font-semibold text-slate-700">{currentActivity.title}</span>
-                    </SheetDescription>
+                  Current: <span className="font-semibold text-slate-700">{currentActivity.title}</span>
+                </SheetDescription>
                   )}
-                  {city && (
+                {city && (
                     <div className="text-xs text-slate-500">
-                      📍 {city}
-                    </div>
-                  )}
+                    📍 {city}
+                  </div>
+                )}
                 </div>
               </div>
             </div>

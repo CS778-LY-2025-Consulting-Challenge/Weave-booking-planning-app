@@ -51,6 +51,7 @@ import AccommodationCard from '@/components/AccommodationCard';
 import AccommodationChangePanel from '@/components/AccommodationChangePanel';
 import TransportationCard from '@/components/TransportationCard';
 import TravelSafetyCard from '@/components/TravelSafetyCard';
+import DailyRouteMap from '@/components/DailyRouteMap';
 
 type Coordinates = { lat: number; lng: number };
 type DayPlan = {
@@ -382,6 +383,9 @@ export default function AIPlanner() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null); // City filter state
+  const [selectedDay, setSelectedDay] = useState<number | null>(null); // NEW: Selected day for route highlighting
+  const [isMapDialogOpen, setIsMapDialogOpen] = useState(false); // NEW: Control map dialog
+  const [isDailyRouteMapOpen, setIsDailyRouteMapOpen] = useState(false); // NEW: Control daily route map
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<any>(null);
   const [isChangePanelOpen, setIsChangePanelOpen] = useState(false);
@@ -581,6 +585,41 @@ export default function AIPlanner() {
     console.log('[mapCityPoints] No route data available');
     return [];
   }, [activeState.mapPoints, activeState.mapRoute, activeState.routeFlow]);
+
+  // NEW: Generate daily routes for map visualization
+  const dayRoutes = useMemo(() => {
+    if (!activeState.dayPlans || activeState.dayPlans.length === 0) {
+      console.log('[dayRoutes] No day plans available');
+      return [];
+    }
+
+    const routes = activeState.dayPlans.map((dayPlan) => {
+      // Check if activities array exists
+      if (!dayPlan.activities || !Array.isArray(dayPlan.activities)) {
+        return {
+          day: dayPlan.day,
+          activities: []
+        };
+      }
+
+      const activities = dayPlan.activities
+        .filter((act) => act.coords && act.coords.lat && act.coords.lng)
+        .map((act) => ({
+          name: act.title || act.activity || 'Activity',
+          lat: act.coords!.lat,
+          lng: act.coords!.lng,
+          type: act.type
+        }));
+
+      return {
+        day: dayPlan.day,
+        activities
+      };
+    }).filter(route => route.activities.length >= 2); // Only include days with at least 2 waypoints
+
+    console.log('[dayRoutes] Generated routes for', routes.length, 'days');
+    return routes;
+  }, [activeState.dayPlans]);
 
   const destinationLabel = useMemo(() => {
     const dest = activeState.destination;
@@ -1389,10 +1428,23 @@ export default function AIPlanner() {
           <div key={`${dayNumber}-${day.title ?? 'untitled'}-${dayIdx}`} className="space-y-3">
             {/* Day Header */}
             <div className="space-y-1">
-              <div className="border-b border-slate-100 pb-1">
+              <div className="border-b border-slate-100 pb-1 flex items-center justify-between">
                 <h3 className="text-lg font-bold text-slate-800">
                   Day {dayNumber}: {day.title}
                 </h3>
+                
+                {/* NEW: View Day Route Button */}
+                <button
+                  onClick={() => {
+                    setSelectedDay(dayNumber);
+                    setIsDailyRouteMapOpen(true); // Open daily route map
+                  }}
+                  className="flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  title="Click to view this day's route on map"
+                >
+                  <MapPin className="h-3 w-3" />
+                  View route
+                </button>
               </div>
               
               {/* Date, Weekday and Weather */}
@@ -1739,7 +1791,7 @@ export default function AIPlanner() {
 
                   {/* Right: Map Thumbnail + Dialog */}
                   <div className="min-w-0 lg:w-[44%]">
-                    <Dialog>
+                    <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
                       <DialogTrigger asChild>
                         <button className="group relative h-24 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm transition-all hover:shadow-md lg:h-full">
                           {/* Map Image Placeholder / Background */}
@@ -1768,6 +1820,8 @@ export default function AIPlanner() {
                             <TripMap 
                               cityPoints={mapCityPoints} 
                               attractionPoints={attractionPoints}
+                              dayRoutes={dayRoutes}
+                              selectedDay={selectedDay}
                               isDetailPanelOpen={isDetailPanelOpen}
                               setIsDetailPanelOpen={setIsDetailPanelOpen}
                               selectedPlace={selectedPlace}
@@ -2124,6 +2178,97 @@ export default function AIPlanner() {
             });
             return cached;
           })()}
+        />
+      )}
+
+      {/* NEW: Daily Route Map with Google Maps */}
+      {isDailyRouteMapOpen && selectedDay !== null && activeState.dayPlans && (
+        <DailyRouteMap
+          activities={(() => {
+            const day = activeState.dayPlans!.find((_, index) => index + 1 === selectedDay);
+            if (!day) return [];
+            
+            // Filter activities that have valid coordinates and map to DailyRouteMap format
+            return day.activities
+              .filter(activity => activity.coords?.lat && activity.coords?.lng)
+              .map(activity => ({
+                name: activity.title || activity.activity || '',
+                lat: activity.coords!.lat,
+                lng: activity.coords!.lng,
+                type: activity.type,
+                imageUrl: activity.imageUrl
+              }));
+          })()}
+          dayNumber={selectedDay}
+          dayTitle={(() => {
+            const day = activeState.dayPlans!.find((_, index) => index + 1 === selectedDay);
+            return day?.title || `Day ${selectedDay}`;
+          })()}
+          onClose={() => {
+            setIsDailyRouteMapOpen(false);
+            setSelectedDay(null);
+          }}
+          onActivitiesReorder={(reorderedActivities) => {
+            console.log('[AIPlanner] Reordering activities for day', selectedDay, ':', reorderedActivities);
+            
+            // Update the activities order in the active state
+            if (itinerary?.dayPlans) {
+              const updatedDayPlans = itinerary.dayPlans.map((day, index) => {
+                if (index + 1 === selectedDay) {
+                  // Create a map from activity name to original activity
+                  const activityMap = new Map(
+                    day.activities.map(act => [act.title || act.activity || '', act])
+                  );
+                  
+                  // Reorder based on the new order, preserving full activity data
+                  const reordered = reorderedActivities
+                    .map(reorderedAct => activityMap.get(reorderedAct.name))
+                    .filter(Boolean) as typeof day.activities;
+                  
+                  // Add any activities that weren't in the reordered list (shouldn't happen, but safe)
+                  const reorderedNames = new Set(reorderedActivities.map(a => a.name));
+                  const remaining = day.activities.filter(
+                    act => !reorderedNames.has(act.title || act.activity || '')
+                  );
+                  
+                  return {
+                    ...day,
+                    activities: [...reordered, ...remaining],
+                  };
+                }
+                return day;
+              });
+              
+              setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
+              console.log('[AIPlanner] Day plan activities reordered successfully');
+            } else if (plannerState?.dayPlans) {
+              const updatedDayPlans = plannerState.dayPlans.map((day, index) => {
+                if (index + 1 === selectedDay) {
+                  const activityMap = new Map(
+                    day.activities.map(act => [act.title || act.activity || '', act])
+                  );
+                  
+                  const reordered = reorderedActivities
+                    .map(reorderedAct => activityMap.get(reorderedAct.name))
+                    .filter(Boolean) as typeof day.activities;
+                  
+                  const reorderedNames = new Set(reorderedActivities.map(a => a.name));
+                  const remaining = day.activities.filter(
+                    act => !reorderedNames.has(act.title || act.activity || '')
+                  );
+                  
+                  return {
+                    ...day,
+                    activities: [...reordered, ...remaining],
+                  };
+                }
+                return day;
+              });
+              
+              setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
+              console.log('[AIPlanner] Day plan activities reordered successfully');
+            }
+          }}
         />
       )}
     </div>
