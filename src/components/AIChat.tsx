@@ -18,9 +18,6 @@ export default function AIChat() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Hide the floating assistant on the dedicated AI Planner page and AI Planner Intro page to avoid redundancy
-  if (pathname === '/ai-planner' || pathname === '/ai-planner-intro') return null;
-
   const shouldDelayVisibility = pathname === '/';
   const [hasReachedScrollThreshold, setHasReachedScrollThreshold] = useState(!shouldDelayVisibility);
   const [isOpen, setIsOpen] = useState(false);
@@ -51,6 +48,9 @@ export default function AIChat() {
     handleScrollGate();
     return () => window.removeEventListener('scroll', handleScrollGate);
   }, [shouldDelayVisibility]);
+
+  // Hide the floating assistant on the dedicated AI Planner page and AI Planner Intro page to avoid redundancy
+  if (pathname === '/ai-planner' || pathname === '/ai-planner-intro') return null;
 
   const handleSend = () => {
     if (!input.trim()) return;
