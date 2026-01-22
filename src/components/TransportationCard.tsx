@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { MoreHorizontal, Trash2, Plane, ExternalLink, Clock } from 'lucide-react';
 import {
   DropdownMenu,
@@ -123,6 +124,7 @@ export default function TransportationCard({
   onView,
   onRemove,
 }: TransportationCardProps) {
+  const router = useRouter();
   const [airlineLogoUrl, setAirlineLogoUrl] = useState<string>('');
   const [logoLoadError, setLogoLoadError] = useState(false);
 
@@ -176,15 +178,34 @@ export default function TransportationCard({
   }, [transportation.airline, transportation.airlineCode]);
 
   const handleBookFlight = () => {
+    console.log('[TransportationCard] Book Flight clicked!', {
+      hasBookingUrl: !!transportation.bookingUrl,
+      bookingUrl: transportation.bookingUrl,
+      from: transportation.from,
+      to: transportation.to,
+      travellers
+    });
+
     if (transportation.bookingUrl) {
+      console.log('[TransportationCard] Using external booking URL:', transportation.bookingUrl);
       window.open(transportation.bookingUrl, '_blank', 'noopener,noreferrer');
     } else {
-      // Fallback to Google Flights
+      // Redirect to internal flight booking page
       const fromCode = transportation.fromCode || transportation.from.substring(0, 3).toUpperCase();
       const toCode = transportation.toCode || transportation.to.substring(0, 3).toUpperCase();
       const date = transportation.date || new Date().toISOString().split('T')[0];
-      const url = `https://www.google.com/travel/flights?q=${fromCode}+to+${toCode}&date=${date}`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+
+      const searchParams = new URLSearchParams({
+        from: fromCode,
+        to: toCode,
+        date: date,
+        travellers: travellers.toString(),
+        autoSearch: 'true',
+      });
+
+      const url = `/flights?${searchParams.toString()}`;
+      console.log('[TransportationCard] Redirecting to internal flights page:', url);
+      router.push(url);
     }
   };
 
