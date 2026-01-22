@@ -448,12 +448,14 @@ export default function Dashboard() {
                           value={newTrip.date}
                           onChange={e => setNewTrip({ ...newTrip, date: e.target.value })}
                         />
-                        <button
-                          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                        <span
+                          className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 bg-black text-white hover:bg-gray-900 transition-colors cursor-pointer"
                           onClick={handleAddTrip}
+                          role="button"
+                          tabIndex={0}
                         >
                           Add Journey
-                        </button>
+                        </span>
                       </div>
                       {/* Trips List */}
                       <ul className="space-y-4">
@@ -477,36 +479,46 @@ export default function Dashboard() {
                                   value={editTrip.date}
                                   onChange={e => setEditTrip({ ...editTrip, date: e.target.value })}
                                 />
-                                <button
-                                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                                <span
+                                  className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 bg-black text-white hover:bg-gray-900 transition-colors cursor-pointer"
                                   onClick={handleUpdateTrip}
+                                  role="button"
+                                  tabIndex={0}
                                 >
                                   Save
-                                </button>
-                                <button
-                                  className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500"
+                                </span>
+                                <span
+                                  className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 bg-black text-white hover:bg-gray-900 transition-colors cursor-pointer"
                                   onClick={() => setEditTripId(null)}
+                                  role="button"
+                                  tabIndex={0}
                                 >
                                   Cancel
-                                </button>
+                                </span>
                               </div>
                             ) : (
                               <div className="flex flex-col md:flex-row gap-2 md:items-center w-full justify-between">
                                 <span className="font-semibold">{trip.destination}</span>
                                 <span className="text-gray-600">{trip.date}</span>
                                 <div className="flex gap-2 mt-2 md:mt-0">
-                                  <button
-                                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                                  <span
+                                    className="inline-flex items-center justify-center rounded-full border p-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors cursor-pointer"
                                     onClick={() => handleEditTrip(id, trip)}
+                                    role="button"
+                                    tabIndex={0}
+                                    title="Edit"
                                   >
-                                    Edit
-                                  </button>
-                                  <button
-                                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                                    <Edit className="size-4" />
+                                  </span>
+                                  <span
+                                    className="inline-flex items-center justify-center rounded-full border p-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 hover:bg-gray-100 transition-colors cursor-pointer"
                                     onClick={() => handleDeleteTrip(id)}
+                                    role="button"
+                                    tabIndex={0}
+                                    title="Delete"
                                   >
-                                    Delete
-                                  </button>
+                                    <Trash2 className="size-4 text-red-600" />
+                                  </span>
                                 </div>
                               </div>
                             )}
