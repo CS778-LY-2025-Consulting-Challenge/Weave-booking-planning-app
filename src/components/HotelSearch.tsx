@@ -414,7 +414,7 @@ export function HotelSearch({ onSearch, isLoading = false }: HotelSearchProps) {
             <Button
               onClick={handleSearch}
               disabled={isLoading}
-              className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
+              className="w-full h-12 bg-black hover:bg-gray-900 text-white font-medium"
             >
               {isLoading ? (
                 <>

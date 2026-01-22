@@ -4,7 +4,7 @@ import { StripeProvider } from '@/components/StripeProvider';
 import { AuthProvider } from '@/context/AuthContext';
 import { GlobalErrorHandler } from '@/components/GlobalErrorHandler';
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, Inter, Butterfly_Kids, Emilys_Candy, Knewave, Mystery_Quest, Charm } from 'next/font/google';
+import { Cormorant_Garamond, Inter, Butterfly_Kids, Emilys_Candy, Knewave, Mystery_Quest, Charm, Bonheur_Royale, Special_Elite } from 'next/font/google';
 import './index.css';
 
 const cormorant = Cormorant_Garamond({
@@ -56,6 +56,20 @@ const charm = Charm({
   display: 'swap',
 });
 
+const bonheurRoyale = Bonheur_Royale({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-bonheur-royale',
+  display: 'swap',
+});
+
+const specialElite = Special_Elite({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-special-elite',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'Weave Travel Booking Prototype',
   description:
@@ -69,7 +83,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`${cormorant.variable} ${inter.variable} ${butterflyKids.variable} ${emilysCandy.variable} ${knewave.variable} ${mysteryQuest.variable} ${charm.variable}`}>
+      <html lang="en" className={`${cormorant.variable} ${inter.variable} ${butterflyKids.variable} ${emilysCandy.variable} ${knewave.variable} ${mysteryQuest.variable} ${charm.variable} ${bonheurRoyale.variable} ${specialElite.variable}`}>
         <body suppressHydrationWarning className={inter.className}>
           <GlobalErrorHandler />
           <AuthProvider>
