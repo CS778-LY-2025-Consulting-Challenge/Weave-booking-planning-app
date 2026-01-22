@@ -139,12 +139,12 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(#2563eb, #9333ea);
+  background: #000000;
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(#1d4ed8, #7e22ce);
+  background: #1a1a1a;
 }
 
 .scrollbar-hide {
