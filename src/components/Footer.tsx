@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plane, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -9,10 +9,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-                <Plane className="size-6 text-white" />
-              </div>
-              <span className="text-white">Weave</span>
+              <span className="text-white text-6xl" style={{ fontFamily: 'var(--font-butterfly-kids)' }}>Weave</span>
             </div>
             <p className="text-sm">
               Your journey begins here. Plan, explore, and experience the world like never before.
@@ -68,7 +65,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center">
-          <p>&copy; 2025 Weave. All rights reserved.</p>
+          <p>&copy; 2026 Weave. All rights reserved.</p>
         </div>
       </div>
     </footer>

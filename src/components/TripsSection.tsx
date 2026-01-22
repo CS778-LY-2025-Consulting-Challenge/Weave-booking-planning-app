@@ -106,7 +106,7 @@ const TripsSection = () => {
         <div className="mt-2 h-8 w-px bg-gradient-to-b from-white/70 to-transparent"></div>
       </div>
 
-      <div className="relative z-10 h-full px-6 py-8">
+      <div className="relative z-10 h-full px-6 py-8 md:px-12 lg:px-16">
         <motion.div
           className="mx-auto flex h-full flex-col justify-between gap-4"
           initial={{ opacity: 0, y: -20 }}
@@ -114,10 +114,10 @@ const TripsSection = () => {
           transition={{ duration: 0.6 }}
         >
           <div className="flex flex-col gap-6 text-white md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-5xl font-bold tracking-tight">Weave</h1>
-              <h1 className="text-2xl font-normal tracking-tight">
-                Your one stop shop for everything travel
+            <div className="ml-4 md:ml-8">
+              <h1 className="text-7xl md:text-8xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-butterfly-kids)' }}>Weave</h1>
+              <h1 className="text-3xl md:text-4xl font-normal tracking-tight" style={{ fontFamily: 'var(--font-emilys-candy)' }}>
+                Your one stop shop for everything travel.
               </h1>
             </div>
 

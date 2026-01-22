@@ -4,7 +4,7 @@ import { StripeProvider } from '@/components/StripeProvider';
 import { AuthProvider } from '@/context/AuthContext';
 import { GlobalErrorHandler } from '@/components/GlobalErrorHandler';
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, Inter } from 'next/font/google';
+import { Cormorant_Garamond, Inter, Butterfly_Kids, Emilys_Candy, Knewave, Mystery_Quest, Charm, Bonheur_Royale, Special_Elite } from 'next/font/google';
 import './index.css';
 
 const cormorant = Cormorant_Garamond({
@@ -21,6 +21,55 @@ const inter = Inter({
   display: 'swap',
 });
 
+const butterflyKids = Butterfly_Kids({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-butterfly-kids',
+  display: 'swap',
+});
+
+const emilysCandy = Emilys_Candy({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-emilys-candy',
+  display: 'swap',
+});
+
+const knewave = Knewave({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-knewave',
+  display: 'swap',
+});
+
+const mysteryQuest = Mystery_Quest({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-mystery-quest',
+  display: 'swap',
+});
+
+const charm = Charm({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-charm',
+  display: 'swap',
+});
+
+const bonheurRoyale = Bonheur_Royale({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-bonheur-royale',
+  display: 'swap',
+});
+
+const specialElite = Special_Elite({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-special-elite',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'Weave Travel Booking Prototype',
   description:
@@ -34,7 +83,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
+      <html lang="en" className={`${cormorant.variable} ${inter.variable} ${butterflyKids.variable} ${emilysCandy.variable} ${knewave.variable} ${mysteryQuest.variable} ${charm.variable} ${bonheurRoyale.variable} ${specialElite.variable}`}>
         <body suppressHydrationWarning className={inter.className}>
           <GlobalErrorHandler />
           <AuthProvider>
