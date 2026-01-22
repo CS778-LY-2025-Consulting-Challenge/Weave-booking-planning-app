@@ -340,17 +340,12 @@ export default function Journeys() {
               </div>
             </motion.div>
 
-            <h1 className="font-cormorant mb-8 text-7xl font-light tracking-tight text-white md:text-8xl lg:text-9xl">
+            <h1 className="font-cormorant mb-8 text-7xl font-light tracking-tight text-white md:text-8xl lg:text-9xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }}>
               Featured Journeys
             </h1>
 
-            <p className="font-inter mx-auto mb-6 max-w-3xl text-xl leading-relaxed font-light tracking-wide text-white/90 md:text-2xl">
-              Curated stories from discerning travelers
-            </p>
-
-            <p className="font-inter mx-auto mb-16 max-w-2xl text-base leading-loose font-light text-white/60 md:text-lg">
-              Discover authentic experiences crafted by explorers who seek more
-              than destinations — they seek transformation
+            <p className="font-inter mx-auto mb-6 max-w-3x2 text-xl leading-relaxed font-light tracking-wide text-white/90 md:text-4xl" style={{ fontFamily: 'var(--font-special-elite)' }}>
+              Curated stories from discerning travelers.
             </p>
 
             {/* Stats */}
