@@ -77,7 +77,7 @@ export default function SavedTripsPage() {
           onChange={e => setNewTrip({ ...newTrip, date: e.target.value })}
         />
         <button
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-black text-white px-4 py-2 rounded hover:bg-gray-900 transition-colors text-sm font-medium"
           onClick={handleAddTrip}
         >
           Add Trip
@@ -105,13 +105,13 @@ export default function SavedTripsPage() {
                   onChange={e => setEditTrip({ ...editTrip, date: e.target.value })}
                 />
                 <button
-                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                  className="bg-black text-white px-3 py-1 rounded hover:bg-gray-900 transition-colors text-sm font-medium"
                   onClick={handleUpdateTrip}
                 >
                   Save
                 </button>
                 <button
-                  className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500"
+                  className="bg-black text-white px-3 py-1 rounded hover:bg-gray-900 transition-colors text-sm font-medium"
                   onClick={() => setEditTripId(null)}
                 >
                   Cancel
@@ -123,13 +123,13 @@ export default function SavedTripsPage() {
                 <span className="text-gray-600">{trip.date}</span>
                 <div className="flex gap-2 mt-2 md:mt-0">
                   <button
-                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                    className="bg-black text-white px-3 py-1 rounded hover:bg-gray-900 transition-colors text-sm font-medium"
                     onClick={() => handleEditTrip(id, trip)}
                   >
                     Edit
                   </button>
                   <button
-                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                    className="bg-black text-white px-3 py-1 rounded hover:bg-gray-900 transition-colors text-sm font-medium"
                     onClick={() => handleDeleteTrip(id)}
                   >
                     Delete
