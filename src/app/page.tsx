@@ -583,11 +583,11 @@ export default function Home() {
             <p className="text-sm font-bold tracking-[0.2em] uppercase text-[#a20000]">
               FEATURED EXPERIENCES
             </p>
-            <h2 className="font-[Abril_Fatface] font-bold text-4xl text-[#a20000] md:text-5xl">
+            <h2 className="font-bold text-4xl text-[#a20000] md:text-5xl" style={{ fontFamily: 'var(--font-charm)' }}>
               Explore Our Best Packages
             </h2>
-            <p className="mt-4 font-bold text-[#a20000]">
-              Handpicked tour packages designed to showcase the world's most incredible destinations
+            <p className="mt-4 font-bold text-2xl text-[#a20000]" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+              Handpicked tour packages designed to showcase the world's most incredible destinations.
             </p>
           </div>
         </div>
@@ -612,12 +612,12 @@ export default function Home() {
       {/* 360° Content Promotion Advertisement */}
       <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-1">
+          <div className="relative overflow-hidden rounded-2xl bg-black p-1">
             <div className="relative overflow-hidden rounded-xl bg-white">
               <div className="grid items-center gap-8 p-8 md:grid-cols-2 md:gap-12 md:p-12">
                 {/* Left Content */}
                 <div className="space-y-6">
-                  <div className="inline-block rounded-full bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-1.5 text-xs tracking-wider text-white uppercase">
+                  <div className="inline-block rounded-full bg-blue-600 px-4 py-1.5 text-xs tracking-wider text-white uppercase">
                     Special Offer
                   </div>
 
@@ -633,17 +633,17 @@ export default function Home() {
                     experiences with our community and unlock exclusive rewards.
                   </p>
 
-                  <div className="flex items-center gap-4 rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 p-6">
-                    <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-purple-600">
-                      <span className="text-3xl text-white">30%</span>
+                  <div className="flex items-center gap-4 rounded-xl border-2 border-gray-200 bg-gray-50 p-6">
+                    <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full bg-blue-600">
+                      <span className="text-3xl font-bold text-white">30%</span>
                     </div>
                     <div>
                       <p className="mb-1 text-sm tracking-wider text-gray-600 uppercase">
                         Get Up To
                       </p>
                       <p
-                        className="text-2xl text-gray-900"
-                        style={{ fontWeight: '700' }}
+                        className="text-3xl text-gray-900" 
+                        style={{ fontWeight: '700', fontFamily: 'var(--font-mystery-quest)' }}
                       >
                         Discount on Next Booking
                       </p>
@@ -652,7 +652,7 @@ export default function Home() {
 
                   <div className="flex flex-col gap-4 sm:flex-row">
                     <button
-                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-4 text-sm tracking-wider text-white uppercase shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-purple-700"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-8 py-4 text-sm tracking-wider text-white uppercase shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-700"
                       onClick={() => router.push('/packages')}
                     >
                       Browse Packages
@@ -671,8 +671,8 @@ export default function Home() {
                 <div className="relative">
                   <div className="relative aspect-square overflow-hidden rounded-xl shadow-2xl">
                     <img
-                      src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
-                      alt="360 degree camera capturing travel"
+                      src="/images/offer.png"
+                      alt="Travel offer"
                       className="h-full w-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
