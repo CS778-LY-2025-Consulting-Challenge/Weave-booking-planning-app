@@ -160,7 +160,7 @@ const ParallaxHero = () => {
               <div className="pointer-events-none absolute inset-0 top-[28%] flex items-start justify-center">
                 <div className="pointer-events-auto relative flex w-full max-w-4xl items-start justify-center px-8">
                   {/* Center Vertical Line */}
-                  <div className="absolute top-0 left-1/2 z-0 h-full w-px -translate-x-1/2 bg-gradient-to-b from-white/80 via-white/60 to-white/20" />
+                  <div className="absolute top-0 left-1/2 z-10 h-full w-[2px] -translate-x-1/2 bg-white" />
 
                   {/* Timeline Cards Container */}
                   <div className="relative flex w-full flex-col gap-3">
@@ -183,7 +183,7 @@ const ParallaxHero = () => {
                           )}
                         >
                           {/* Center Dot */}
-                          <div className="absolute left-1/2 z-10 flex h-3 w-3 -translate-x-1/2 items-center justify-center">
+                          <div className="absolute left-1/2 z-20 flex h-3 w-3 -translate-x-1/2 items-center justify-center">
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-40" />
                             <span className="relative inline-flex h-2.5 w-2.5 rounded-full border-2 border-white bg-slate-900/80" />
                           </div>
@@ -194,13 +194,13 @@ const ParallaxHero = () => {
                             whileHover={{ scale: 1.02, translateY: -2 }}
                             transition={{ duration: 0.2 }}
                             className={cn(
-                              'group relative w-[42%] overflow-hidden rounded-xl border border-white/20 bg-black/40 p-4 backdrop-blur-md transition-all',
+                              'group relative w-[48%] overflow-hidden rounded-xl border border-white/20 bg-black/40 p-6 backdrop-blur-md transition-all',
                               isLeft ? 'mr-auto' : 'ml-auto'
                             )}
                           >
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-4">
                               {/* Icon */}
-                              <div className="h-12 w-12 flex-shrink-0">
+                              <div className="h-16 w-16 flex-shrink-0">
                                 <img
                                   src={item.iconUrl}
                                   alt={item.title}
@@ -210,16 +210,16 @@ const ParallaxHero = () => {
 
                               {/* Content */}
                               <div className="min-w-0 flex-1">
-                                <h3 className="text-sm font-semibold text-white">
+                                <h3 className="text-lg font-semibold text-white">
                                   {item.title}
                                 </h3>
-                                <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-white/70">
+                                <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-white/80">
                                   {item.description}
                                 </p>
                               </div>
 
                               {/* Arrow */}
-                              <ArrowRight className="size-4 flex-shrink-0 text-white/40 transition-all group-hover:translate-x-1 group-hover:text-white" />
+                              <ArrowRight className="size-5 flex-shrink-0 text-white/40 transition-all group-hover:translate-x-1 group-hover:text-white" />
                             </div>
                           </motion.a>
                         </motion.div>
