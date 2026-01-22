@@ -44,39 +44,40 @@ export default function ThingsToKnowCard({ destination, userOrigin }: ThingsToKn
   const [isExpanded, setIsExpanded] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  useEffect(() => {
-    const fetchTipsData = async () => {
-      if (!destination) return;
+  const fetchTipsData = async (forceRefresh = false) => {
+    if (!destination) return;
 
-      setIsLoading(true);
-      setError('');
+    setIsLoading(true);
+    setError('');
+    setTipsData(null); // Clear old data when fetching new destination
 
-      try {
-        const response = await fetch('/api/destination-tips', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ destination, userOrigin }),
-        });
+    try {
+      const response = await fetch('/api/destination-tips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ destination, userOrigin, forceRefresh }),
+      });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch destination tips');
-        }
-
-        const data = await response.json();
-        setTipsData(data);
-      } catch (err: any) {
-        console.error('[ThingsToKnowCard] Error:', err);
-        setError(err.message || 'Failed to load destination information');
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to fetch destination tips');
       }
-    };
 
-    fetchTipsData();
+      const data = await response.json();
+      setTipsData(data);
+    } catch (err: any) {
+      console.error('[ThingsToKnowCard] Error:', err);
+      setError(err.message || 'Failed to load destination information');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTipsData(false); // Normal fetch from cache
   }, [destination, userOrigin, refreshTrigger]);
 
   const handleRefresh = () => {
-    setRefreshTrigger(prev => prev + 1);
+    fetchTipsData(true); // Force refresh bypasses cache
   };
 
   const getImportanceStyle = (importance: string) => {
@@ -146,7 +147,7 @@ export default function ThingsToKnowCard({ destination, userOrigin }: ThingsToKn
               {/* Destination Title */}
               <div className="mb-4 pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900 uppercase tracking-wide">
-                  {tipsData.destination.toUpperCase()}: Cultural Insights & Practical Realities
+                  {destination.toUpperCase()}: Cultural Insights & Practical Realities
                 </h3>
               </div>
 
