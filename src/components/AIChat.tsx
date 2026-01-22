@@ -7,7 +7,7 @@ import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import CharizardOrb from './CharizardOrb';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface ChatMessage {
   type: 'ai' | 'user';
@@ -16,6 +16,7 @@ interface ChatMessage {
 
 export default function AIChat() {
   const pathname = usePathname();
+  const router = useRouter();
 
   // Hide the floating assistant on the dedicated AI Planner page and AI Planner Intro page to avoid redundancy
   if (pathname === '/ai-planner' || pathname === '/ai-planner-intro') return null;
@@ -83,7 +84,7 @@ export default function AIChat() {
     return (
       <motion.button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={() => router.push('/ai-planner-intro')}
         className="fixed bottom-6 right-6 z-50"
         initial={{ opacity: 0, scale: 0.8, y: 40 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}

@@ -403,7 +403,60 @@ Create a comprehensive, day-by-day itinerary that matches these parameters.
       console.log('[Itinerary API] Enriched transportation with Google Flights data');
     }
 
-    return NextResponse.json({ data: content });
+    // Send overview data first (includes transportation and accommodation)
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        try {
+          // Send overview with all metadata, transportation, and accommodation
+          const overview = {
+            tripTitle: content.tripTitle,
+            summary: content.summary,
+            routeFlow: content.routeFlow,
+            mapPoints: content.mapPoints,
+            destination: content.destination,
+            departureCity: content.departureCity,
+            dates: content.dates,
+            travellers: content.travellers,
+            purpose: content.purpose,
+            preferences: content.preferences,
+            transportation: content.transportation,
+            accommodation: content.accommodation,
+          };
+          
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: 'overview', data: overview })}\n\n`)
+          );
+          
+          // Send each day plan individually
+          if (content.dayPlans && Array.isArray(content.dayPlans)) {
+            for (const dayPlan of content.dayPlans) {
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ type: 'day', data: dayPlan })}\n\n`)
+              );
+            }
+          }
+          
+          // Send completion signal
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: 'complete' })}\n\n`)
+          );
+          
+          controller.close();
+        } catch (error) {
+          console.error('[Itinerary API] Stream error:', error);
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
   } catch (error: any) {
     console.error('[Itinerary API] Error:', error);
     return NextResponse.json(

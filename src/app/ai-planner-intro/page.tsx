@@ -65,16 +65,14 @@ export default function AIPlannerIntro() {
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
 
-      {/* Navbar with hover-to-show behavior - Only render on client */}
-      {isMounted && (
-        <div
-          className={`fixed left-0 right-0 top-0 z-50 transition-transform duration-300 ${
-            isNavbarVisible ? 'translate-y-0' : '-translate-y-full'
-          }`}
-        >
-          <Navbar />
-        </div>
-      )}
+      {/* Navbar with hover-to-show behavior - Always render, use CSS to control visibility */}
+      <div
+        className={`fixed left-0 right-0 top-0 z-50 transition-transform duration-300 ${
+          isMounted && isNavbarVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
+        <Navbar />
+      </div>
 
       {/* Content */}
       <div className="relative z-10 flex min-h-screen flex-col">

@@ -52,6 +52,7 @@ import AccommodationCard from '@/components/AccommodationCard';
 import AccommodationChangePanel from '@/components/AccommodationChangePanel';
 import TransportationCard from '@/components/TransportationCard';
 import TravelSafetyCard from '@/components/TravelSafetyCard';
+import ThingsToKnowCard from '@/components/ThingsToKnowCard';
 import DailyRouteMap from '@/components/DailyRouteMap';
 
 type Coordinates = { lat: number; lng: number };
@@ -702,11 +703,13 @@ export default function AIPlanner() {
   // Preload activity images when itinerary changes
   useEffect(() => {
     const preloadImages = async () => {
-      if (!activeState?.dayPlans) return;
+      if (!activeState?.dayPlans || !Array.isArray(activeState.dayPlans)) return;
       
       const titlesToPreload = activeState.dayPlans.flatMap(day => 
-        day.activities.map(act => act.title).filter(Boolean) as string[]
-      );
+        (day?.activities && Array.isArray(day.activities)) 
+          ? day.activities.map(act => act.title).filter(Boolean) 
+          : []
+      ) as string[];
       
       console.log('[ImagePreload] Starting preload for', titlesToPreload.length, 'activities');
       
@@ -1622,8 +1625,8 @@ export default function AIPlanner() {
           background-color: #94a3b8; /* slate-400 */
         }
       `}</style>
-      <div className="mx-auto max-w-screen-xl px-4 pb-6 sm:px-6 lg:px-10">
-        <div className="grid gap-8 lg:grid-cols-[360px_1fr]">
+      <div className="w-full px-4 pb-6 sm:px-6 lg:px-10">
+        <div className="grid gap-8 lg:grid-cols-[30%_1fr]">
           {/* Left: Chat */}
           <Card className="sticky top-24 flex flex-col self-start border border-orange-200/60 bg-white/90 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
             <CardHeader className="py-2 pb-0">
@@ -1937,11 +1940,19 @@ export default function AIPlanner() {
             {/* Travel Safety Alert - Show when trip is generated */}
             {activeState.tripTitle && activeState.destination && (
               <TravelSafetyCard 
-                destination={typeof activeState.destination === 'string' ? activeState.destination : activeState.destination[0]}
+                destination={selectedCity || (typeof activeState.destination === 'string' ? activeState.destination : activeState.destination[0])}
                 dates={activeState.dates?.start && activeState.dates?.end ? {
                   start: activeState.dates.start,
                   end: activeState.dates.end
                 } : undefined}
+              />
+            )}
+
+            {/* Things to Know - Show when trip is generated */}
+            {activeState.tripTitle && activeState.destination && (
+              <ThingsToKnowCard 
+                destination={selectedCity || (typeof activeState.destination === 'string' ? activeState.destination : activeState.destination[0])}
+                userOrigin={activeState.origin}
               />
             )}
 
