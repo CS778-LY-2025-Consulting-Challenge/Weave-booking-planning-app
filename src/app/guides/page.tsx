@@ -447,11 +447,11 @@ export default function Guides() {
               {/* Header Area with Text */}
               <div className="px-8 pt-24 pb-8 sm:px-12 lg:px-16">
                 <div className="mx-auto max-w-3xl text-center">
-                  <h1 className="mb-4 text-4xl text-white drop-shadow-lg sm:text-5xl lg:text-6xl">
+                  <h1 className="mb-4 text-4xl text-white drop-shadow-lg sm:text-5xl lg:text-8xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }}>
                     Explore with locals.
                   </h1>
-                  <p className="text-lg text-white/90 drop-shadow-md sm:text-xl">
-                    Connect with verified local guides for authentic experiences
+                  <p className="text-lg text-white/90 drop-shadow-md sm:text-3xl" style={{ fontFamily: 'var(--font-special-elite)' }}>
+                    Connect with verified local guides for authentic experiences.
                   </p>
                 </div>
               </div>
@@ -518,10 +518,10 @@ export default function Guides() {
       <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-12">
           <div className="mb-12 text-center">
-            <h2 className="mb-4 text-4xl lg:text-5xl">
+            <h2 className="font-bold text-4xl text-[#a20000] md:text-5xl" style={{ fontFamily: 'var(--font-charm)' }}>
               No one does it like our local experts
-            </h2>
-            <p className="mx-auto max-w-3xl text-lg text-gray-600">
+            </h2><br></br>
+            <p className="mx-auto max-w-3x2 text-3xl text-gray-600" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
               These are award-winning trip partners, not tour guides. They know
               the secret spots, the must do adventures, and have the connections
               to make anything happen.

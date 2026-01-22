@@ -94,8 +94,8 @@ export default function TrendingDestinations() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="mb-4 text-white drop-shadow-lg">Trending Destinations</h1>
-            <p className="mx-auto max-w-3xl text-xl text-white/90 drop-shadow-md">
+            <h1 className="mb-4 text-white drop-shadow-lg md:text-9xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }} >Trending Destinations</h1>
+            <p className="mx-auto max-w-3x3 text-xl md:text-3xl text-white/90 drop-shadow-md" style={{ fontFamily: 'var(--font-special-elite)' }}>
               Discover the world's most exciting destinations right now.
             </p>
           </motion.div>

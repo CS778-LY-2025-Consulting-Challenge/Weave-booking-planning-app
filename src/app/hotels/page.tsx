@@ -205,16 +205,11 @@ export default function HotelBooking() {
               transition={{ duration: 0.8 }}
               className="mb-8 text-white"
             >
-              <div className="mb-4 flex items-center gap-2">
-                <Sparkles className="size-6 text-amber-400" />
-                <p className="text-sm tracking-widest text-amber-400 uppercase">
-                  Boutique Luxury
-                </p>
-              </div>
-              <h1 className="mb-4 text-5xl md:text-7xl">Book Hotel's</h1>
-              <p className="max-w-2xl text-xl text-gray-200 md:text-2xl">
+            
+              <h1 className="mb-4 text-5xl md:text-9xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }} >Book Hotel's</h1>
+              <p className="text-xl text-gray-200 md:text-3xl" style={{ fontFamily: 'var(--font-special-elite)' }}>
                 Where contemporary design meets timeless elegance in the heart
-                of the city
+                of the city.
               </p>
             </motion.div>
 

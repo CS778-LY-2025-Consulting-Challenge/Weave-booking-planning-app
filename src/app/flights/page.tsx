@@ -624,7 +624,8 @@ export default function FlightBooking() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.7 }}
-              className="mb-6 text-5xl drop-shadow-2xl md:text-7xl"
+              className="mb-6 text-5xl drop-shadow-2xl md:text-8xl"
+              style={{ fontFamily: 'var(--font-bonheur-royale)' }}
             >
               Discover Your Journey
             </motion.h1>
@@ -633,9 +634,10 @@ export default function FlightBooking() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.9 }}
-              className="mb-8 text-xl text-gray-100 drop-shadow-lg md:text-2xl"
+              className="mb-8 text-xl text-gray-100 drop-shadow-lg md:text-3xl"
+              style={{ fontFamily: 'var(--font-special-elite)' }}
             >
-              Book flights to destinations around the world with ease
+              Book flights to destinations around the world with ease.
             </motion.p>
 
             <motion.div
