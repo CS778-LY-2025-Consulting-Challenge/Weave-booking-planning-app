@@ -706,8 +706,10 @@ export default function AIPlanner() {
       if (!activeState?.dayPlans || !Array.isArray(activeState.dayPlans)) return;
       
       const titlesToPreload = activeState.dayPlans.flatMap(day => 
-        day.activities?.map(act => act.title).filter(Boolean) as string[] || []
-      );
+        (day?.activities && Array.isArray(day.activities)) 
+          ? day.activities.map(act => act.title).filter(Boolean) 
+          : []
+      ) as string[];
       
       console.log('[ImagePreload] Starting preload for', titlesToPreload.length, 'activities');
       
