@@ -268,16 +268,16 @@ export default function Packages() {
             transition={{ duration: 0.8 }}
             className="text-white"
           >
-            <h1 className="mb-6 text-5xl text-white drop-shadow-2xl md:text-7xl">
+            <h1 className="mb-6 text-5xl text-white drop-shadow-2xl md:text-9xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }}>
               Travel Packages
             </h1>
-            <p className="mx-auto mb-8 max-w-3xl text-xl text-gray-200 md:text-2xl">
+            <p className="mx-auto mb-8 max-w-5xl text-xl text-gray-200 md:text-3xl" style={{ fontFamily: 'var(--font-special-elite)' }}>
               Explore our curated travel packages with flights, hotels, and
               experiences all included. Book now and let us handle the details!
             </p>
             <Button
               size="lg"
-              className="bg-linear-to-r from-blue-600 to-purple-600 text-white shadow-2xl hover:from-blue-700 hover:to-purple-700"
+              className="bg-white text-gray-900 shadow-2xl hover:bg-gray-100"
               onClick={() => {
                 document
                   .getElementById('packages-grid')
