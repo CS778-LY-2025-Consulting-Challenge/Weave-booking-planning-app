@@ -42,37 +42,42 @@ export default function ThingsToKnowCard({ destination, userOrigin }: ThingsToKn
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [isExpanded, setIsExpanded] = useState(true);
-
-  const fetchTipsData = async () => {
-    if (!destination) return;
-
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch('/api/destination-tips', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ destination, userOrigin }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch destination tips');
-      }
-
-      const data = await response.json();
-      setTipsData(data);
-    } catch (err: any) {
-      console.error('[ThingsToKnowCard] Error:', err);
-      setError(err.message || 'Failed to load destination information');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
+    const fetchTipsData = async () => {
+      if (!destination) return;
+
+      setIsLoading(true);
+      setError('');
+
+      try {
+        const response = await fetch('/api/destination-tips', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ destination, userOrigin }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch destination tips');
+        }
+
+        const data = await response.json();
+        setTipsData(data);
+      } catch (err: any) {
+        console.error('[ThingsToKnowCard] Error:', err);
+        setError(err.message || 'Failed to load destination information');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchTipsData();
-  }, [destination]);
+  }, [destination, userOrigin, refreshTrigger]);
+
+  const handleRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   const getImportanceStyle = (importance: string) => {
     switch (importance) {
@@ -101,7 +106,7 @@ export default function ThingsToKnowCard({ destination, userOrigin }: ThingsToKn
             <Button
               variant="ghost"
               size="sm"
-              onClick={fetchTipsData}
+              onClick={handleRefresh}
               disabled={isLoading}
               className="h-6 w-6 p-0"
             >
