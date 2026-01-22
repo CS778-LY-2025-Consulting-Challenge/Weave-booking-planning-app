@@ -170,10 +170,7 @@ export default function Navbar() {
               href="/"
               className="flex items-center gap-2 transition-transform duration-300 hover:scale-105"
             >
-              <div className="rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 p-2 shadow-lg">
-                <Plane className="size-6 text-white" />
-              </div>
-              <span className="text-white drop-shadow-lg">Weave</span>
+              <span className="text-white text-5xl drop-shadow-lg" style={{ fontFamily: 'var(--font-butterfly-kids)' }}>Weave</span>
             </Link>
 
             {/* Desktop Navigation */}
