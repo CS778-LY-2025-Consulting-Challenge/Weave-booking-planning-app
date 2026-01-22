@@ -147,6 +147,7 @@ type TripState = {
   }>;
   media?: { photos?: string[]; videos?: string[] };
   mapRoute?: { points: Array<{ name: string; coords: Coordinates }> };
+  origin?: string;
 };
 
 type ChatMessage = { type: 'ai' | 'user'; text: string };
