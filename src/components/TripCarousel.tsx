@@ -121,7 +121,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
     return (
       <div
         className={cn(
-          'relative mx-auto flex w-full max-w-4xl items-center overflow-hidden py-4',
+          'relative flex w-full items-center overflow-hidden py-4',
           className
         )}
         ref={constraintsRef}
@@ -134,7 +134,7 @@ const TripCarousel = forwardRef<TripCarouselRef, TripCarouselProps>(
           onDragEnd={() => setTimeout(() => setIsDragging(false), 100)}
           animate={controls}
           style={{ x }}
-          className="flex cursor-grab gap-6 px-8 active:cursor-grabbing"
+          className="flex cursor-grab gap-6 pr-[calc(100%-300px)] pl-[calc(100%-300px)] active:cursor-grabbing"
         >
           {orderedTrips.map((trip) => {
             const isSelected = trip.id === selectedId;
