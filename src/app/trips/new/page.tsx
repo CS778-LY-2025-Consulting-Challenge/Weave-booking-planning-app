@@ -26,7 +26,6 @@ export default function CreateTripPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [currency, setCurrency] = useState('USD');
-  const [budget, setBudget] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +47,6 @@ export default function CreateTripPage() {
           startDate: startDate || undefined,
           endDate: endDate || undefined,
           baseCurrency: currency,
-          budgetLimit: budget ? toCents(parseFloat(budget)) : undefined,
         }),
       });
 
@@ -59,7 +57,7 @@ export default function CreateTripPage() {
 
       const data = await response.json();
       toast.success('Trip created successfully!');
-      router.push(`/trips/${data.trip.id}/budget`);
+      router.push('/dashboard');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to create trip');
     } finally {
@@ -139,35 +137,20 @@ export default function CreateTripPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Currency</Label>
-                  <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger id="currency">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENCIES.map((curr) => (
-                        <SelectItem key={curr.code} value={curr.code}>
-                          {curr.symbol} {curr.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="budget">Budget (optional)</Label>
-                  <Input
-                    id="budget"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency</Label>
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger id="currency">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((curr) => (
+                      <SelectItem key={curr.code} value={curr.code}>
+                        {curr.symbol} {curr.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="rounded-lg bg-blue-50 p-4 border border-blue-200">

@@ -75,7 +75,7 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const { name, destination, startDate, endDate, budgetLimit, baseCurrency } = body;
+        const { name, destination, startDate, endDate, baseCurrency } = body;
 
         const updatedTrip = await prisma.trip.update({
             where: { id: tripId },
@@ -84,7 +84,6 @@ export async function PATCH(
                 destination,
                 startDate: startDate ? new Date(startDate) : undefined,
                 endDate: endDate ? new Date(endDate) : undefined,
-                budgetLimit: budgetLimit !== undefined ? Number(budgetLimit) : undefined,
                 baseCurrency,
             },
         });

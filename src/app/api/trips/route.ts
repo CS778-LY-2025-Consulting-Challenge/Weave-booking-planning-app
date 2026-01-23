@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { name, destination, startDate, endDate, baseCurrency, budgetLimit } = body;
+    const { name, destination, startDate, endDate, baseCurrency } = body;
 
     const trip = await prisma.trip.create({
       data: {
@@ -56,7 +56,6 @@ export async function POST(req: Request) {
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
         baseCurrency: baseCurrency || 'USD',
-        budgetLimit: budgetLimit ? Number(budgetLimit) : undefined,
         createdBy: userId,
         participants: {
           create: {

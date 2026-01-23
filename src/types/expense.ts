@@ -12,7 +12,6 @@ export interface Trip {
   startDate?: string;
   endDate?: string;
   destination?: string;
-  budgetLimit?: number; // optional budget cap
   createdAt: string;
   updatedAt: string;
 }
@@ -87,7 +86,6 @@ export interface CreateTripRequest {
   startDate?: string;
   endDate?: string;
   destination?: string;
-  budgetLimit?: number;
 }
 
 export interface InviteParticipantRequest {
@@ -123,16 +121,6 @@ export interface TripWithParticipants extends Trip {
 
 export interface ExpenseWithShares extends Expense {
   shares: ExpenseShare[];
-}
-
-export interface TripBudgetSummary {
-  totalSpent: number;
-  budgetLimit?: number;
-  budgetRemaining?: number;
-  percentUsed?: number;
-  expenseCount: number;
-  participantCount: number;
-  averagePerPerson: number;
 }
 
 // Helper type for expense categories
