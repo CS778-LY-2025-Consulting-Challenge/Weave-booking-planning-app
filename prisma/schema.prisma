@@ -70,3 +70,25 @@ model ExpenseSplit {
 
   expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
 }
+
+// AI Trip Planner - Saved Trips (separate from expense tracking)
+model SavedTrip {
+  id               String   @id @default(uuid())
+  userId           String   // clerk userId
+  title            String
+  destination      String
+  thumbnailUrl     String?
+  
+  // AI Planner State (JSON)
+  plannerState     String   // JSON string: routeFlow, mapPoints, dates, dayPlans, etc.
+  chatHistory      String   // JSON string: all chat messages
+  transportation   String?  // JSON string: flight/transport data
+  accommodation    String?  // JSON string: hotel/accommodation data
+  safetyAlert      String?  // JSON string: safety information
+  thingsToKnow     String?  // JSON string: destination tips
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@index([userId])
+}
