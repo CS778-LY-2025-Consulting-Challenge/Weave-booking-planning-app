@@ -48,6 +48,7 @@ import TripMap from '@/components/TripMap';
 import PlaceDetailPanel from '@/components/PlaceDetailPanel';
 import ActivityChangePanel from '@/components/ActivityChangePanel';
 import AttractionDetailPanel from '@/components/AttractionDetailPanel';
+import ProgressIndicator, { type ProgressStep, type StepStatus } from '@/components/ProgressIndicator';
 import AccommodationCard from '@/components/AccommodationCard';
 import AccommodationChangePanel from '@/components/AccommodationChangePanel';
 import TransportationCard from '@/components/TransportationCard';
@@ -373,6 +374,15 @@ const ActivityCard = ({
   );
 };
 
+// Progress indicator steps - defined outside component to avoid re-creation on each render
+const GENERATION_STEPS_DATA: ProgressStep[] = [
+  { id: 1, label: 'Understanding your preferences', status: 'pending', estimatedDuration: 1200 },
+  { id: 2, label: 'Planning destinations and timing', status: 'pending', estimatedDuration: 1800 },
+  { id: 3, label: 'Searching places & attractions', status: 'pending', estimatedDuration: 4000 },
+  { id: 4, label: 'Checking travel safety updates', status: 'pending', estimatedDuration: 2500 },
+  { id: 5, label: 'Generating daily itinerary', status: 'pending', estimatedDuration: 6000 },
+];
+
 export default function AIPlanner() {
   const searchParams = useSearchParams();
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -408,6 +418,10 @@ export default function AIPlanner() {
     accommodationIndex: number;
     accommodation: any;
   } | null>(null);
+
+  // Progress indicator state
+  const GENERATION_STEPS = GENERATION_STEPS_DATA.map(step => ({ ...step }));
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>(GENERATION_STEPS);
   const dayPlansRef = useRef<HTMLDivElement>(null);
 
   // Alternatives cache: { "dayNumber-activityIndex": [...alternatives] }
@@ -797,6 +811,7 @@ export default function AIPlanner() {
     setMessages((prev) => [...prev, { type: 'user', text: userText }]);
     setInput('');
     setIsChatting(true);
+    
     try {
       const res = await fetch('/api/ai-planner/chat', {
         method: 'POST',
@@ -806,8 +821,25 @@ export default function AIPlanner() {
       const data = await res.json();
       const reply = data?.reply ?? 'Got it!';
       const stateUpdate = data?.plannerState ?? {};
+      
       setMessages((prev) => [...prev, { type: 'ai', text: reply }]);
       setPlannerState((prev) => ({ ...prev, ...stateUpdate }));
+      
+      // If API returned plannerState (trip generation detected), show progress animation
+      if (stateUpdate && Object.keys(stateUpdate).length > 0) {
+        setIsGenerating(true);
+        
+        // Reset and start progress animation
+        setProgressSteps(GENERATION_STEPS_DATA.map(step => ({ ...step, status: 'pending' })));
+        simulateProgress();
+        
+        // Hide progress after animation completes
+        setTimeout(() => {
+          setProgressSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
+        }, 12300); // Total animation duration
+        
+        setTimeout(() => setIsGenerating(false), 12800);
+      }
     } catch (err) {
       setMessages((prev) => [...prev, { type: 'ai', text: 'Oops, something went wrong.' }]);
     } finally {
@@ -815,8 +847,41 @@ export default function AIPlanner() {
     }
   };
 
+  // Update progress step status
+  const updateStepStatus = useCallback((stepId: number, status: StepStatus) => {
+    setProgressSteps(prev =>
+      prev.map(step =>
+        step.id === stepId ? { ...step, status } : step
+      )
+    );
+  }, []);
+
+  // Simulate progress animation
+  const simulateProgress = useCallback(() => {
+    let cumulativeDelay = 0;
+
+    GENERATION_STEPS_DATA.forEach((step) => {
+      // Mark as loading
+      setTimeout(() => {
+        updateStepStatus(step.id, 'loading');
+      }, cumulativeDelay);
+
+      // Mark as completed
+      cumulativeDelay += step.estimatedDuration || 1000;
+      setTimeout(() => {
+        updateStepStatus(step.id, 'completed');
+      }, cumulativeDelay);
+    });
+  }, [updateStepStatus]);
+
   const handleGenerate = async () => {
+    // Reset progress steps
+    setProgressSteps(GENERATION_STEPS_DATA.map(step => ({ ...step, status: 'pending' })));
     setIsGenerating(true);
+    
+    // Start progress simulation
+    simulateProgress();
+    
     try {
       console.log('[handleGenerate] Sending plannerState to API:', plannerState);
       const res = await fetch('/api/ai-planner/itinerary', {
@@ -881,14 +946,21 @@ export default function AIPlanner() {
           }
         }
       }
+      
+      // Force complete all steps when API returns
+      setProgressSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
+      
     } catch (err: any) {
       console.error('[handleGenerate] Error:', err);
       setMessages((prev) => [
         ...prev,
         { type: 'ai', text: `Unable to generate itinerary: ${err.message || 'Please try again.'}` },
       ]);
+      // Reset progress on error
+      setProgressSteps(GENERATION_STEPS_DATA.map(step => ({ ...step, status: 'pending' })));
     } finally {
-      setIsGenerating(false);
+      // Delay hiding to show completion state
+      setTimeout(() => setIsGenerating(false), 500);
     }
   };
 
@@ -1734,7 +1806,7 @@ export default function AIPlanner() {
               <Card className="sticky top-24 flex flex-col self-start border border-slate-200 bg-gradient-to-br from-slate-50 to-gray-50 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
                 <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-8 text-center">
                   {/* Animated Charizard */}
-                  <div className="relative mb-6 flex h-48 w-48 items-center justify-center overflow-hidden">
+                  <div className="relative mb-8 flex h-40 w-40 items-center justify-center overflow-hidden">
                     <img 
                       src="https://d30mgvfwc9sz4j.cloudfront.net/charizard/charizard-animated.gif" 
                       alt="Charizard thinking" 
@@ -1750,20 +1822,30 @@ export default function AIPlanner() {
                     </div>
                   </div>
                   
-                  {/* Thinking Text */}
-                  <h2 className="mb-3 text-2xl font-bold text-slate-900">
-                    Charizard is crafting your perfect journey...
-                  </h2>
-                  <p className="max-w-md text-base text-slate-600">
-                    Analyzing destinations, finding the best activities, and creating your personalized itinerary ✨
-                  </p>
-                  
-                  {/* Loading dots */}
-                  <div className="mt-6 flex gap-2">
-                    <div className="h-3 w-3 animate-bounce rounded-full bg-slate-300" style={{ animationDelay: '0ms' }}></div>
-                    <div className="h-3 w-3 animate-bounce rounded-full bg-slate-300" style={{ animationDelay: '150ms' }}></div>
-                    <div className="h-3 w-3 animate-bounce rounded-full bg-slate-300" style={{ animationDelay: '300ms' }}></div>
-                  </div>
+                  {/* Conditional Content: Progress for generating, static text for chatting */}
+                  {isGenerating ? (
+                    <>
+                      {/* Generating Trip - Show Progress */}
+                      <h2 className="mb-6 text-2xl font-bold text-slate-900">
+                        Charizard is crafting your perfect journey...
+                      </h2>
+                      
+                      {/* Progress Indicator */}
+                      <div className="w-full max-w-md">
+                        <ProgressIndicator steps={progressSteps} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Chatting - Static Content */}
+                      <h2 className="mb-4 text-2xl font-bold text-slate-900">
+                        Charizard is thinking...
+                      </h2>
+                      <p className="text-sm text-slate-600">
+                        Ready to help you plan your adventure!
+                      </p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
