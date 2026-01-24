@@ -810,7 +810,21 @@ export default function AIPlanner() {
     const userText = input.trim();
     setMessages((prev) => [...prev, { type: 'user', text: userText }]);
     setInput('');
-    setIsChatting(true);
+    
+    // Detect if this is likely a trip generation request
+    // (when user has filled in key fields like destination, dates, or explicitly asks for itinerary)
+    const isLikelyGeneration = 
+      plannerState.destination || 
+      plannerState.dates?.start || 
+      /\b(plan|itinerary|trip|generate|create|help me plan|suggest|recommend)\b/i.test(userText);
+    
+    if (isLikelyGeneration) {
+      setIsGenerating(true);
+      setProgressSteps(GENERATION_STEPS_DATA.map(step => ({ ...step, status: 'pending' })));
+      simulateProgress();
+    } else {
+      setIsChatting(true);
+    }
     
     try {
       const res = await fetch('/api/ai-planner/chat', {
@@ -825,23 +839,22 @@ export default function AIPlanner() {
       setMessages((prev) => [...prev, { type: 'ai', text: reply }]);
       setPlannerState((prev) => ({ ...prev, ...stateUpdate }));
       
-      // If API returned plannerState (trip generation detected), show progress animation
-      if (stateUpdate && Object.keys(stateUpdate).length > 0) {
+      // If we weren't already showing progress and API returned plannerState
+      if (!isLikelyGeneration && stateUpdate && Object.keys(stateUpdate).length > 0) {
         setIsGenerating(true);
-        
-        // Reset and start progress animation
         setProgressSteps(GENERATION_STEPS_DATA.map(step => ({ ...step, status: 'pending' })));
         simulateProgress();
+      }
+      
+      // API completed - mark all steps as completed
+      if (isLikelyGeneration || (stateUpdate && Object.keys(stateUpdate).length > 0)) {
+        setProgressSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
         
-        // Hide progress after animation completes
-        setTimeout(() => {
-          setProgressSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
-        }, 12300); // Total animation duration
-        
-        setTimeout(() => setIsGenerating(false), 12800);
+        setTimeout(() => setIsGenerating(false), 500);
       }
     } catch (err) {
       setMessages((prev) => [...prev, { type: 'ai', text: 'Oops, something went wrong.' }]);
+      setIsGenerating(false);
     } finally {
       setIsChatting(false);
     }
@@ -856,21 +869,23 @@ export default function AIPlanner() {
     );
   }, []);
 
-  // Simulate progress animation
+  // Simulate progress animation - but keep last step loading until API completes
   const simulateProgress = useCallback(() => {
     let cumulativeDelay = 0;
 
-    GENERATION_STEPS_DATA.forEach((step) => {
+    GENERATION_STEPS_DATA.forEach((step, index) => {
       // Mark as loading
       setTimeout(() => {
         updateStepStatus(step.id, 'loading');
       }, cumulativeDelay);
 
-      // Mark as completed
+      // Mark as completed (except the last step - wait for API)
       cumulativeDelay += step.estimatedDuration || 1000;
-      setTimeout(() => {
-        updateStepStatus(step.id, 'completed');
-      }, cumulativeDelay);
+      if (index < GENERATION_STEPS_DATA.length - 1) {
+        setTimeout(() => {
+          updateStepStatus(step.id, 'completed');
+        }, cumulativeDelay);
+      }
     });
   }, [updateStepStatus]);
 
