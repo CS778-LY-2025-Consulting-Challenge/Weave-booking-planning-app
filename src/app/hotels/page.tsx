@@ -43,12 +43,20 @@ import { toast } from 'sonner';
 
 export default function HotelBooking() {
   const router = useRouter();
-  const [checkIn, setCheckIn] = useState('2025-12-15');
-  const [checkOut, setCheckOut] = useState('2025-12-22');
+  const [checkIn, setCheckIn] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().split('T')[0];
+  });
+  const [checkOut, setCheckOut] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    return d.toISOString().split('T')[0];
+  });
   const [guests, setGuests] = useState(2);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectingCheckIn, setSelectingCheckIn] = useState(true);
-  const [currentMonth, setCurrentMonth] = useState(new Date(2025, 11, 1)); // December 2025
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Hotel search states
   const [searchResults, setSearchResults] = useState<HotelResult[]>([]);
@@ -205,7 +213,7 @@ export default function HotelBooking() {
               transition={{ duration: 0.8 }}
               className="mb-8 text-white"
             >
-            
+
               <h1 className="mb-4 text-5xl md:text-9xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }} >Book Hotel's</h1>
               <p className="text-xl text-gray-200 md:text-3xl" style={{ fontFamily: 'var(--font-special-elite)' }}>
                 Where contemporary design meets timeless elegance in the heart
@@ -369,10 +377,10 @@ export default function HotelBooking() {
                                   </div>
                                   <div
                                     className={`text-xs ${isSelected
-                                        ? 'text-amber-200'
-                                        : inRange
-                                          ? 'text-amber-600'
-                                          : 'text-gray-500'
+                                      ? 'text-amber-200'
+                                      : inRange
+                                        ? 'text-amber-600'
+                                        : 'text-gray-500'
                                       }`}
                                   >
                                     ${dayInfo.price}
