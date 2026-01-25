@@ -1,7 +1,9 @@
 'use client';
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
 import {
   Sparkles,
   Send,
@@ -30,6 +32,8 @@ import {
   CloudLightning,
   Wind,
   Plus,
+  Save,
+  Check,
 } from 'lucide-react';
 import CharizardOrb from '@/components/CharizardOrb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -385,6 +389,8 @@ const GENERATION_STEPS_DATA: ProgressStep[] = [
 
 export default function AIPlanner() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user, isLoaded } = useUser();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       type: 'ai',
@@ -396,6 +402,8 @@ export default function AIPlanner() {
   const [itinerary, setItinerary] = useState<TripState | null>(null);
   const [isChatting, setIsChatting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedTripId, setSavedTripId] = useState<string | null>(null);
   const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null); // City filter state
   const [selectedDay, setSelectedDay] = useState<number | null>(null); // NEW: Selected day for route highlighting
@@ -433,6 +441,59 @@ export default function AIPlanner() {
   const [isCachingAccommodation, setIsCachingAccommodation] = useState(false);
 
   const activeState = useMemo(() => itinerary || plannerState, [itinerary, plannerState]);
+
+  // Save trip function
+  const handleSaveTrip = async () => {
+    if (!isLoaded || !user) {
+      toast.error('Please sign in to save your trip');
+      router.push('/auth/signin');
+      return;
+    }
+
+    if (!activeState.tripTitle || !activeState.destination) {
+      toast.error('Please generate an itinerary first');
+      return;
+    }
+
+    setIsSaving(true);
+    
+    try {
+      const destination = Array.isArray(activeState.destination) 
+        ? activeState.destination.join(', ') 
+        : activeState.destination;
+
+      const response = await fetch('/api/saved-trips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: activeState.tripTitle,
+          destination: destination,
+          thumbnailUrl: heroImageUrl || null,
+          plannerState: JSON.stringify(activeState),
+          chatHistory: JSON.stringify(messages),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save trip');
+      }
+
+      const savedTrip = await response.json();
+      setSavedTripId(savedTrip.id);
+      toast.success('Trip saved successfully! 🎉', {
+        description: 'You can view it in My Trips',
+        action: {
+          label: 'View My Trips',
+          onClick: () => router.push('/trips/saved'),
+        },
+      });
+    } catch (error) {
+      console.error('[Save Trip] Error:', error);
+      toast.error('Failed to save trip. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Filter day plans by selected city
   const filteredDayPlans = useMemo(() => {
@@ -763,9 +824,60 @@ export default function AIPlanner() {
     preloadImages();
   }, [activeState?.dayPlans, activityImageCache]);
 
+  // Load saved trip from URL parameter (tripId)
+  useEffect(() => {
+    const tripId = searchParams?.get('tripId');
+    if (!tripId || !isLoaded || !user) return;
+
+    const loadSavedTrip = async () => {
+      try {
+        console.log('[LoadTrip] Loading saved trip:', tripId);
+        const response = await fetch(`/api/saved-trips/${tripId}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to load trip');
+        }
+
+        const savedTrip = await response.json();
+        
+        // Restore planner state
+        if (savedTrip.plannerState) {
+          const restoredState = typeof savedTrip.plannerState === 'string' 
+            ? JSON.parse(savedTrip.plannerState) 
+            : savedTrip.plannerState;
+          setPlannerState(restoredState);
+          console.log('[LoadTrip] Restored planner state:', restoredState.tripTitle);
+        }
+
+        // Restore chat history
+        if (savedTrip.chatHistory) {
+          const restoredMessages = typeof savedTrip.chatHistory === 'string'
+            ? JSON.parse(savedTrip.chatHistory)
+            : savedTrip.chatHistory;
+          setMessages(restoredMessages);
+          console.log('[LoadTrip] Restored', restoredMessages.length, 'messages');
+        }
+
+        // Mark as already saved
+        setSavedTripId(tripId);
+        toast.success('Trip loaded successfully!');
+      } catch (error) {
+        console.error('[LoadTrip] Error:', error);
+        toast.error('Failed to load trip');
+      }
+    };
+
+    loadSavedTrip();
+  }, [searchParams, isLoaded, user]);
+
   // Handle initial message from URL parameter
   useEffect(() => {
     const initialMessage = searchParams?.get('initialMessage');
+    const tripId = searchParams?.get('tripId');
+    
+    // Don't auto-send message if loading a saved trip
+    if (tripId) return;
+    
     if (initialMessage && messages.length === 1) {
       // Only auto-send if we haven't started chatting yet
       setInput(initialMessage);
@@ -1882,9 +1994,39 @@ export default function AIPlanner() {
               ) : null}
 
               <CardHeader className="relative space-y-3 pb-6">
-                <CardTitle className="text-3xl font-extrabold tracking-tight text-slate-900">
-                  {activeState.tripTitle || 'Your Dream Journey'}
-                </CardTitle>
+                <div className="flex items-start justify-between gap-4">
+                  <CardTitle className="text-3xl font-extrabold tracking-tight text-slate-900">
+                    {activeState.tripTitle || 'Your Dream Journey'}
+                  </CardTitle>
+                  
+                  {/* Save Button */}
+                  <Button
+                    onClick={handleSaveTrip}
+                    disabled={isSaving || savedTripId !== null}
+                    className={`shrink-0 transition-all ${
+                      savedTripId
+                        ? 'bg-green-500 hover:bg-green-600'
+                        : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
+                    }`}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : savedTripId ? (
+                      <>
+                        <Check className="mr-2 h-4 w-4" />
+                        Saved
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Trip
+                      </>
+                    )}
+                  </Button>
+                </div>
                 
                 {/* Icons & Counts Summary */}
                 <div className="min-w-0 lg:w-[56%] lg:min-w-[520px]">
