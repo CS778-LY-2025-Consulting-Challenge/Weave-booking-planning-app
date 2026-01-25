@@ -192,12 +192,18 @@ function CalendarDayButton({
     if (modifiers.focused) ref.current?.focus()
   }, [modifiers.focused])
 
+  // Use a stable, locale-independent date string to avoid hydration mismatches
+  const dayKey = React.useMemo(
+    () => day.date.toISOString().split("T")[0],
+    [day.date]
+  )
+
   return (
     <Button
       ref={ref}
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString()}
+      data-day={dayKey}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&
