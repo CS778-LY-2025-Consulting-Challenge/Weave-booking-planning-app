@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // GET /api/saved-trips - Fetch all saved trips for the current user
 export async function GET(request: NextRequest) {
@@ -71,8 +69,8 @@ export async function POST(request: NextRequest) {
         title,
         destination,
         thumbnailUrl: thumbnailUrl || null,
-        plannerState: plannerState ? JSON.stringify(plannerState) : null,
-        chatHistory: chatHistory ? JSON.stringify(chatHistory) : null,
+        plannerState: plannerState ? JSON.stringify(plannerState) : '{}',
+        chatHistory: chatHistory ? JSON.stringify(chatHistory) : '[]',
       },
     });
 

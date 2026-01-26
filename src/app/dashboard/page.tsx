@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { getSavedTrips, saveTrip, updateTrip, deleteTrip } from '@/lib/savedTrips';
+import { getUserProfile, type UserProfile } from '@/lib/userProfile';
 
 interface Journey {
   id: number;
@@ -66,6 +67,10 @@ export default function Dashboard() {
   const [editTripId, setEditTripId] = useState<string | null>(null);
   const [editTrip, setEditTrip] = useState({ destination: '', date: '' });
 
+  // User Profile State
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
   // Authentication check - redirect to auth if not signed in
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -91,13 +96,22 @@ export default function Dashboard() {
   }, [isLoaded, isSignedIn, user, router]);
 
 
-  // Load saved trips from Firebase
+  // Load saved trips and profile from Firebase
   useEffect(() => {
     if (!user?.id) return;
     setSavedLoading(true);
+    setProfileLoading(true);
+
+    // Fetch Trips
     getSavedTrips(user.id).then((data) => {
       setSavedTrips(data || {});
       setSavedLoading(false);
+    });
+
+    // Fetch Profile
+    getUserProfile(user.id).then((data) => {
+      setUserProfile(data);
+      setProfileLoading(false);
     });
   }, [user?.id]);
 
@@ -519,31 +533,55 @@ export default function Dashboard() {
                 <CardTitle>Profile</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-sm text-gray-500">Name</Label>
-                  <p>John Traveler</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">Email</Label>
-                  <p>john@example.com</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">Country</Label>
-                  <p>United States</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">
-                    Budget Preference
-                  </Label>
-                  <Badge>Mid-Range</Badge>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">
-                    Season Preference
-                  </Label>
-                  <Badge variant="outline">Spring/Fall</Badge>
-                </div>
-                <Button className="w-full" variant="outline">
+                {profileLoading ? (
+                  <div className="space-y-4 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <Label className="text-sm text-gray-500">Name</Label>
+                      <p className="font-medium">
+                        {userProfile?.firstName && userProfile?.lastName
+                          ? `${userProfile.firstName} ${userProfile.lastName}`
+                          : user?.fullName || 'Traveler'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">Email</Label>
+                      <p className="break-all">
+                        {userProfile?.email || user?.emailAddresses?.[0]?.emailAddress || 'No email'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">Country</Label>
+                      <p>{userProfile?.nationality || 'Not Set'}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">
+                        Budget Preference
+                      </Label>
+                      <Badge variant={userProfile?.preferences?.budgetPreference ? 'default' : 'secondary'}>
+                        {userProfile?.preferences?.budgetPreference || 'Not Set'}
+                      </Badge>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">
+                        Season Preference
+                      </Label>
+                      <Badge variant="outline">
+                        {userProfile?.preferences?.seasonPreference || 'Not Set'}
+                      </Badge>
+                    </div>
+                  </>
+                )}
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={() => router.push('/profile')}
+                >
                   <Edit className="mr-2 size-4" />
                   Edit Profile
                 </Button>

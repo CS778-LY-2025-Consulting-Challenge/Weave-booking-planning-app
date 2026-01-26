@@ -421,6 +421,7 @@ export default function HotelDetailsPage() {
             guests,
             totalPrice: calculateTotalPrice(),
             userId: user?.id || 'guest',
+            userEmail: user?.primaryEmailAddress?.emailAddress,
           }),
         });
 

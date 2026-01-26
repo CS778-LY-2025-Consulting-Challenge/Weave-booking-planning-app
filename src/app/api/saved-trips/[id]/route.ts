@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // GET /api/saved-trips/[id] - Fetch a single saved trip
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { userId } = await auth();
 
     if (!userId) {
@@ -21,7 +20,7 @@ export async function GET(
 
     const savedTrip = await prisma.savedTrip.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: userId,
       },
     });
@@ -53,9 +52,10 @@ export async function GET(
 // PUT /api/saved-trips/[id] - Update a saved trip
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { userId } = await auth();
 
     if (!userId) {
@@ -71,7 +71,7 @@ export async function PUT(
     // Verify ownership
     const existingTrip = await prisma.savedTrip.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: userId,
       },
     });
@@ -85,7 +85,7 @@ export async function PUT(
 
     const updatedTrip = await prisma.savedTrip.update({
       where: {
-        id: params.id,
+        id,
       },
       data: {
         title: title || existingTrip.title,
@@ -109,9 +109,10 @@ export async function PUT(
 // DELETE /api/saved-trips/[id] - Delete a saved trip
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { userId } = await auth();
 
     if (!userId) {
@@ -124,7 +125,7 @@ export async function DELETE(
     // Verify ownership before deleting
     const existingTrip = await prisma.savedTrip.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: userId,
       },
     });
@@ -138,7 +139,7 @@ export async function DELETE(
 
     await prisma.savedTrip.delete({
       where: {
-        id: params.id,
+        id,
       },
     });
 
