@@ -29,10 +29,11 @@ import {
 } from 'lucide-react';
 import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 export default function Journeys() {
   const router = useRouter();
+  const [viewMode, setViewMode] = useState<'myJourneys' | 'communityJourneys'>('myJourneys');
   const [favorites, setFavorites] = useState<number[]>([]);
   const [selectedSeasons, setSelectedSeasons] = useState<Set<string>>(new Set());
   const [selectedWeather, setSelectedWeather] = useState<Set<string>>(new Set());
@@ -40,105 +41,172 @@ export default function Journeys() {
   const [selectedDurations, setSelectedDurations] = useState<Set<string>>(new Set());
   const [wishlistAnimating, setWishlistAnimating] = useState<number | null>(null);
   const [activeJourney, setActiveJourney] = useState<number | null>(null);
+  
+  // Toggle button visibility logic (same as navbar)
+  const [isVisible, setIsVisible] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const viewportHeight = window.innerHeight;
+      
+      // Change text color after scrolling to second page
+      const hasScrolled = scrollY > viewportHeight;
+      
+      if (scrollY <= 10) {
+        setIsVisible(true);
+      } else if (scrollY < lastScrollY) {
+        // Scrolling up
+        setIsVisible(true);
+      } else if (scrollY > lastScrollY && scrollY > 100) {
+        // Scrolling down
+        setIsVisible(false);
+      }
+      
+      setLastScrollY(scrollY);
+    };
+
+    // Initial check
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const journeys = [
     {
       id: 1,
       title: 'New Zealand Explorer',
       author: 'James T.',
+      authorAvatar: 'https://i.pravatar.cc/150?img=12',
       destination: 'New Zealand',
       season: 'Spring',
       weather: 'Clear',
-      duration: '18 Days',
+      duration: '18 days & 17 nights',
       type: 'Adventure',
       image: '/images/new%20zealand.jpg',
       description:
-        "A transformative journey through Aotearoa's most iconic landscapes. Navigate the Fiordland cruises, experience adrenaline-pumping activities in Queenstown, and contemplate majesty at Milford Sound. Where adventure meets serenity.",
+        "A transformative journey through Aotearoa's most iconic landscapes. Navigate the Fiordland cruises, experience adrenaline-pumping activities in Queenstown, and contemplate majesty at Milford Sound.",
       likes: 567,
+      comments: 89,
+      views: 2340,
+      imports: 156,
+      rating: 4.9,
     },
     {
       id: 2,
       title: 'Bali Adventure',
       author: 'Sarah M.',
+      authorAvatar: 'https://i.pravatar.cc/150?img=5',
       destination: 'Bali, Indonesia',
       season: 'Summer',
       weather: 'Sunny',
-      duration: '10 Days',
+      duration: '10 days & 9 nights',
       type: 'Adventure',
       image: '/images/bali.jpg',
       description:
         'Sacred temples whisper ancient wisdom while emerald rice paddies stretch endlessly. Dive into cenote pools, embrace spiritual ceremonies, and discover the art of slow travel through Balinese hospitality.',
       likes: 234,
+      comments: 45,
+      views: 1890,
+      imports: 78,
+      rating: 4.7,
     },
     {
       id: 3,
       title: 'European Grand Tour',
       author: 'Mike R.',
+      authorAvatar: 'https://i.pravatar.cc/150?img=33',
       destination: 'Multiple Cities, Europe',
       season: 'Spring',
       weather: 'Mild',
-      duration: '21 Days',
+      duration: '21 days & 20 nights',
       type: 'Culture',
       image: '/images/paris.jpg',
       description:
         "A scholarly pilgrimage through Europe's cultural heart. From Renaissance masterpieces in Florence to Gothic grandeur in Paris, experience centuries of art, architecture, and storytelling in seven countries.",
       likes: 456,
+      comments: 67,
+      views: 3120,
+      imports: 203,
+      rating: 4.8,
     },
     {
       id: 4,
       title: 'Mountain Trekking Nepal',
       author: 'Emma K.',
+      authorAvatar: 'https://i.pravatar.cc/150?img=9',
       destination: 'Himalayas, Nepal',
       season: 'Autumn',
       weather: 'Clear',
-      duration: '14 Days',
+      duration: '14 days & 13 nights',
       type: 'Adventure',
       image: '/images/nepal.jpg',
       description:
         "Summit your inner peak amid the world's highest mountains. Through alpine meadows and prayer flag-adorned passes, witness crystalline skies and find profound silence that only the Himalayas can offer.",
       likes: 189,
+      comments: 34,
+      views: 1560,
+      imports: 92,
+      rating: 4.6,
     },
     {
       id: 5,
       title: 'Tokyo Food Tour',
       author: 'David L.',
+      authorAvatar: 'https://i.pravatar.cc/150?img=15',
       destination: 'Tokyo, Japan',
       season: 'Spring',
       weather: 'Mild',
-      duration: '7 Days',
+      duration: '7 days & 6 nights',
       type: 'Food & Culture',
       image: '/images/Tokyo.jpg',
       description:
         'Taste the soul of Japan through Michelin-starred precision and street-corner perfection. From omakase temples to midnight ramen sanctuaries, discover how Tokyo elevates every meal into ritual.',
       likes: 312,
+      comments: 52,
+      views: 2100,
+      imports: 124,
+      rating: 4.8,
     },
     {
       id: 6,
       title: 'Greek Island Hopping',
       author: 'Lisa P.',
+      authorAvatar: 'https://i.pravatar.cc/150?img=20',
       destination: 'Greek Islands',
       season: 'Summer',
       weather: 'Sunny',
-      duration: '12 Days',
+      duration: '12 days & 11 nights',
       type: 'Beach & Relaxation',
       image: '/images/greek.jpg',
       description:
         'Island-hop through the Aegean where whitewashed villages meet azure waters. Each island unveils its own mythology, flavors, and the timeless rhythm of Mediterranean living.',
       likes: 278,
+      comments: 41,
+      views: 1780,
+      imports: 98,
+      rating: 4.7,
     },
     {
       id: 7,
       title: 'New York City Explorer',
       author: 'Tom W.',
+      authorAvatar: 'https://i.pravatar.cc/150?img=8',
       destination: 'New York, USA',
       season: 'Fall',
       weather: 'Cool',
-      duration: '5 Days',
+      duration: '5 days & 4 nights',
       type: 'City Break',
       image: '/images/new%20york.jpg',
       description:
         "Immerse in the electric choreography of the city that never sleeps. From Broadway's golden lights to Central Park's autumn foliage, experience the pulse of ambition and culture.",
       likes: 201,
+      comments: 28,
+      views: 1420,
+      imports: 67,
+      rating: 4.5,
     },
   ];
 
@@ -284,6 +352,148 @@ export default function Journeys() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-zinc-50/30 to-white">
+      {/* Toggle Button - Fixed Below Navbar */}
+      <div className={cn(
+        "fixed top-24 left-1/2 z-50 -translate-x-1/2 transition-all duration-300",
+        isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+      )}>
+        <div className="inline-flex rounded-full border border-zinc-300/50 bg-white/70 p-0.5 shadow-md backdrop-blur-md">
+          <button
+            onClick={() => setViewMode('myJourneys')}
+            className={cn(
+              'px-5 py-2 text-xs font-medium transition-all duration-300 rounded-full',
+              viewMode === 'myJourneys'
+                ? 'bg-zinc-400 text-white shadow-sm'
+                : 'text-zinc-600 hover:text-zinc-900'
+            )}
+          >
+            Community Journeys
+          </button>
+          <button
+            onClick={() => setViewMode('communityJourneys')}
+            className={cn(
+              'px-5 py-2 text-xs font-medium transition-all duration-300 rounded-full',
+              viewMode === 'communityJourneys'
+                ? 'bg-zinc-400 text-white shadow-sm'
+                : 'text-zinc-600 hover:text-zinc-900'
+            )}
+          >
+            Gallery
+          </button>
+        </div>
+      </div>
+
+      {/* Conditional Content */}
+      {viewMode === 'myJourneys' ? (
+        // Community Journeys - Card Grid View
+        <div className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50 pb-20 pt-32">
+          <div className="container mx-auto px-4 max-w-7xl">
+            {/* Header */}
+            <div className="mb-12 text-center">
+              <h1 className="font-cormorant mb-4 text-4xl font-light text-zinc-800 md:text-5xl">
+                Community Journeys
+              </h1>
+              <p className="font-inter mx-auto max-w-2xl text-zinc-600">
+                Discover and import travel itineraries shared by fellow travelers. Find inspiration, save favorites, and create your own adventure.
+              </p>
+            </div>
+
+            {/* Journey Grid */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {journeys.map((journey) => (
+                <motion.div
+                  key={journey.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  whileHover={{ y: -8 }}
+                  className="group relative overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:shadow-xl"
+                >
+                  {/* Image */}
+                  <div className="relative h-56 overflow-hidden">
+                    <img
+                      src={journey.image}
+                      alt={journey.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    
+                    {/* Rating Badge */}
+                    <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 backdrop-blur-sm">
+                      <Sun className="size-4 text-amber-500" />
+                      <span className="text-sm font-semibold text-zinc-800">{journey.rating}</span>
+                    </div>
+
+                    {/* Duration Badge */}
+                    <div className="absolute top-4 left-4 rounded-full bg-black/60 px-3 py-1.5 backdrop-blur-sm">
+                      <span className="text-xs font-medium text-white">{journey.duration}</span>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-5">
+                    {/* Title */}
+                    <h3 className="font-cormorant mb-2 text-xl font-semibold text-zinc-800 line-clamp-1">
+                      {journey.title}
+                    </h3>
+
+                    {/* Destination */}
+                    <div className="mb-3 flex items-center gap-2 text-sm text-zinc-600">
+                      <MapPin className="size-4" />
+                      <span>{journey.destination}</span>
+                    </div>
+
+                    {/* Description */}
+                    <p className="font-inter mb-4 text-sm leading-relaxed text-zinc-600 line-clamp-2">
+                      {journey.description}
+                    </p>
+
+                    {/* Author */}
+                    <div className="mb-4 flex items-center gap-3">
+                      <img
+                        src={journey.authorAvatar}
+                        alt={journey.author}
+                        className="size-8 rounded-full border-2 border-zinc-200"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-zinc-800">{journey.author}</p>
+                        <p className="text-xs text-zinc-500">{journey.type}</p>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="flex items-center justify-between border-t border-zinc-100 pt-4">
+                      <div className="flex items-center gap-4 text-xs text-zinc-500">
+                        <span className="flex items-center gap-1">
+                          <Heart className="size-4" />
+                          {journey.likes}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                          </svg>
+                          {journey.comments}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          {journey.imports}
+                        </span>
+                      </div>
+                      <button className="rounded-lg bg-zinc-800 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-700">
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        // Gallery View
+        <>
       {/* HERO COVER SECTION */}
       <section className="relative flex h-screen items-center justify-center overflow-hidden">
         {/* Background Image with Overlay */}
@@ -750,6 +960,8 @@ export default function Journeys() {
           </Dialog>
         </div>
       </main>
+        </>
+      )}
     </div>
   );
 }

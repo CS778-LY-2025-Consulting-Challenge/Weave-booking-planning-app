@@ -115,11 +115,11 @@ export default function SavedTripsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="container mx-auto px-4 py-12 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 pt-24">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">My Trips</h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">My Trips</h1>
           <p className="text-slate-600">Your saved travel plans and itineraries</p>
         </div>
 
@@ -141,7 +141,7 @@ export default function SavedTripsPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {trips.map((trip) => (
               <div
                 key={trip.id}
@@ -149,7 +149,7 @@ export default function SavedTripsPage() {
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group"
               >
                 {/* Thumbnail */}
-                <div className="relative h-48 bg-gradient-to-br from-indigo-500 to-purple-600">
+                <div className="relative h-40 bg-gradient-to-br from-indigo-500 to-purple-600">
                   {trip.thumbnailUrl ? (
                     <Image
                       src={trip.thumbnailUrl}
@@ -168,18 +168,18 @@ export default function SavedTripsPage() {
                 </div>
 
                 {/* Content */}
-                <div className="p-5">
-                  <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition">
+                <div className="p-4">
+                  <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition">
                     {trip.title || 'Untitled Trip'}
                   </h3>
-                  <p className="text-slate-600 mb-3 flex items-center gap-2">
+                  <p className="text-slate-600 mb-3 flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     {trip.destination || 'Multiple destinations'}
                   </p>
-                  <div className="flex items-center justify-between text-sm text-slate-500">
+                  <div className="flex items-center justify-between text-xs text-slate-500">
                     <span>
                       Updated {new Date(trip.updatedAt).toLocaleDateString()}
                     </span>
