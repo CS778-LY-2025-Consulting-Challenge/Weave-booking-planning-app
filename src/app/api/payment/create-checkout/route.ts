@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
       guests,
       totalPrice,
       userId,
+      userEmail,
     } = body;
 
     // Validate required fields
@@ -59,15 +60,20 @@ export async function POST(request: NextRequest) {
       ],
       metadata: {
         hotelId,
-        hotelName,
-        hotelLocation: hotelLocation || '',
+        hotelName: hotelName.substring(0, 200),
+        hotelLocation: (hotelLocation || '').substring(0, 450),
         roomId,
-        roomName: roomName || '',
+        roomName: (roomName || '').substring(0, 200),
         checkInDate,
         checkOutDate,
         guests: guests.toString(),
         userId: userId || 'guest',
+        userEmail: userEmail || '',
       },
+      customer_email: userEmail,
+      payment_intent_data: userEmail ? {
+        receipt_email: userEmail,
+      } : undefined,
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/booking-confirmation?session_id={CHECKOUT_SESSION_ID}&status=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/hotels?status=cancelled`,
     });
