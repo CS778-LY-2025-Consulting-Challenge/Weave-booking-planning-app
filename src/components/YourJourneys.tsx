@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Calendar, TrendingUp, Star } from 'lucide-react';
+import { MapPin, Calendar, TrendingUp, Star, Plane, Edit, Trash2, Plus, Check, X } from 'lucide-react';
 import Image from 'next/image';
 
 interface Journey {
@@ -20,11 +20,16 @@ interface Journey {
   cities?: string[];
 }
 
+interface SavedTrip {
+  destination: string;
+  date: string;
+}
+
 const destinationImages: { [key: string]: string } = {
-  'Paris, France': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=500&h=300&fit=crop',
-  'Tokyo, Japan': 'https://images.unsplash.com/photo-1540959375944-7049f642e9c1?w=500&h=300&fit=crop',
+  'Paris, France': '/images/paris-dashboard.jpg',
+  'Tokyo, Japan': '/images/tokyo-dashboard.jpg',
   'Bali, Indonesia': 'https://images.unsplash.com/photo-1522250925050-faabad1cb485?w=500&h=300&fit=crop',
-  'European Grand Tour': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=500&h=300&fit=crop',
+  'European Grand Tour': '/images/europe-dasboard.jpg',
   'New York': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=500&h=300&fit=crop',
   'Sydney': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=300&fit=crop',
 };
@@ -43,8 +48,39 @@ const budgetData: { [key: string]: { spent: number; budget: number } } = {
   '4': { spent: 0, budget: 5000 },
 };
 
-export default function YourJourneys({ journeys }: { journeys: Journey[] }) {
+export default function YourJourneys({ 
+  journeys, 
+  savedTripsCount,
+  savedTrips,
+  savedLoading,
+  newTrip,
+  setNewTrip,
+  editTripId,
+  setEditTripId,
+  editTrip,
+  setEditTrip,
+  handleAddTrip,
+  handleEditTrip,
+  handleUpdateTrip,
+  handleDeleteTrip
+}: { 
+  journeys: Journey[]; 
+  savedTripsCount: number;
+  savedTrips: Record<string, SavedTrip>;
+  savedLoading: boolean;
+  newTrip: SavedTrip;
+  setNewTrip: (trip: SavedTrip) => void;
+  editTripId: string | null;
+  setEditTripId: (id: string | null) => void;
+  editTrip: SavedTrip;
+  setEditTrip: (trip: SavedTrip) => void;
+  handleAddTrip: () => void;
+  handleEditTrip: (id: string, trip: SavedTrip) => void;
+  handleUpdateTrip: () => void;
+  handleDeleteTrip: (id: string) => void;
+}) {
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [showAll, setShowAll] = useState(false);
 
   // Determine trip status dynamically
   const getTripStatus = (journey: Journey) => {
@@ -72,11 +108,20 @@ export default function YourJourneys({ journeys }: { journeys: Journey[] }) {
         return allTrips.filter(j => j.status === 'current');
       case 'past':
         return allTrips.filter(j => j.status === 'past');
+      case 'saved':
+        return allTrips.filter(j => j.type === 'copied');
+      case 'ai-saved':
+        // TODO: Filter AI-saved journeys when integrated
+        return [];
       case 'all':
       default:
         return allTrips;
     }
   }, [journeys, activeTab]);
+
+  // Count stats
+  const upcomingCount = journeys.filter(j => getTripStatus(j) === 'upcoming').length;
+  const pastCount = journeys.filter(j => getTripStatus(j) === 'past').length;
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -132,21 +177,138 @@ export default function YourJourneys({ journeys }: { journeys: Journey[] }) {
         <Tabs 
           value={activeTab} 
           onValueChange={setActiveTab}
-          className="w-full sm:w-auto"
+          className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-4 sm:w-auto">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
             <TabsTrigger value="current">Current</TabsTrigger>
             <TabsTrigger value="past">Past</TabsTrigger>
+            <TabsTrigger value="saved">Saved Journeys</TabsTrigger>
+            <TabsTrigger value="ai-saved">AI-Saved</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
-      {/* Journey Cards Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {/* Journey Cards Grid OR Saved Journeys List */}
+      {activeTab === 'saved' ? (
+        <div className="space-y-4">
+          {/* Add Trip Form */}
+          <Card className="border-gray-200 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row gap-4 items-end">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Destination</label>
+                  <input
+                    type="text"
+                    placeholder="Enter destination"
+                    className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={newTrip.destination}
+                    onChange={e => setNewTrip({ ...newTrip, destination: e.target.value })}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                  <input
+                    type="date"
+                    className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={newTrip.date}
+                    onChange={e => setNewTrip({ ...newTrip, date: e.target.value })}
+                  />
+                </div>
+                <button
+                  className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
+                  onClick={handleAddTrip}
+                >
+                  Add Journey
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Saved Trips List */}
+          {savedLoading && (
+            <div className="text-center py-12 text-gray-500">Loading...</div>
+          )}
+          {!savedLoading && Object.entries(savedTrips).length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p>No saved journeys yet.</p>
+            </div>
+          )}
+          {Object.entries(savedTrips).map(([id, trip]) => (
+            <Card key={id} className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                {editTripId === id ? (
+                  <div className="flex flex-col md:flex-row gap-4 items-end">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Destination</label>
+                      <input
+                        type="text"
+                        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={editTrip.destination}
+                        onChange={e => setEditTrip({ ...editTrip, destination: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                      <input
+                        type="date"
+                        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={editTrip.date}
+                        onChange={e => setEditTrip({ ...editTrip, date: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        onClick={handleUpdateTrip}
+                        title="Save"
+                      >
+                        <Check className="h-5 w-5" />
+                      </button>
+                      <button
+                        className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                        onClick={() => setEditTripId(null)}
+                        title="Cancel"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-900">{trip.destination}</h3>
+                      <p className="text-sm text-gray-500 mt-1">{trip.date}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                        onClick={() => handleEditTrip(id, trip)}
+                        title="Edit"
+                      >
+                        <Edit className="h-5 w-5" />
+                      </button>
+                      <button
+                        className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                        onClick={() => handleDeleteTrip(id)}
+                        title="Delete"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredJourneys.length > 0 ? (
-          filteredJourneys.map((journey) => {
+          (showAll ? filteredJourneys : filteredJourneys.slice(0, 3)).map((journey) => {
             const budget = getBudgetInfo(journey.id);
             const activities = getActivities(journey.destination);
             const country = getCountryFromDestination(journey.destination);
@@ -271,6 +433,34 @@ export default function YourJourneys({ journeys }: { journeys: Journey[] }) {
           </div>
         )}
       </div>
+      </>
+      )}
+
+      {/* View More Button - Only for regular journeys */}
+      {activeTab !== 'saved' && filteredJourneys.length > 3 && (
+        <div className="flex justify-center pt-4">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
+          >
+            {showAll ? (
+              <>
+                View Less
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+              </>
+            ) : (
+              <>
+                View More ({filteredJourneys.length - 3} more)
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
