@@ -45,6 +45,7 @@ interface Journey {
   notes?: string;
   photos?: string[];
   cities?: string[];
+  image?: string;
 }
 
 interface SavedPackage {
@@ -315,6 +316,29 @@ export default function Dashboard() {
                     <Badge variant="outline">
                       {userProfile?.preferences?.seasonPreference || 'Not Set'}
                     </Badge>
+                  </div>
+                  <div className="pt-3 border-t">
+                    <Label className="text-sm text-gray-500">Travel Stats</Label>
+                    <div className="mt-2 grid grid-cols-2 gap-3">
+                      <div className="rounded-lg bg-blue-50 p-3 text-center">
+                        <p className="text-2xl font-bold text-blue-600">{Object.keys(savedTrips).length}</p>
+                        <p className="text-xs text-gray-600">Saved Trips</p>
+                      </div>
+                      <div className="rounded-lg bg-green-50 p-3 text-center">
+                        <p className="text-2xl font-bold text-green-600">{upcomingJourneys.length}</p>
+                        <p className="text-xs text-gray-600">Upcoming</p>
+                      </div>
+                      <div className="rounded-lg bg-purple-50 p-3 text-center">
+                        <p className="text-2xl font-bold text-purple-600">{pastJourneys.length}</p>
+                        <p className="text-xs text-gray-600">Completed</p>
+                      </div>
+                      <div className="rounded-lg bg-orange-50 p-3 text-center">
+                        <p className="text-2xl font-bold text-orange-600">
+                          {new Set(journeys.map(j => j.destination)).size}
+                        </p>
+                        <p className="text-xs text-gray-600">Destinations</p>
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
