@@ -25,7 +25,7 @@ import {
 import { format } from 'date-fns';
 
 interface Guide {
-  id: number;
+  id: string;
   name: string;
   country: string;
   specialties: string[];
