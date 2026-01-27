@@ -30,6 +30,8 @@ import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { getSavedTrips, saveTrip, updateTrip, deleteTrip } from '@/lib/savedTrips';
+import DashboardMap from '@/components/DashboardMap';
+import UpcomingBookingsTickets from '@/components/UpcomingBookingsTickets';
 import { getUserProfile, type UserProfile } from '@/lib/userProfile';
 
 interface Journey {
@@ -200,27 +202,39 @@ export default function Dashboard() {
   const pastJourneys = journeys.filter((j) => j.type === 'past');
   const copiedJourneys = journeys.filter((j) => j.type === 'copied');
 
+  // Sample map destinations from journeys
+  const mapDestinations = [
+    { name: 'Paris', lat: 48.8566, lng: 2.3522 },
+    { name: 'Tokyo', lat: 35.6762, lng: 139.6503 },
+    { name: 'Bali', lat: -8.3405, lng: 115.0920 },
+    { name: 'New York', lat: 40.7128, lng: -74.0060 },
+    { name: 'Sydney', lat: -33.8688, lng: 151.2093 },
+    { name: 'Dubai', lat: 25.2048, lng: 55.2708 },
+  ];
 
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16">
-      {/* Header */}
-      <div className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <h2 className="text-lg font-semibold text-gray-900">Dashboard</h2>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 pt-20">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
         {/* Welcome Header */}
-        <div className="mb-8">
-          <h1 className="mb-2">
-            Welcome back, {user?.firstName || 'Traveler'}!
+        <div className="mb-6">
+          <h1 className="mb-2 text-4xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }}>
+            Welcome back, {user?.firstName || 'Nayak'}!
           </h1>
-          <p className="text-gray-600">
-            Manage your journeys and plan your next adventure
+          <p className="text-gray-600 text-2xl"  style={{ fontFamily: 'var(--font-special-elite)' }}>
+            Manage your journeys and plan your next adventure.
           </p>
         </div>
+
+        {/* World Map Section */}
+        <Card className="mb-8 overflow-hidden shadow-lg">
+          <CardContent className="p-0">
+            <DashboardMap destinations={mapDestinations} height={500} />
+          </CardContent>
+        </Card>
+
+        {/* Upcoming Bookings Tickets */}
+        <UpcomingBookingsTickets />
 
         {/* Summary Cards */}
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
