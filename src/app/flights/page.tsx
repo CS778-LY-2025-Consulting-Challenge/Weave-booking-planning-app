@@ -44,7 +44,6 @@ import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FlightBookingFlow } from '@/components/FlightBookingFlow';
 import { toast } from 'sonner';
-import { saveFlightBooking } from '@/lib/bookingUtils';
 
 interface Flight {
   id: string;
@@ -1580,9 +1579,6 @@ export default function FlightBooking() {
                           cabinClass: selectedFlight.cabin,
                           price: selectedFlight.price * totalPassengers,
                         };
-
-                        console.log('Saving booking data:', bookingData);
-                        saveFlightBooking(bookingData);
 
                         // Close dialogs
                         setShowConfirmation(false);
