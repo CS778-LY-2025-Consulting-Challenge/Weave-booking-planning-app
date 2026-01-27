@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { addGuideProfile } from '@/lib/guides';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -90,23 +91,28 @@ export default function ApplyGuide() {
     }
 
     setIsSubmitting(true);
-
-    // Simulate API submission
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Store application in localStorage for demo
-    const applications = JSON.parse(localStorage.getItem('guideApplications') || '[]');
-    applications.push({
-      ...formData,
-      id: Math.random().toString(36).substr(2, 9),
-      submittedAt: new Date().toISOString(),
-      status: 'pending',
-    });
-    localStorage.setItem('guideApplications', JSON.stringify(applications));
-
+    try {
+      await addGuideProfile({
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        country: formData.country,
+        city: formData.city,
+        languages: formData.languages,
+        yearsOfExperience: formData.yearsOfExperience,
+        certifications: formData.certifications,
+        bio: formData.bio,
+        specialties: formData.specialties,
+        whyGuide: formData.whyGuide,
+        createdAt: new Date().toISOString(),
+        status: 'pending',
+      });
+      setStep('success');
+      toast.success('Application submitted successfully!');
+    } catch (err) {
+      toast.error('Failed to submit application. Please try again.');
+    }
     setIsSubmitting(false);
-    setStep('success');
-    toast.success('Application submitted successfully!');
   };
 
   const languageOptions = [

@@ -30,7 +30,7 @@ export default function Onboarding() {
     if (isLoaded && isSignedIn && user?.publicMetadata?.userType) {
       const userType = user.publicMetadata.userType as string;
       if (userType === 'guide') {
-        router.push('/guide-dashboard');
+        router.push('/apply-guide');
       } else {
         router.push('/dashboard');
       }
@@ -59,7 +59,7 @@ export default function Onboarding() {
 
       // Redirect based on user type
       if (userType === 'guide') {
-        router.push('/guide-dashboard');
+        router.push('/apply-guide');
       } else {
         router.push('/dashboard');
       }

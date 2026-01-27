@@ -192,3 +192,30 @@ html {
     cursor: pointer;
   }
 }
+
+/* Custom scrollbar styles for share dialog */
+.share-dialog-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.share-dialog-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.share-dialog-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.share-dialog-scroll:hover::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+}
+
+.share-dialog-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.share-dialog-scroll.scrolling::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+}

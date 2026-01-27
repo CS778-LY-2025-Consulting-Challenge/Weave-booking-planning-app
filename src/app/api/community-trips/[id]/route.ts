@@ -46,6 +46,7 @@ export async function GET(
       ...trip,
       plannerState: JSON.parse(trip.plannerState),
       highlights: JSON.parse(trip.highlights),
+      dayGuides: trip.dayGuides ? JSON.parse(trip.dayGuides) : null, // 解析 dayGuides
     };
     
     return NextResponse.json(tripData);

@@ -30,6 +30,9 @@ import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { getSavedTrips, saveTrip, updateTrip, deleteTrip } from '@/lib/savedTrips';
+import { getUserProfile, type UserProfile } from '@/lib/userProfile';
+import DashboardMap from '@/components/DashboardMap';
+import UpcomingBookingsTickets from '@/components/UpcomingBookingsTickets';
 
 interface Journey {
   id: number;
@@ -66,6 +69,10 @@ export default function Dashboard() {
   const [editTripId, setEditTripId] = useState<string | null>(null);
   const [editTrip, setEditTrip] = useState({ destination: '', date: '' });
 
+  // User Profile State
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
   // Authentication check - redirect to auth if not signed in
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -91,13 +98,22 @@ export default function Dashboard() {
   }, [isLoaded, isSignedIn, user, router]);
 
 
-  // Load saved trips from Firebase
+  // Load saved trips and profile from Firebase
   useEffect(() => {
     if (!user?.id) return;
     setSavedLoading(true);
+    setProfileLoading(true);
+
+    // Fetch Trips
     getSavedTrips(user.id).then((data) => {
       setSavedTrips(data || {});
       setSavedLoading(false);
+    });
+
+    // Fetch Profile
+    getUserProfile(user.id).then((data) => {
+      setUserProfile(data);
+      setProfileLoading(false);
     });
   }, [user?.id]);
 
@@ -186,27 +202,39 @@ export default function Dashboard() {
   const pastJourneys = journeys.filter((j) => j.type === 'past');
   const copiedJourneys = journeys.filter((j) => j.type === 'copied');
 
+  // Sample map destinations from journeys
+  const mapDestinations = [
+    { name: 'Paris', lat: 48.8566, lng: 2.3522 },
+    { name: 'Tokyo', lat: 35.6762, lng: 139.6503 },
+    { name: 'Bali', lat: -8.3405, lng: 115.0920 },
+    { name: 'New York', lat: 40.7128, lng: -74.0060 },
+    { name: 'Sydney', lat: -33.8688, lng: 151.2093 },
+    { name: 'Dubai', lat: 25.2048, lng: 55.2708 },
+  ];
 
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16">
-      {/* Header */}
-      <div className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <h2 className="text-lg font-semibold text-gray-900">Dashboard</h2>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 pt-20">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
         {/* Welcome Header */}
-        <div className="mb-8">
-          <h1 className="mb-2">
-            Welcome back, {user?.firstName || 'Traveler'}!
+        <div className="mb-6">
+          <h1 className="mb-2 text-4xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }}>
+            Welcome back, {user?.firstName || 'Nayak'}!
           </h1>
-          <p className="text-gray-600">
-            Manage your journeys and plan your next adventure
+          <p className="text-gray-600 text-2xl"  style={{ fontFamily: 'var(--font-special-elite)' }}>
+            Manage your journeys and plan your next adventure.
           </p>
         </div>
+
+        {/* World Map Section */}
+        <Card className="mb-8 overflow-hidden shadow-lg">
+          <CardContent className="p-0">
+            <DashboardMap destinations={mapDestinations} height={500} />
+          </CardContent>
+        </Card>
+
+        {/* Upcoming Bookings Tickets */}
+        <UpcomingBookingsTickets />
 
         {/* Summary Cards */}
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -519,31 +547,55 @@ export default function Dashboard() {
                 <CardTitle>Profile</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-sm text-gray-500">Name</Label>
-                  <p>John Traveler</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">Email</Label>
-                  <p>john@example.com</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">Country</Label>
-                  <p>United States</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">
-                    Budget Preference
-                  </Label>
-                  <Badge>Mid-Range</Badge>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">
-                    Season Preference
-                  </Label>
-                  <Badge variant="outline">Spring/Fall</Badge>
-                </div>
-                <Button className="w-full" variant="outline">
+                {profileLoading ? (
+                  <div className="space-y-4 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <Label className="text-sm text-gray-500">Name</Label>
+                      <p className="font-medium">
+                        {userProfile?.firstName && userProfile?.lastName
+                          ? `${userProfile.firstName} ${userProfile.lastName}`
+                          : user?.fullName || 'Traveler'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">Email</Label>
+                      <p className="break-all">
+                        {userProfile?.email || user?.emailAddresses?.[0]?.emailAddress || 'No email'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">Country</Label>
+                      <p>{userProfile?.nationality || 'Not Set'}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">
+                        Budget Preference
+                      </Label>
+                      <Badge variant={userProfile?.preferences?.budgetPreference ? 'default' : 'secondary'}>
+                        {userProfile?.preferences?.budgetPreference || 'Not Set'}
+                      </Badge>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">
+                        Season Preference
+                      </Label>
+                      <Badge variant="outline">
+                        {userProfile?.preferences?.seasonPreference || 'Not Set'}
+                      </Badge>
+                    </div>
+                  </>
+                )}
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={() => router.push('/profile')}
+                >
                   <Edit className="mr-2 size-4" />
                   Edit Profile
                 </Button>

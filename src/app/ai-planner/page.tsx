@@ -34,6 +34,7 @@ import {
   Plus,
   Save,
   Check,
+  Share2,
 } from 'lucide-react';
 import CharizardOrb from '@/components/CharizardOrb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -234,16 +235,22 @@ const ActivityCard = ({
         console.log('[ActivityCard] Searching image for:', words, '(original:', activity.title + ')');
         
         const res = await fetch(`/api/unsplash/search?city=${encodeURIComponent(words)}`);
+        if (!res.ok) {
+          console.warn('[ActivityCard] Failed to fetch image, status:', res.status);
+          return;
+        }
         const data = await res.json();
         if (data.imageUrl) {
           setImageUrl(data.imageUrl);
         }
       } catch (err) {
-        console.error('Error fetching activity image:', err);
+        // Silently handle image fetch errors - this is not critical functionality
+        console.warn('[ActivityCard] Image fetch failed (non-critical):', err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setIsLoadingImage(false);
       }
     };
+    
     fetchImage();
   }, [activity.title, activity.location]);
 
@@ -418,6 +425,31 @@ export default function AIPlanner() {
     activity: any;
     isAdding?: boolean; // true for add mode, false/undefined for replace mode
   } | null>(null);
+  
+  // Share to community state
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareForm, setShareForm] = useState<{
+    title: string;
+    description: string;
+    highlights: string[];
+    dayGuides: Array<{
+      dayNumber: number;
+      dayTitle: string;
+      guide: string;
+      activities: Array<{
+        name: string;
+        imageUrl?: string;
+        time?: string;
+        location?: string;
+      }>;
+    }>;
+  }>({
+    title: '',
+    description: '',
+    highlights: [],
+    dayGuides: [],
+  });
   const [isAttractionDetailOpen, setIsAttractionDetailOpen] = useState(false);
   const [selectedAttraction, setSelectedAttraction] = useState<any>(null);
   const [isAccommodationChangePanelOpen, setIsAccommodationChangePanelOpen] = useState(false);
@@ -492,6 +524,105 @@ export default function AIPlanner() {
       toast.error('Failed to save trip. Please try again.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Share to community function
+  const handleShareToCommunity = async () => {
+    if (!isLoaded || !user) {
+      toast.error('Please sign in to share your trip');
+      router.push('/auth/signin');
+      return;
+    }
+
+    if (!activeState.tripTitle || !activeState.destination) {
+      toast.error('Please generate an itinerary first');
+      return;
+    }
+
+    // Prepare day guides from itinerary
+    const dayGuides = activeState.dayPlans?.map((day, index) => ({
+      dayNumber: index + 1,
+      dayTitle: day.title || `Day ${index + 1}`,
+      guide: '', // User will fill this
+      activities: day.activities?.map(act => ({
+        name: act.title || '',
+        imageUrl: act.imageUrl,
+        time: act.time,
+        location: act.location,
+      })) || [],
+    })) || [];
+
+    // Open share dialog with pre-filled data
+    setShareForm({
+      title: shareForm.title || activeState.tripTitle || '',
+      description: shareForm.description || '',
+      highlights: shareForm.highlights.length > 0 ? shareForm.highlights : [],
+      dayGuides: dayGuides,
+    });
+    setIsShareDialogOpen(true);
+  };
+
+  const handleShareSubmit = async () => {
+    if (!shareForm.title.trim()) {
+      toast.error('Please enter a title');
+      return;
+    }
+
+    setIsSharing(true);
+    
+    try {
+      const destination = Array.isArray(activeState.destination) 
+        ? activeState.destination.join(', ') 
+        : activeState.destination;
+
+      const duration = activeState.summary?.days 
+        ? `${activeState.summary.days} days`
+        : activeState.dates?.durationDays 
+        ? `${activeState.dates.durationDays} days`
+        : '1 day';
+
+      const response = await fetch('/api/community-trips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: shareForm.title,
+          destination: destination,
+          thumbnailUrl: heroImageUrl || null,
+          duration: duration,
+          description: shareForm.description,
+          plannerState: activeState,
+          highlights: shareForm.highlights,
+          dayGuides: shareForm.dayGuides, // 新增：每天的攻略
+          userName: user?.fullName || user?.firstName || 'Anonymous',
+          userAvatar: user?.imageUrl || null,
+          sourceType: 'ai-planner',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to share trip');
+      }
+
+      const sharedTrip = await response.json();
+      toast.success('Trip shared to community! 🌟', {
+        description: 'Others can now discover your journey',
+        action: {
+          label: 'View in Community',
+          onClick: () => router.push(`/community-trips/${sharedTrip.id}`),
+        },
+      });
+      
+      // Reset all dialog and map states
+      setIsShareDialogOpen(false);
+      setIsDailyRouteMapOpen(false);
+      setSelectedDay(null);
+      
+    } catch (error) {
+      console.error('[Share Trip] Error:', error);
+      toast.error('Failed to share trip. Please try again.');
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -1999,33 +2130,46 @@ export default function AIPlanner() {
                     {activeState.tripTitle || 'Your Dream Journey'}
                   </CardTitle>
                   
-                  {/* Save Button */}
-                  <Button
-                    onClick={handleSaveTrip}
-                    disabled={isSaving || savedTripId !== null}
-                    className={`shrink-0 transition-all ${
-                      savedTripId
-                        ? 'bg-green-500 hover:bg-green-600'
-                        : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
-                    }`}
-                  >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : savedTripId ? (
-                      <>
-                        <Check className="mr-2 h-4 w-4" />
-                        Saved
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Trip
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex gap-2 shrink-0">
+                    {/* Save Button */}
+                    <Button
+                      onClick={handleSaveTrip}
+                      disabled={isSaving || savedTripId !== null}
+                      className={`transition-all ${
+                        savedTripId
+                          ? 'bg-green-500 hover:bg-green-600'
+                          : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
+                      }`}
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : savedTripId ? (
+                        <>
+                          <Check className="mr-2 h-4 w-4" />
+                          Saved
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Trip
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Share to Community Button */}
+                    <Button
+                      onClick={handleShareToCommunity}
+                      disabled={!activeState.tripTitle}
+                      variant="outline"
+                      className="border-2 border-purple-500 text-purple-600 hover:bg-purple-50"
+                    >
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Share
+                    </Button>
+                  </div>
                 </div>
                 
                 {/* Icons & Counts Summary */}
@@ -2614,6 +2758,261 @@ export default function AIPlanner() {
           }}
         />
       )}
+
+      {/* Share to Community Dialog */}
+      <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-2xl font-bold">Share to Community</DialogTitle>
+          </DialogHeader>
+          
+          <div 
+            className="share-dialog-scroll space-y-4 py-4 overflow-y-auto flex-1 pr-2 pl-1"
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'transparent transparent',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.scrollbarColor = '#d1d5db transparent';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.scrollbarColor = 'transparent transparent';
+            }}
+            onScroll={(e) => {
+              const target = e.currentTarget;
+              target.classList.add('scrolling');
+              clearTimeout((target as any).scrollTimeout);
+              (target as any).scrollTimeout = setTimeout(() => {
+                target.classList.remove('scrolling');
+              }, 1000);
+            }}
+          >
+            {/* Preview Image */}
+            {heroImageUrl && (
+              <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                <img
+                  src={heroImageUrl}
+                  alt="Trip preview"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            )}
+
+            {/* Title */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Title *</label>
+              <Input
+                value={shareForm.title}
+                onChange={(e) => setShareForm({ ...shareForm, title: e.target.value })}
+                placeholder="Give your journey a catchy title..."
+                className="text-lg"
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <textarea
+                value={shareForm.description}
+                onChange={(e) => setShareForm({ ...shareForm, description: e.target.value })}
+                placeholder="Share what makes this trip special..."
+                className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground">
+                {shareForm.description.length}/500 characters
+              </p>
+            </div>
+
+            {/* Highlights */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Highlights (Optional)</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {shareForm.highlights.map((highlight, idx) => (
+                  <Badge key={idx} variant="secondary" className="gap-1">
+                    {highlight}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => {
+                        setShareForm({
+                          ...shareForm,
+                          highlights: shareForm.highlights.filter((_, i) => i !== idx),
+                        });
+                      }}
+                    />
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add a highlight (e.g., 'Family-friendly', 'Budget travel')"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                      setShareForm({
+                        ...shareForm,
+                        highlights: [...shareForm.highlights, e.currentTarget.value.trim()],
+                      });
+                      e.currentTarget.value = '';
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Day-by-Day Travel Guides */}
+            {shareForm.dayGuides.length > 0 && (
+              <div className="space-y-4 pt-4 border-t">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Daily Travel Guides</label>
+                  <p className="text-xs text-muted-foreground">
+                    Share your experiences and tips for each day. You can use **bold** or *italic* for formatting.
+                  </p>
+                </div>
+                
+                {shareForm.dayGuides.map((dayGuide, dayIndex) => (
+                  <div key={dayIndex} className="space-y-3 p-4 bg-slate-50 rounded-lg border">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-white">
+                        Day {dayGuide.dayNumber}
+                      </Badge>
+                      <h4 className="text-sm font-semibold">{dayGuide.dayTitle}</h4>
+                    </div>
+                    
+                    {/* Show activities preview */}
+                    <div className="flex flex-wrap gap-2">
+                      {dayGuide.activities.slice(0, 3).map((activity, idx) => (
+                        <div key={idx} className="text-xs text-muted-foreground bg-white px-2 py-1 rounded border">
+                          📍 {activity.name}
+                        </div>
+                      ))}
+                      {dayGuide.activities.length > 3 && (
+                        <div className="text-xs text-muted-foreground bg-white px-2 py-1 rounded border">
+                          +{dayGuide.activities.length - 3} more
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Guide textarea with formatting help */}
+                    <div className="space-y-2">
+                      <textarea
+                        id={`guide-textarea-${dayIndex}`}
+                        value={dayGuide.guide}
+                        onChange={(e) => {
+                          const newDayGuides = [...shareForm.dayGuides];
+                          newDayGuides[dayIndex] = { ...dayGuide, guide: e.target.value };
+                          setShareForm({ ...shareForm, dayGuides: newDayGuides });
+                        }}
+                        placeholder="Share your travel guide for this day... Tips: Use **text** for bold, *text* for italic, - for lists"
+                        className="min-h-[120px] w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        maxLength={1000}
+                      />
+                      <div className="flex justify-between items-center">
+                        <div className="flex gap-2 text-xs text-muted-foreground">
+                          <button
+                            type="button"
+                            className="hover:text-foreground px-2 py-1 rounded hover:bg-slate-200"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const textarea = document.getElementById(`guide-textarea-${dayIndex}`) as HTMLTextAreaElement;
+                              if (textarea) {
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const text = textarea.value;
+                                const selectedText = text.substring(start, end);
+                                const newText = text.substring(0, start) + `**${selectedText || 'bold text'}**` + text.substring(end);
+                                const newDayGuides = [...shareForm.dayGuides];
+                                newDayGuides[dayIndex] = { ...dayGuide, guide: newText };
+                                setShareForm({ ...shareForm, dayGuides: newDayGuides });
+                                // Set cursor position after inserted text
+                                setTimeout(() => {
+                                  const newPos = start + (selectedText ? selectedText.length + 4 : 11);
+                                  textarea.setSelectionRange(newPos, newPos);
+                                  textarea.focus();
+                                }, 0);
+                              }
+                            }}
+                          >
+                            <strong>B</strong> Bold
+                          </button>
+                          <button
+                            type="button"
+                            className="hover:text-foreground px-2 py-1 rounded hover:bg-slate-200 italic"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const textarea = document.getElementById(`guide-textarea-${dayIndex}`) as HTMLTextAreaElement;
+                              if (textarea) {
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const text = textarea.value;
+                                const selectedText = text.substring(start, end);
+                                const newText = text.substring(0, start) + `*${selectedText || 'italic text'}*` + text.substring(end);
+                                const newDayGuides = [...shareForm.dayGuides];
+                                newDayGuides[dayIndex] = { ...dayGuide, guide: newText };
+                                setShareForm({ ...shareForm, dayGuides: newDayGuides });
+                                // Set cursor position after inserted text
+                                setTimeout(() => {
+                                  const newPos = start + (selectedText ? selectedText.length + 2 : 13);
+                                  textarea.setSelectionRange(newPos, newPos);
+                                  textarea.focus();
+                                }, 0);
+                              }
+                            }}
+                          >
+                            <em>I</em> Italic
+                          </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {dayGuide.guide.length}/1000
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Info */}
+            <div className="rounded-lg bg-purple-50 p-4 text-sm text-purple-900">
+              <p className="font-medium mb-1">Your trip will be shared with the community</p>
+              <p className="text-purple-700">
+                Other travelers can view, like, comment, and import your itinerary to create their own version.
+              </p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 flex-shrink-0 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsShareDialogOpen(false);
+                setIsDailyRouteMapOpen(false);
+                setSelectedDay(null);
+              }}
+              disabled={isSharing}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleShareSubmit}
+              disabled={isSharing || !shareForm.title.trim()}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {isSharing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sharing...
+                </>
+              ) : (
+                <>
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share to Community
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

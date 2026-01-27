@@ -1,3 +1,4 @@
+
 "use client";
 
 import timePreciousImage from '@/images/2.png';
@@ -6,14 +7,7 @@ import circleImage from '@/images/1.webp';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import {
   BadgeCheck,
   ChevronDown,
@@ -33,8 +27,11 @@ import { VideoCall } from '@/components/VideoCall';
 import { GuideBookingDialog } from '@/components/GuideBookingDialog';
 import { VideoCallModal } from '@/components/VideoCallModal';
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+
 interface Guide {
-  id: number;
+  id: string;
   name: string;
   country: string;
   rating: number;
@@ -129,175 +126,52 @@ export default function Guides() {
     return () => clearInterval(scrollInterval);
   }, [isCarouselHovered]);
 
-  const guides: Guide[] = [
-    {
-      id: 1,
-      name: 'Andrea',
-      country: 'Italy',
-      rating: 4.9,
-      reviews: 243,
-      languages: ['English', 'German', 'French'],
-      specialties: ['History', 'Architecture', 'Nightlife'],
-      hourlyRate: 35,
-      image: '/images/andrea.jpg',
-      video: '/images/andrea-1.mp4',
-      verified: true,
-      responseTime: '5 min',
-      featured: true,
-      tagline: 'Discover the hidden gems of Rome.',
-    },
-    {
-      id: 2,
-      name: 'Thanh',
-      country: 'Vietnam',
-      rating: 5.0,
-      reviews: 189,
-      languages: ['English', 'Japanese'],
-      specialties: ['Culture', 'Food', 'Temples'],
-      hourlyRate: 40,
-      image: '/images/thanh.jpg',
-      video: '/images/thanh-1.mp4',
-      verified: true,
-      responseTime: '10 min',
-      featured: true,
-      tagline: 'Experience the vibrant culture of Ho Chi Minh City.',
-    },
-    {
-      id: 3,
-      name: 'Lucas',
-      country: 'Argentina',
-      rating: 4.8,
-      reviews: 312,
-      languages: ['English', 'Italian', 'Spanish'],
-      specialties: ['History', 'Art', 'Cuisine'],
-      hourlyRate: 38,
-      image: '/images/lucas.jpg',
-      video: '/images/lucas-1.mp4',
-      verified: true,
-      featured: true,
-      responseTime: '3 min',
-      tagline: 'Custom art experiences in Buenos Aires.',
-    },
-    {
-      id: 4,
-      name: 'Venese',
-      country: 'Japan',
-      rating: 4.9,
-      reviews: 278,
-      languages: ['English', 'French', 'German'],
-      specialties: ['Art', 'Fashion', 'Wine'],
-      hourlyRate: 42,
-      image: '/images/venese.jpg',
-      video: '/images/venese-1.mp4',
-      verified: true, 
-      featured: true,
-      responseTime: '8 min',
-      tagline: 'Tokyo’s fashion and art insider.',
-    },
-    {
-      id: 5,
-      name: 'Tiago',
-      country: 'Portugal',
-      rating: 4.7,
-      reviews: 156,
-      languages: ['English', 'Spanish', 'Catalan'],
-      specialties: ['Architecture', 'Beaches', 'Tapas'],
-      hourlyRate: 30,
-      image: '/images/tiago.jpg',
-      video: '/images/tiago-1.mp4',
-      verified: true,
-      featured: true,
-      responseTime: '12 min',
-      tagline: 'Explore Lisbon’s stunning architecture and coastal beauty.',
-    },
-    {
-      id: 6,
-      name: 'June',
-      country: 'Thailand',
-      rating: 4.8,
-      reviews: 201,
-      languages: ['English', 'Hindi', 'Marathi'],
-      specialties: ['Culture', 'Food', 'Markets'],
-      hourlyRate: 25,
-      image: '/images/june.jpg',
-      video: '/images/june-4.mp4',
-      verified: true,
-      responseTime: '6 min',
-      featured: true,
-      tagline: 'Discover the vibrant culture of Bangkok.',
-    },
-    {
-      id: 7,
-      name: 'Gunnar',
-      country: 'Iceland',
-      rating: 4.9,
-      reviews: 334,
-      languages: ['English', 'Spanish'],
-      specialties: ['Museums', 'Food', 'Broadway'],
-      hourlyRate: 45,
-      image: '/images/gunnar.jpg',
-      video: '/images/gunnar-3.mp4',
-      verified: true,
-      featured: true,
-      responseTime: '4 min',
-      tagline: "Experience Iceland's natural wonders with a local expert.",
-    },
-    {
-      id: 8,
-      name: 'Denise & Rob',
-      country: 'Tanzania',
-      rating: 5.0,
-      reviews: 267,
-      languages: ['English', 'French'],
-      specialties: ['History', 'Pubs', 'Royal Sites'],
-      hourlyRate: 40,
-      image: '/images/denis.jpg',
-      video: '/images/denise-3.mp4',
-      verified: true,
-      featured: true,
-      responseTime: '7 min',
-      tagline: 'Safari adventures with local wildlife experts.',
-    },
-    {
-      id: 9,
-      name: 'Cris',
-      country: 'Brazil',
-      rating: 4.9,
-      reviews: 215,
-      languages: ['English', 'Portuguese', 'Spanish'],
-      specialties: ['Wine', 'Coastal Towns', 'Food'],
-      hourlyRate: 32,
-      image: '/images/cris.jpg',
-      video: '/images/cris-2.mp4',
-      verified: true,
-      responseTime: '9 min',
-      featured: true,
-      tagline: "Discover Brazil's hidden gems.",
-    },
-    {
-      id: 10,
-      name: 'Zoloo',
-      country: 'Mongolia',
-      rating: 4.8,
-      reviews: 198,
-      languages: ['English', 'Thai', 'Mandarin'],
-      specialties: ['Temples', 'Street Food', 'Night Markets'],
-      hourlyRate: 28,
-      image: '/images/zoloo.jpg',
-      video: '/images/zoloo-1.mp4',
-      verified: true,
-      featured: true,
-      responseTime: '11 min',
-      tagline: 'Explore the wonders of Mongolia with a local guide.',
-    },
-  ];
+
+  // Firebase guides state
+  const [guides, setGuides] = useState<Guide[]>([]);
+  const [loadingGuides, setLoadingGuides] = useState(true);
+  const [guidesError, setGuidesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchGuides() {
+      setLoadingGuides(true);
+      setGuidesError(null);
+      try {
+        const { getAllGuides } = await import('@/lib/guides');
+        const data = await getAllGuides();
+        // Convert Firebase object to array and map to Guide interface
+        const guidesArr: Guide[] = Object.entries(data).map(([id, guide]: [string, any]) => ({
+          id: id,
+          name: guide.name || guide.fullName || 'Unknown',
+          country: guide.country || 'Unknown',
+          rating: guide.rating ?? 5,
+          reviews: guide.reviews ?? 0,
+          languages: guide.languages || [],
+          specialties: Array.isArray(guide.specialties) ? guide.specialties : (guide.specialties ? guide.specialties.split(',').map((s: string) => s.trim()) : []),
+          hourlyRate: guide.hourlyRate ?? 50,
+          image: guide.image || '/images/default-guide.jpg',
+          video: guide.video || '',
+          verified: guide.verified ?? true,
+          responseTime: guide.responseTime || 'within a day',
+          featured: guide.featured ?? false,
+          tagline: guide.tagline || '',
+        }));
+        setGuides(guidesArr);
+      } catch (err) {
+        setGuidesError('Failed to load guides.');
+      } finally {
+        setLoadingGuides(false);
+      }
+    }
+    fetchGuides();
+  }, []);
+
 
   const filteredGuides = guides.filter((guide) => {
     const matchesSearch =
       searchQuery === '' ||
-      guide.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      guide.name.toLowerCase().includes(searchQuery.toLowerCase());
-
+      guide.country?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      guide.name?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -1146,7 +1020,7 @@ export default function Guides() {
       <VideoCallModal
         open={videoCallOpen}
         onClose={handleVideoCallClose}
-        roomID={currentBooking?.guide.id.toString()}
+        roomID={currentBooking?.guide.id}
       />
     </div>
   );

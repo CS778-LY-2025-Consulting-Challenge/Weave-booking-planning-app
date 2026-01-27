@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
       description,
       plannerState,
       highlights,
+      dayGuides, // 新增：每天的攻略
       originalTripId,
       sourceType,
     } = body;
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
         description: description || '',
         plannerState: JSON.stringify(plannerState),
         highlights: JSON.stringify(highlights || []),
+        dayGuides: dayGuides ? JSON.stringify(dayGuides) : null, // 新增：存储每天的攻略
         originalTripId,
         sourceType: sourceType || 'scratch',
         rating: 0,
