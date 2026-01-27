@@ -357,9 +357,6 @@ Create a comprehensive, day-by-day itinerary that matches these parameters.
                   ? depDate.toISOString().split('T')[0]
                   : (transport.date || plannerState.dates?.start || content.dates?.start);
                 
-                // Generate booking URL
-                const bookingUrl = `https://www.google.com/travel/flights?q=${fromCode}+to+${toCode}&date=${flightDate}`;
-                
                 console.log('[Itinerary API] Enriched with Google Flights:', {
                   airline: flight.airline,
                   code: flight.airlineCode,
@@ -383,7 +380,6 @@ Create a comprehensive, day-by-day itinerary that matches these parameters.
                   aircraft: flight.aircraft,
                   price: `NZ$${flight.pricePerPerson.toLocaleString()}`,
                   priceEstimate: `NZ$${flight.price.toLocaleString()}`,
-                  bookingUrl,
                   time: formattedTime,
                   date: flightDate,
                   carbonEmissions: flight.carbonEmissions,

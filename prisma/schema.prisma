@@ -70,3 +70,97 @@ model ExpenseSplit {
 
   expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
 }
+
+// AI Trip Planner - Saved Trips (separate from expense tracking)
+model SavedTrip {
+  id               String   @id @default(uuid())
+  userId           String   // clerk userId
+  title            String
+  destination      String
+  thumbnailUrl     String?
+  
+  // AI Planner State (JSON)
+  plannerState     String   // JSON string: routeFlow, mapPoints, dates, dayPlans, etc.
+  chatHistory      String   // JSON string: all chat messages
+  transportation   String?  // JSON string: flight/transport data
+  accommodation    String?  // JSON string: hotel/accommodation data
+  safetyAlert      String?  // JSON string: safety information
+  thingsToKnow     String?  // JSON string: destination tips
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@index([userId])
+}
+
+// Community UGC - User-Generated Trip Content
+model CommunityTrip {
+  id              String   @id @default(uuid())
+  userId          String   // clerk userId
+  userName        String
+  userAvatar      String?
+  
+  // Trip Basic Info
+  title           String
+  destination     String
+  thumbnailUrl    String
+  duration        String   // e.g. "5 days & 4 nights"
+  rating          Float    @default(0)
+  description     String?  // Short description
+  
+  // Trip Content (reuse SavedTrip structure)
+  plannerState    String   // JSON: complete itinerary data
+  highlights      String   // JSON array: trip highlights
+  
+  // Statistics
+  viewCount       Int      @default(0)
+  importCount     Int      @default(0)
+  commentCount    Int      @default(0)
+  likeCount       Int      @default(0)
+  
+  // Source Tracking (for iteration loop)
+  originalTripId  String?  // If improved from another trip
+  sourceType      String?  // "ai_generated", "community_import", "scratch"
+  
+  // Status
+  isPublished     Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  comments        Comment[]
+  likes           Like[]
+  
+  @@index([userId])
+  @@index([destination])
+  @@index([rating])
+}
+
+model Comment {
+  id              String        @id @default(uuid())
+  tripId          String
+  trip            CommunityTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  userId          String        // clerk userId
+  userName        String
+  userAvatar      String?
+  content         String
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([tripId])
+}
+
+model Like {
+  id              String        @id @default(uuid())
+  tripId          String
+  trip            CommunityTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  userId          String        // clerk userId
+  
+  createdAt       DateTime      @default(now())
+  
+  @@unique([tripId, userId])
+  @@index([tripId])
+}

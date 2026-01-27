@@ -9,6 +9,7 @@ import {
   Plane,
   Settings,
   User as UserIcon,
+  MapPin,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -224,7 +225,15 @@ export default function Navbar() {
                         userButtonBox: 'flex-row-reverse',
                       }
                     }}
-                  />
+                  >
+                    <UserButton.MenuItems>
+                      <UserButton.Action
+                        label="My Trips"
+                        labelIcon={<MapPin className="size-4" />}
+                        onClick={() => router.push('/trips/saved')}
+                      />
+                    </UserButton.MenuItems>
+                  </UserButton>
                 </div>
               </SignedIn>
               <SignedOut>
@@ -263,6 +272,13 @@ export default function Navbar() {
                     {/* Mobile Auth Section */}
                     <SignedIn>
                       <div className="my-2 h-px bg-white/20" />
+                      <Link
+                        href="/trips/saved"
+                        className="flex items-center gap-2 p-2 text-white transition-colors hover:text-gray-200"
+                      >
+                        <MapPin className="size-4" />
+                        My Trips
+                      </Link>
                       <Link
                         href="/user-profile"
                         className="flex items-center gap-2 p-2 text-white transition-colors hover:text-gray-200"

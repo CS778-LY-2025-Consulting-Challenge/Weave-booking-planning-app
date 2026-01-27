@@ -16,7 +16,7 @@ const TIMELINE_ITEMS = [
   {
     id: '2',
     title: 'AI Trip Planner',
-    link: '/ai-planner',
+    link: '/ai-planner-intro',
     iconUrl: '/images/ai-planner.png',
     description:
       'Intelligent itineraries customized to your personal preferences.',

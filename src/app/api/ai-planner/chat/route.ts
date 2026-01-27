@@ -364,9 +364,6 @@ export async function POST(request: Request) {
                   ? depDate.toISOString().split('T')[0]
                   : (transport.date || plannerState.dates?.start);
                 
-                // Generate booking URL
-                const bookingUrl = `https://www.google.com/travel/flights?q=${fromCode}+to+${toCode}&date=${flightDate}`;
-                
                 console.log('[Chat API] Enriched with Google Flights:', {
                   airline: flight.airline,
                   code: flight.airlineCode,
@@ -390,7 +387,6 @@ export async function POST(request: Request) {
                   aircraft: flight.aircraft,
                   price: `NZ$${flight.pricePerPerson.toLocaleString()}`,
                   priceEstimate: `NZ$${flight.price.toLocaleString()}`,
-                  bookingUrl,
                   time: formattedTime,
                   date: flightDate,
                   carbonEmissions: flight.carbonEmissions,

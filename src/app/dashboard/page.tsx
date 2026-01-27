@@ -29,10 +29,10 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { Trip } from '@/types/expense';
 import { getSavedTrips, saveTrip, updateTrip, deleteTrip } from '@/lib/savedTrips';
 import DashboardMap from '@/components/DashboardMap';
 import UpcomingBookingsTickets from '@/components/UpcomingBookingsTickets';
+import { getUserProfile, type UserProfile } from '@/lib/userProfile';
 
 interface Journey {
   id: number;
@@ -68,8 +68,10 @@ export default function Dashboard() {
   const [newTrip, setNewTrip] = useState({ destination: '', date: '' });
   const [editTripId, setEditTripId] = useState<string | null>(null);
   const [editTrip, setEditTrip] = useState({ destination: '', date: '' });
-  const [budgetTrips, setBudgetTrips] = useState<Trip[]>([]);
-  const [budgetTripsLoading, setBudgetTripsLoading] = useState(true);
+
+  // User Profile State
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   // Authentication check - redirect to auth if not signed in
   useEffect(() => {
@@ -96,13 +98,22 @@ export default function Dashboard() {
   }, [isLoaded, isSignedIn, user, router]);
 
 
-  // Load saved trips from Firebase
+  // Load saved trips and profile from Firebase
   useEffect(() => {
     if (!user?.id) return;
     setSavedLoading(true);
+    setProfileLoading(true);
+
+    // Fetch Trips
     getSavedTrips(user.id).then((data) => {
       setSavedTrips(data || {});
       setSavedLoading(false);
+    });
+
+    // Fetch Profile
+    getUserProfile(user.id).then((data) => {
+      setUserProfile(data);
+      setProfileLoading(false);
     });
   }, [user?.id]);
 
@@ -136,38 +147,7 @@ export default function Dashboard() {
     setSavedTrips(data || {});
   };
 
-  useEffect(() => {
-    let isMounted = true;
 
-    const loadBudgetTrips = async () => {
-      setBudgetTripsLoading(true);
-      try {
-        const response = await fetch('/api/trips');
-        if (!response.ok) {
-          throw new Error('Failed to load trips');
-        }
-        const data = await response.json();
-        if (isMounted) {
-          setBudgetTrips(data.trips ?? []);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setBudgetTrips([]);
-        }
-        toast.error('Failed to load budget trips');
-      } finally {
-        if (isMounted) {
-          setBudgetTripsLoading(false);
-        }
-      }
-    };
-
-    loadBudgetTrips();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const [journeys, setJourneys] = useState<Journey[]>([
     {
@@ -328,8 +308,8 @@ export default function Dashboard() {
                       <Calendar className="size-4 text-blue-600" />
                       <span className="text-sm">{journey.destination}</span>
                       <span className="ml-auto text-sm text-gray-500">
-                        {new Date(journey.startDate).toLocaleDateString()} -{' '}
-                        {new Date(journey.endDate).toLocaleDateString()}
+                        {new Date(journey.startDate).toLocaleDateString('en-US')} -{' '}
+                        {new Date(journey.endDate).toLocaleDateString('en-US')}
                       </span>
                     </div>
                   ))}
@@ -362,9 +342,9 @@ export default function Dashboard() {
                               <p className="text-sm text-gray-500">
                                 {new Date(
                                   journey.startDate
-                                ).toLocaleDateString()}{' '}
+                                ).toLocaleDateString('en-US')}{' '}
                                 -{' '}
-                                {new Date(journey.endDate).toLocaleDateString()}
+                                {new Date(journey.endDate).toLocaleDateString('en-US')}
                               </p>
                             </div>
                             <div className="flex gap-2">
@@ -418,9 +398,9 @@ export default function Dashboard() {
                               <p className="text-sm text-gray-500">
                                 {new Date(
                                   journey.startDate
-                                ).toLocaleDateString()}{' '}
+                                ).toLocaleDateString('en-US')}{' '}
                                 -{' '}
-                                {new Date(journey.endDate).toLocaleDateString()}
+                                {new Date(journey.endDate).toLocaleDateString('en-US')}
                               </p>
                             </div>
                             <Button variant="ghost" size="sm">
@@ -462,12 +442,14 @@ export default function Dashboard() {
                           value={newTrip.date}
                           onChange={e => setNewTrip({ ...newTrip, date: e.target.value })}
                         />
-                        <button
-                          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                        <span
+                          className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 bg-black text-white hover:bg-gray-900 transition-colors cursor-pointer"
                           onClick={handleAddTrip}
+                          role="button"
+                          tabIndex={0}
                         >
                           Add Journey
-                        </button>
+                        </span>
                       </div>
                       {/* Trips List */}
                       <ul className="space-y-4">
@@ -491,42 +473,65 @@ export default function Dashboard() {
                                   value={editTrip.date}
                                   onChange={e => setEditTrip({ ...editTrip, date: e.target.value })}
                                 />
-                                <button
-                                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                                <span
+                                  className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 bg-black text-white hover:bg-gray-900 transition-colors cursor-pointer"
                                   onClick={handleUpdateTrip}
+                                  role="button"
+                                  tabIndex={0}
                                 >
                                   Save
-                                </button>
-                                <button
-                                  className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500"
+                                </span>
+                                <span
+                                  className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 bg-black text-white hover:bg-gray-900 transition-colors cursor-pointer"
                                   onClick={() => setEditTripId(null)}
+                                  role="button"
+                                  tabIndex={0}
                                 >
                                   Cancel
-                                </button>
+                                </span>
                               </div>
                             ) : (
                               <div className="flex flex-col md:flex-row gap-2 md:items-center w-full justify-between">
                                 <span className="font-semibold">{trip.destination}</span>
                                 <span className="text-gray-600">{trip.date}</span>
                                 <div className="flex gap-2 mt-2 md:mt-0">
-                                  <button
-                                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                                  <span
+                                    className="inline-flex items-center justify-center rounded-full border p-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors cursor-pointer"
                                     onClick={() => handleEditTrip(id, trip)}
+                                    role="button"
+                                    tabIndex={0}
+                                    title="Edit"
                                   >
-                                    Edit
-                                  </button>
-                                  <button
-                                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                                    <Edit className="size-4" />
+                                  </span>
+                                  <span
+                                    className="inline-flex items-center justify-center rounded-full border p-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 hover:bg-gray-100 transition-colors cursor-pointer"
                                     onClick={() => handleDeleteTrip(id)}
+                                    role="button"
+                                    tabIndex={0}
+                                    title="Delete"
                                   >
-                                    Delete
-                                  </button>
+                                    <Trash2 className="size-4 text-red-600" />
+                                  </span>
                                 </div>
                               </div>
                             )}
                           </li>
                         ))}
                       </ul>
+                      
+                      {/* View More Trips Button */}
+                      <div className="mt-6 text-center">
+                        <button
+                          onClick={() => router.push('/trips/saved')}
+                          className="inline-flex items-center justify-center gap-2 rounded-lg border border-indigo-200 px-6 py-3 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                          View More Trips
+                        </button>
+                      </div>
                     </div>
                   </TabsContent>
 
@@ -539,92 +544,58 @@ export default function Dashboard() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Trip Budgets</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {budgetTripsLoading ? (
-                  <p className="text-sm text-gray-500">Loading trips...</p>
-                ) : budgetTrips.length === 0 ? (
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-500">
-                      No trips yet. Create one to start tracking budgets.
-                    </p>
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => router.push('/trips/new')}
-                    >
-                      <Plus className="mr-2 size-4" />
-                      Create Trip
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {budgetTrips.map((trip) => (
-                      <div
-                        key={trip.id}
-                        className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 p-3"
-                      >
-                        <div>
-                          <p className="text-sm font-medium">{trip.name}</p>
-                          {trip.destination && (
-                            <p className="text-xs text-gray-500">
-                              {trip.destination}
-                            </p>
-                          )}
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => router.push(`/trips/${trip.id}/budget`)}
-                        >
-                          Budget
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      className="w-full"
-                      variant="ghost"
-                      onClick={() => router.push('/trips/new')}
-                    >
-                      <Plus className="mr-2 size-4" />
-                      New Trip
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
                 <CardTitle>Profile</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-sm text-gray-500">Name</Label>
-                  <p>John Traveler</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">Email</Label>
-                  <p>john@example.com</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">Country</Label>
-                  <p>United States</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">
-                    Budget Preference
-                  </Label>
-                  <Badge>Mid-Range</Badge>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">
-                    Season Preference
-                  </Label>
-                  <Badge variant="outline">Spring/Fall</Badge>
-                </div>
-                <Button className="w-full" variant="outline">
+                {profileLoading ? (
+                  <div className="space-y-4 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <Label className="text-sm text-gray-500">Name</Label>
+                      <p className="font-medium">
+                        {userProfile?.firstName && userProfile?.lastName
+                          ? `${userProfile.firstName} ${userProfile.lastName}`
+                          : user?.fullName || 'Traveler'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">Email</Label>
+                      <p className="break-all">
+                        {userProfile?.email || user?.emailAddresses?.[0]?.emailAddress || 'No email'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">Country</Label>
+                      <p>{userProfile?.nationality || 'Not Set'}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">
+                        Budget Preference
+                      </Label>
+                      <Badge variant={userProfile?.preferences?.budgetPreference ? 'default' : 'secondary'}>
+                        {userProfile?.preferences?.budgetPreference || 'Not Set'}
+                      </Badge>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">
+                        Season Preference
+                      </Label>
+                      <Badge variant="outline">
+                        {userProfile?.preferences?.seasonPreference || 'Not Set'}
+                      </Badge>
+                    </div>
+                  </>
+                )}
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={() => router.push('/profile')}
+                >
                   <Edit className="mr-2 size-4" />
                   Edit Profile
                 </Button>
