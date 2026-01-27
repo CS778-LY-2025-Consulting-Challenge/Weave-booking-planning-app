@@ -23,6 +23,7 @@ import {
   Compass,
   Filter,
   Heart,
+  Loader2 as Loader,
   Map,
   MapPin,
   Sun
@@ -42,9 +43,63 @@ export default function Journeys() {
   const [wishlistAnimating, setWishlistAnimating] = useState<number | null>(null);
   const [activeJourney, setActiveJourney] = useState<number | null>(null);
   
+  // Community trips from API
+  const [communityTrips, setCommunityTrips] = useState<any[]>([]);
+  const [loadingCommunity, setLoadingCommunity] = useState(false);
+  
   // Toggle button visibility logic (same as navbar)
   const [isVisible, setIsVisible] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Fetch community trips when switching to community view
+  useEffect(() => {
+    if (viewMode === 'communityJourneys' && communityTrips.length === 0) {
+      fetchCommunityTrips();
+    }
+  }, [viewMode]);
+
+  const fetchCommunityTrips = async () => {
+    try {
+      setLoadingCommunity(true);
+      const response = await fetch('/api/community-trips?limit=50');
+      if (response.ok) {
+        const data = await response.json();
+        
+        // If API returns data, use it; otherwise use mock data
+        if (data && data.length > 0) {
+          const transformedTrips = data.map((trip: any) => ({
+            id: trip.id,
+            title: trip.title,
+            author: trip.userName,
+            authorAvatar: trip.userAvatar || 'https://i.pravatar.cc/150?img=1',
+            destination: trip.destination,
+            duration: trip.duration,
+            type: 'Community',
+            image: trip.thumbnailUrl || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828',
+            description: trip.description || 'Discover this amazing journey',
+            likes: trip._count?.likes || 0,
+            comments: trip._count?.comments || 0,
+            views: trip.viewCount || 0,
+            imports: trip.importCount || 0,
+            rating: trip.rating || 4.5,
+          }));
+          setCommunityTrips(transformedTrips);
+        } else {
+          // Use mock data as fallback
+          setCommunityTrips(journeys);
+        }
+      } else {
+        // If API fails, use mock data
+        setCommunityTrips(journeys);
+      }
+    } catch (error) {
+      console.error('Error fetching community trips:', error);
+      // Use mock data as fallback
+      setCommunityTrips(journeys);
+    } finally {
+      setLoadingCommunity(false);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -359,10 +414,10 @@ export default function Journeys() {
       )}>
         <div className="inline-flex rounded-full border border-zinc-300/50 bg-white/70 p-0.5 shadow-md backdrop-blur-md">
           <button
-            onClick={() => setViewMode('myJourneys')}
+            onClick={() => setViewMode('communityJourneys')}
             className={cn(
               'px-5 py-2 text-xs font-medium transition-all duration-300 rounded-full',
-              viewMode === 'myJourneys'
+              viewMode === 'communityJourneys'
                 ? 'bg-zinc-400 text-white shadow-sm'
                 : 'text-zinc-600 hover:text-zinc-900'
             )}
@@ -370,10 +425,10 @@ export default function Journeys() {
             Community Journeys
           </button>
           <button
-            onClick={() => setViewMode('communityJourneys')}
+            onClick={() => setViewMode('myJourneys')}
             className={cn(
               'px-5 py-2 text-xs font-medium transition-all duration-300 rounded-full',
-              viewMode === 'communityJourneys'
+              viewMode === 'myJourneys'
                 ? 'bg-zinc-400 text-white shadow-sm'
                 : 'text-zinc-600 hover:text-zinc-900'
             )}
@@ -384,7 +439,7 @@ export default function Journeys() {
       </div>
 
       {/* Conditional Content */}
-      {viewMode === 'myJourneys' ? (
+      {viewMode === 'communityJourneys' ? (
         // Community Journeys - Card Grid View
         <div className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50 pb-20 pt-32">
           <div className="container mx-auto px-4 max-w-7xl">
@@ -398,16 +453,40 @@ export default function Journeys() {
               </p>
             </div>
 
+            {/* Loading State */}
+            {loadingCommunity && (
+              <div className="flex justify-center items-center py-20">
+                <div className="flex flex-col items-center gap-4">
+                  <Loader className="size-8 animate-spin text-zinc-400" />
+                  <p className="text-zinc-600">Loading community trips...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!loadingCommunity && communityTrips.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20">
+                <Compass className="size-16 text-zinc-300 mb-4" />
+                <h3 className="text-xl font-semibold text-zinc-800 mb-2">No community trips yet</h3>
+                <p className="text-zinc-600 mb-6">Be the first to share your journey!</p>
+                <Button onClick={() => router.push('/ai-planner')}>
+                  Create a Trip
+                </Button>
+              </div>
+            )}
+
             {/* Journey Grid */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {journeys.map((journey) => (
+            {!loadingCommunity && communityTrips.length > 0 && (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {communityTrips.map((journey) => (
                 <motion.div
                   key={journey.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4 }}
                   whileHover={{ y: -8 }}
-                  className="group relative overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:shadow-xl"
+                  onClick={() => router.push(`/community-trips/${journey.id}`)}
+                  className="group relative overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:shadow-xl cursor-pointer"
                 >
                   {/* Image */}
                   <div className="relative h-56 overflow-hidden">
@@ -481,7 +560,13 @@ export default function Journeys() {
                           {journey.imports}
                         </span>
                       </div>
-                      <button className="rounded-lg bg-zinc-800 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-700">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/community-trips/${journey.id}`);
+                        }}
+                        className="rounded-lg bg-zinc-800 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-700"
+                      >
                         View Details
                       </button>
                     </div>
@@ -489,6 +574,7 @@ export default function Journeys() {
                 </motion.div>
               ))}
             </div>
+            )}
           </div>
         </div>
       ) : (

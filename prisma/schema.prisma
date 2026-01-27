@@ -111,6 +111,7 @@ model CommunityTrip {
   // Trip Content (reuse SavedTrip structure)
   plannerState    String   // JSON: complete itinerary data
   highlights      String   // JSON array: trip highlights
+  dayGuides       String?  // JSON: daily travel guides with user experiences
   
   // Statistics
   viewCount       Int      @default(0)

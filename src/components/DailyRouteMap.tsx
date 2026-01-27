@@ -285,24 +285,35 @@ export default function DailyRouteMap({
 
   // Function to calculate route
   const calculateRoute = () => {
-    if (!directionsServiceRef.current || activities.length < 2) {
+    // Filter activities with valid coordinates
+    const validActivities = activities.filter(a => 
+      a && 
+      typeof a.lat === 'number' && 
+      typeof a.lng === 'number' && 
+      !isNaN(a.lat) && 
+      !isNaN(a.lng) &&
+      isFinite(a.lat) &&
+      isFinite(a.lng)
+    );
+
+    if (!directionsServiceRef.current || validActivities.length < 2) {
       setIsLoading(false);
       setIsRecalculating(false);
       return;
     }
 
-    console.log('[DailyRouteMap] Calculating route for', activities.length, 'activities');
+    console.log('[DailyRouteMap] Calculating route for', validActivities.length, 'valid activities');
 
     // Clear previous route before calculating new one
     if (directionsRendererRef.current) {
       directionsRendererRef.current.setDirections({ routes: [] });
     }
 
-    const origin = { lat: activities[0].lat, lng: activities[0].lng };
-    const destination = { lat: activities[activities.length - 1].lat, lng: activities[activities.length - 1].lng };
+    const origin = { lat: validActivities[0].lat, lng: validActivities[0].lng };
+    const destination = { lat: validActivities[validActivities.length - 1].lat, lng: validActivities[validActivities.length - 1].lng };
     
     // Waypoints are all activities except first and last
-    const waypoints = activities.slice(1, -1).map(activity => ({
+    const waypoints = validActivities.slice(1, -1).map(activity => ({
       location: { lat: activity.lat, lng: activity.lng },
       stopover: true,
     }));
@@ -385,6 +396,17 @@ export default function DailyRouteMap({
 
     console.log('[DailyRouteMap] Updating markers and recalculating route...');
 
+    // Filter activities with valid coordinates
+    const validActivities = activities.filter(a => 
+      a && 
+      typeof a.lat === 'number' && 
+      typeof a.lng === 'number' && 
+      !isNaN(a.lat) && 
+      !isNaN(a.lng) &&
+      isFinite(a.lat) &&
+      isFinite(a.lng)
+    );
+
     // Clear existing markers
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
@@ -395,7 +417,7 @@ export default function DailyRouteMap({
     }
 
     // Add new markers with updated numbers
-    activities.forEach((activity, index) => {
+    validActivities.forEach((activity, index) => {
       const marker = new window.google.maps.Marker({
         position: { lat: activity.lat, lng: activity.lng },
         map: googleMapRef.current,
@@ -438,7 +460,7 @@ export default function DailyRouteMap({
     });
 
     // Recalculate route
-    if (activities.length >= 2) {
+    if (validActivities.length >= 2) {
       calculateRoute();
     } else {
       setIsRecalculating(false);
@@ -502,19 +524,30 @@ export default function DailyRouteMap({
     const initMap = () => {
       if (!mapRef.current || !window.google) return;
 
+      // Filter activities with valid coordinates
+      const validActivities = activities.filter(a => 
+        a && 
+        typeof a.lat === 'number' && 
+        typeof a.lng === 'number' && 
+        !isNaN(a.lat) && 
+        !isNaN(a.lng) &&
+        isFinite(a.lat) &&
+        isFinite(a.lng)
+      );
+
       // Check if there are activities with valid coordinates
-      if (!activities || activities.length === 0) {
+      if (!validActivities || validActivities.length === 0) {
         setError('No activities with valid coordinates found for this day.');
         setIsLoading(false);
         return;
       }
 
-      console.log('[DailyRouteMap] Initializing map with activities:', activities);
+      console.log('[DailyRouteMap] Initializing map with activities:', validActivities);
 
       try {
         // Calculate center point
-        const centerLat = activities.reduce((sum, a) => sum + a.lat, 0) / activities.length;
-        const centerLng = activities.reduce((sum, a) => sum + a.lng, 0) / activities.length;
+        const centerLat = validActivities.reduce((sum, a) => sum + a.lat, 0) / validActivities.length;
+        const centerLng = validActivities.reduce((sum, a) => sum + a.lng, 0) / validActivities.length;
 
         console.log('[DailyRouteMap] Map center:', { lat: centerLat, lng: centerLng });
 
@@ -553,7 +586,7 @@ export default function DailyRouteMap({
         });
 
         // Add numbered markers for each activity
-        activities.forEach((activity, index) => {
+        validActivities.forEach((activity, index) => {
           const marker = new window.google.maps.Marker({
             position: { lat: activity.lat, lng: activity.lng },
             map: map,
@@ -596,7 +629,7 @@ export default function DailyRouteMap({
         });
 
         // Calculate and display route
-        if (activities.length >= 2) {
+        if (validActivities.length >= 2) {
           calculateRoute();
         } else {
           // If only 1 activity, no route needed - just show the map
