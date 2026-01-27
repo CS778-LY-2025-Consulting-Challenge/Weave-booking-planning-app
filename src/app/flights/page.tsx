@@ -40,8 +40,8 @@ import {
   X,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FlightBookingFlow } from '@/components/FlightBookingFlow';
 import { toast } from 'sonner';
 import { saveFlightBooking } from '@/lib/bookingUtils';
@@ -124,6 +124,7 @@ const CITIES: City[] = [
 
 export default function FlightBooking() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [tripType, setTripType] = useState('roundtrip');
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
@@ -169,6 +170,31 @@ export default function FlightBooking() {
     setDepartureDate(tomorrow);
     setReturnDate(nextWeek);
   }, []);
+
+  // Handle URL query parameters for pre-filling
+  useEffect(() => {
+    const fromParam = searchParams.get('from');
+    const toParam = searchParams.get('to');
+    const dateParam = searchParams.get('date');
+    const travellers = searchParams.get('travellers');
+
+    if (fromParam) setFromInput(fromParam);
+    if (toParam) setToInput(toParam);
+    if (dateParam) {
+        const date = new Date(dateParam);
+        // Valid date check
+        if (!isNaN(date.getTime())) {
+            setDepartureDate(date);
+            setTripType('one-way');
+        }
+    }
+    if (travellers) {
+        const count = parseInt(travellers);
+        if (!isNaN(count) && count > 0) {
+            setPassengerCounts(prev => ({ ...prev, adults: count }));
+        }
+    }
+  }, [searchParams]);
 
   // Multi-city flights state
   const [multiCityFlights, setMultiCityFlights] = useState<MultiCityFlight[]>([
@@ -411,6 +437,18 @@ export default function FlightBooking() {
       setIsSearching(false);
     }
   };
+
+  const autoSearchRef = useRef(false);
+
+  useEffect(() => {
+    const autoSearch = searchParams.get('autoSearch');
+    // Only search if not already searching and haven't auto-searched yet
+    if (autoSearch === 'true' && !autoSearchRef.current && fromInput && toInput && departureDate && !isSearching) {
+        // Basic throttle/debounce could be useful but we rely on the flag
+        autoSearchRef.current = true;
+        fetchFlights();
+    }
+  }, [searchParams, fromInput, toInput, departureDate, isSearching]);
 
   // Filter logic
   // Use searchResults if we have searched, otherwise empty or initial mock data

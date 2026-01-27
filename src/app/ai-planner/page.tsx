@@ -1,7 +1,9 @@
 'use client';
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
 import {
   Sparkles,
   Send,
@@ -30,6 +32,8 @@ import {
   CloudLightning,
   Wind,
   Plus,
+  Save,
+  Check,
 } from 'lucide-react';
 import CharizardOrb from '@/components/CharizardOrb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,6 +52,7 @@ import TripMap from '@/components/TripMap';
 import PlaceDetailPanel from '@/components/PlaceDetailPanel';
 import ActivityChangePanel from '@/components/ActivityChangePanel';
 import AttractionDetailPanel from '@/components/AttractionDetailPanel';
+import ProgressIndicator, { type ProgressStep, type StepStatus } from '@/components/ProgressIndicator';
 import AccommodationCard from '@/components/AccommodationCard';
 import AccommodationChangePanel from '@/components/AccommodationChangePanel';
 import TransportationCard from '@/components/TransportationCard';
@@ -373,8 +378,19 @@ const ActivityCard = ({
   );
 };
 
+// Progress indicator steps - defined outside component to avoid re-creation on each render
+const GENERATION_STEPS_DATA: ProgressStep[] = [
+  { id: 1, label: 'Understanding your preferences', status: 'pending', estimatedDuration: 1200 },
+  { id: 2, label: 'Planning destinations and timing', status: 'pending', estimatedDuration: 1800 },
+  { id: 3, label: 'Searching places & attractions', status: 'pending', estimatedDuration: 4000 },
+  { id: 4, label: 'Checking travel safety updates', status: 'pending', estimatedDuration: 2500 },
+  { id: 5, label: 'Generating daily itinerary', status: 'pending', estimatedDuration: 6000 },
+];
+
 export default function AIPlanner() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user, isLoaded } = useUser();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       type: 'ai',
@@ -386,6 +402,8 @@ export default function AIPlanner() {
   const [itinerary, setItinerary] = useState<TripState | null>(null);
   const [isChatting, setIsChatting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedTripId, setSavedTripId] = useState<string | null>(null);
   const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null); // City filter state
   const [selectedDay, setSelectedDay] = useState<number | null>(null); // NEW: Selected day for route highlighting
@@ -408,6 +426,10 @@ export default function AIPlanner() {
     accommodationIndex: number;
     accommodation: any;
   } | null>(null);
+
+  // Progress indicator state
+  const GENERATION_STEPS = GENERATION_STEPS_DATA.map(step => ({ ...step }));
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>(GENERATION_STEPS);
   const dayPlansRef = useRef<HTMLDivElement>(null);
 
   // Alternatives cache: { "dayNumber-activityIndex": [...alternatives] }
@@ -419,6 +441,59 @@ export default function AIPlanner() {
   const [isCachingAccommodation, setIsCachingAccommodation] = useState(false);
 
   const activeState = useMemo(() => itinerary || plannerState, [itinerary, plannerState]);
+
+  // Save trip function
+  const handleSaveTrip = async () => {
+    if (!isLoaded || !user) {
+      toast.error('Please sign in to save your trip');
+      router.push('/auth/signin');
+      return;
+    }
+
+    if (!activeState.tripTitle || !activeState.destination) {
+      toast.error('Please generate an itinerary first');
+      return;
+    }
+
+    setIsSaving(true);
+    
+    try {
+      const destination = Array.isArray(activeState.destination) 
+        ? activeState.destination.join(', ') 
+        : activeState.destination;
+
+      const response = await fetch('/api/saved-trips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: activeState.tripTitle,
+          destination: destination,
+          thumbnailUrl: heroImageUrl || null,
+          plannerState: JSON.stringify(activeState),
+          chatHistory: JSON.stringify(messages),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save trip');
+      }
+
+      const savedTrip = await response.json();
+      setSavedTripId(savedTrip.id);
+      toast.success('Trip saved successfully! 🎉', {
+        description: 'You can view it in My Trips',
+        action: {
+          label: 'View My Trips',
+          onClick: () => router.push('/trips/saved'),
+        },
+      });
+    } catch (error) {
+      console.error('[Save Trip] Error:', error);
+      toast.error('Failed to save trip. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Filter day plans by selected city
   const filteredDayPlans = useMemo(() => {
@@ -749,9 +824,60 @@ export default function AIPlanner() {
     preloadImages();
   }, [activeState?.dayPlans, activityImageCache]);
 
+  // Load saved trip from URL parameter (tripId)
+  useEffect(() => {
+    const tripId = searchParams?.get('tripId');
+    if (!tripId || !isLoaded || !user) return;
+
+    const loadSavedTrip = async () => {
+      try {
+        console.log('[LoadTrip] Loading saved trip:', tripId);
+        const response = await fetch(`/api/saved-trips/${tripId}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to load trip');
+        }
+
+        const savedTrip = await response.json();
+        
+        // Restore planner state
+        if (savedTrip.plannerState) {
+          const restoredState = typeof savedTrip.plannerState === 'string' 
+            ? JSON.parse(savedTrip.plannerState) 
+            : savedTrip.plannerState;
+          setPlannerState(restoredState);
+          console.log('[LoadTrip] Restored planner state:', restoredState.tripTitle);
+        }
+
+        // Restore chat history
+        if (savedTrip.chatHistory) {
+          const restoredMessages = typeof savedTrip.chatHistory === 'string'
+            ? JSON.parse(savedTrip.chatHistory)
+            : savedTrip.chatHistory;
+          setMessages(restoredMessages);
+          console.log('[LoadTrip] Restored', restoredMessages.length, 'messages');
+        }
+
+        // Mark as already saved
+        setSavedTripId(tripId);
+        toast.success('Trip loaded successfully!');
+      } catch (error) {
+        console.error('[LoadTrip] Error:', error);
+        toast.error('Failed to load trip');
+      }
+    };
+
+    loadSavedTrip();
+  }, [searchParams, isLoaded, user]);
+
   // Handle initial message from URL parameter
   useEffect(() => {
     const initialMessage = searchParams?.get('initialMessage');
+    const tripId = searchParams?.get('tripId');
+    
+    // Don't auto-send message if loading a saved trip
+    if (tripId) return;
+    
     if (initialMessage && messages.length === 1) {
       // Only auto-send if we haven't started chatting yet
       setInput(initialMessage);
@@ -796,7 +922,22 @@ export default function AIPlanner() {
     const userText = input.trim();
     setMessages((prev) => [...prev, { type: 'user', text: userText }]);
     setInput('');
-    setIsChatting(true);
+    
+    // Detect if this is likely a trip generation request
+    // (when user has filled in key fields like destination, dates, or explicitly asks for itinerary)
+    const isLikelyGeneration = 
+      plannerState.destination || 
+      plannerState.dates?.start || 
+      /\b(plan|itinerary|trip|generate|create|help me plan|suggest|recommend)\b/i.test(userText);
+    
+    if (isLikelyGeneration) {
+      setIsGenerating(true);
+      setProgressSteps(GENERATION_STEPS_DATA.map(step => ({ ...step, status: 'pending' })));
+      simulateProgress();
+    } else {
+      setIsChatting(true);
+    }
+    
     try {
       const res = await fetch('/api/ai-planner/chat', {
         method: 'POST',
@@ -806,17 +947,68 @@ export default function AIPlanner() {
       const data = await res.json();
       const reply = data?.reply ?? 'Got it!';
       const stateUpdate = data?.plannerState ?? {};
+      
       setMessages((prev) => [...prev, { type: 'ai', text: reply }]);
       setPlannerState((prev) => ({ ...prev, ...stateUpdate }));
+      
+      // If we weren't already showing progress and API returned plannerState
+      if (!isLikelyGeneration && stateUpdate && Object.keys(stateUpdate).length > 0) {
+        setIsGenerating(true);
+        setProgressSteps(GENERATION_STEPS_DATA.map(step => ({ ...step, status: 'pending' })));
+        simulateProgress();
+      }
+      
+      // API completed - mark all steps as completed
+      if (isLikelyGeneration || (stateUpdate && Object.keys(stateUpdate).length > 0)) {
+        setProgressSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
+        
+        setTimeout(() => setIsGenerating(false), 500);
+      }
     } catch (err) {
       setMessages((prev) => [...prev, { type: 'ai', text: 'Oops, something went wrong.' }]);
+      setIsGenerating(false);
     } finally {
       setIsChatting(false);
     }
   };
 
+  // Update progress step status
+  const updateStepStatus = useCallback((stepId: number, status: StepStatus) => {
+    setProgressSteps(prev =>
+      prev.map(step =>
+        step.id === stepId ? { ...step, status } : step
+      )
+    );
+  }, []);
+
+  // Simulate progress animation - but keep last step loading until API completes
+  const simulateProgress = useCallback(() => {
+    let cumulativeDelay = 0;
+
+    GENERATION_STEPS_DATA.forEach((step, index) => {
+      // Mark as loading
+      setTimeout(() => {
+        updateStepStatus(step.id, 'loading');
+      }, cumulativeDelay);
+
+      // Mark as completed (except the last step - wait for API)
+      cumulativeDelay += step.estimatedDuration || 1000;
+      if (index < GENERATION_STEPS_DATA.length - 1) {
+        setTimeout(() => {
+          updateStepStatus(step.id, 'completed');
+        }, cumulativeDelay);
+      }
+    });
+  }, [updateStepStatus]);
+
   const handleGenerate = async () => {
+    // Reset progress steps
+    setProgressSteps(GENERATION_STEPS_DATA.map(step => ({ ...step, status: 'pending' })));
     setIsGenerating(true);
+    
+    // Start progress simulation
+    simulateProgress();
+    
     try {
       console.log('[handleGenerate] Sending plannerState to API:', plannerState);
       const res = await fetch('/api/ai-planner/itinerary', {
@@ -881,14 +1073,21 @@ export default function AIPlanner() {
           }
         }
       }
+      
+      // Force complete all steps when API returns
+      setProgressSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
+      
     } catch (err: any) {
       console.error('[handleGenerate] Error:', err);
       setMessages((prev) => [
         ...prev,
         { type: 'ai', text: `Unable to generate itinerary: ${err.message || 'Please try again.'}` },
       ]);
+      // Reset progress on error
+      setProgressSteps(GENERATION_STEPS_DATA.map(step => ({ ...step, status: 'pending' })));
     } finally {
-      setIsGenerating(false);
+      // Delay hiding to show completion state
+      setTimeout(() => setIsGenerating(false), 500);
     }
   };
 
@@ -1734,7 +1933,7 @@ export default function AIPlanner() {
               <Card className="sticky top-24 flex flex-col self-start border border-slate-200 bg-gradient-to-br from-slate-50 to-gray-50 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
                 <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-8 text-center">
                   {/* Animated Charizard */}
-                  <div className="relative mb-6 flex h-48 w-48 items-center justify-center overflow-hidden">
+                  <div className="relative mb-8 flex h-40 w-40 items-center justify-center overflow-hidden">
                     <img 
                       src="https://d30mgvfwc9sz4j.cloudfront.net/charizard/charizard-animated.gif" 
                       alt="Charizard thinking" 
@@ -1750,20 +1949,30 @@ export default function AIPlanner() {
                     </div>
                   </div>
                   
-                  {/* Thinking Text */}
-                  <h2 className="mb-3 text-2xl font-bold text-slate-900">
-                    Charizard is crafting your perfect journey...
-                  </h2>
-                  <p className="max-w-md text-base text-slate-600">
-                    Analyzing destinations, finding the best activities, and creating your personalized itinerary ✨
-                  </p>
-                  
-                  {/* Loading dots */}
-                  <div className="mt-6 flex gap-2">
-                    <div className="h-3 w-3 animate-bounce rounded-full bg-slate-300" style={{ animationDelay: '0ms' }}></div>
-                    <div className="h-3 w-3 animate-bounce rounded-full bg-slate-300" style={{ animationDelay: '150ms' }}></div>
-                    <div className="h-3 w-3 animate-bounce rounded-full bg-slate-300" style={{ animationDelay: '300ms' }}></div>
-                  </div>
+                  {/* Conditional Content: Progress for generating, static text for chatting */}
+                  {isGenerating ? (
+                    <>
+                      {/* Generating Trip - Show Progress */}
+                      <h2 className="mb-6 text-2xl font-bold text-slate-900">
+                        Charizard is crafting your perfect journey...
+                      </h2>
+                      
+                      {/* Progress Indicator */}
+                      <div className="w-full max-w-md">
+                        <ProgressIndicator steps={progressSteps} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Chatting - Static Content */}
+                      <h2 className="mb-4 text-2xl font-bold text-slate-900">
+                        Charizard is thinking...
+                      </h2>
+                      <p className="text-sm text-slate-600">
+                        Ready to help you plan your adventure!
+                      </p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -1785,9 +1994,39 @@ export default function AIPlanner() {
               ) : null}
 
               <CardHeader className="relative space-y-3 pb-6">
-                <CardTitle className="text-3xl font-extrabold tracking-tight text-slate-900">
-                  {activeState.tripTitle || 'Your Dream Journey'}
-                </CardTitle>
+                <div className="flex items-start justify-between gap-4">
+                  <CardTitle className="text-3xl font-extrabold tracking-tight text-slate-900">
+                    {activeState.tripTitle || 'Your Dream Journey'}
+                  </CardTitle>
+                  
+                  {/* Save Button */}
+                  <Button
+                    onClick={handleSaveTrip}
+                    disabled={isSaving || savedTripId !== null}
+                    className={`shrink-0 transition-all ${
+                      savedTripId
+                        ? 'bg-green-500 hover:bg-green-600'
+                        : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
+                    }`}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : savedTripId ? (
+                      <>
+                        <Check className="mr-2 h-4 w-4" />
+                        Saved
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Trip
+                      </>
+                    )}
+                  </Button>
+                </div>
                 
                 {/* Icons & Counts Summary */}
                 <div className="min-w-0 lg:w-[56%] lg:min-w-[520px]">

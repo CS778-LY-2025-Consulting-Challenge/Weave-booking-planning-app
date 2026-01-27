@@ -36,42 +36,77 @@ import {
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+import { getUserProfile, updateUserProfile, type UserProfile } from '@/lib/userProfile';
 
 export default function Profile() {
-  const { isAuthenticated } = useAuth();
-  const { user } = useUser();
+  const { isLoaded, isSignedIn, user } = useUser();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth');
-    }
-  }, [isAuthenticated, router]);
-
+  // Profile Data State
   const [profileData, setProfileData] = useState({
-    firstName: user?.firstName || 'John',
-    lastName: user?.lastName || 'Doe',
-    email: user?.emailAddresses?.[0]?.emailAddress || 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    address: 'Auckland, New Zealand',
-    dateOfBirth: '1990-05-15',
-    nationality: 'New Zealand',
-    passportNumber: 'NZ123456789',
-    passportExpiry: '2030-05-15',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    dateOfBirth: '',
+    nationality: '',
+    passportNumber: '',
+    passportExpiry: '',
   });
 
+  // Preferences State
   const [preferences, setPreferences] = useState({
     currency: 'USD',
     language: 'English',
     travelClass: 'Economy',
     seatPreference: 'Window',
     mealPreference: 'None',
-    interests: ['Beach', 'Adventure', 'Culture', 'Food'],
+    interests: [] as string[],
+    budgetPreference: 'Mid-Range',
+    seasonPreference: 'Spring/Fall',
   });
+
+  // Auth check and Data Fetching
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.push('/auth');
+      return;
+    }
+
+    if (user?.id) {
+      getUserProfile(user.id).then((data) => {
+        if (data) {
+          setProfileData({
+            firstName: data.firstName || user.firstName || '',
+            lastName: data.lastName || user.lastName || '',
+            email: data.email || user.emailAddresses[0]?.emailAddress || '',
+            phone: data.phone || '',
+            address: data.address || '',
+            dateOfBirth: data.dateOfBirth || '',
+            nationality: data.nationality || '',
+            passportNumber: data.passportNumber || '',
+            passportExpiry: data.passportExpiry || '',
+          });
+          if (data.preferences) {
+            setPreferences(prev => ({ ...prev, ...data.preferences }));
+          }
+        } else {
+          // Initialize with Clerk data if no profile exists
+          setProfileData(prev => ({
+            ...prev,
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.emailAddresses[0]?.emailAddress || '',
+          }));
+        }
+      });
+    }
+  }, [isLoaded, isSignedIn, user, router]);
 
   const [notifications, setNotifications] = useState({
     emailUpdates: true,
@@ -82,13 +117,41 @@ export default function Profile() {
     newsletter: true,
   });
 
-  const handleSaveProfile = () => {
-    toast.success('Profile updated successfully!');
-    setIsEditing(false);
+  const handleSaveProfile = async () => {
+    if (!user?.id) return;
+    try {
+      await updateUserProfile(user.id, {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        phone: profileData.phone,
+        address: profileData.address,
+        dateOfBirth: profileData.dateOfBirth,
+        nationality: profileData.nationality,
+        passportNumber: profileData.passportNumber,
+        passportExpiry: profileData.passportExpiry,
+      });
+      toast.success('Profile updated successfully!');
+      setIsEditing(false);
+    } catch (error) {
+      toast.error('Failed to update profile');
+      console.error(error);
+    }
   };
 
-  const handleSavePreferences = () => {
-    toast.success('Preferences saved!');
+  const handleSavePreferences = async () => {
+    if (!user?.id) return;
+    try {
+      await updateUserProfile(user.id, {
+        preferences: {
+          ...preferences
+        }
+      });
+      toast.success('Preferences saved!');
+    } catch (error) {
+      toast.error('Failed to save preferences');
+      console.error(error);
+    }
   };
 
   const handleSaveNotifications = () => {
@@ -522,6 +585,62 @@ export default function Profile() {
 
                   <Separator />
 
+                  <h3 className="font-semibold text-gray-900">
+                    Dashboard Preferences
+                  </h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="budgetPreference">
+                        Budget Preference
+                      </Label>
+                      <Select
+                        value={preferences.budgetPreference}
+                        onValueChange={(value) =>
+                          setPreferences({
+                            ...preferences,
+                            budgetPreference: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Low">Low</SelectItem>
+                          <SelectItem value="Mid-Range">Mid-Range</SelectItem>
+                          <SelectItem value="High">High</SelectItem>
+                          <SelectItem value="Luxury">Luxury</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="seasonPreference">
+                        Season Preference
+                      </Label>
+                      <Select
+                        value={preferences.seasonPreference}
+                        onValueChange={(value) =>
+                          setPreferences({
+                            ...preferences,
+                            seasonPreference: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Spring/Fall">Spring/Fall</SelectItem>
+                          <SelectItem value="Summer">Summer</SelectItem>
+                          <SelectItem value="Winter">Winter</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <Separator />
+
                   <div>
                     <Label className="mb-3 block">Travel Interests</Label>
                     <div className="flex flex-wrap gap-2">
@@ -550,8 +669,8 @@ export default function Profile() {
                                 interest
                               )
                                 ? preferences.interests.filter(
-                                    (i) => i !== interest
-                                  )
+                                  (i) => i !== interest
+                                )
                                 : [...preferences.interests, interest],
                             });
                           }}

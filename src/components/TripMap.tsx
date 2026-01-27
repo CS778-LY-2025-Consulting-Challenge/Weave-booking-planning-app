@@ -373,6 +373,12 @@ const TripMap: React.FC<TripMapProps> = ({
 
       // Add Markers
       allPoints.forEach((p, idx) => {
+        // Validate coordinates before adding marker
+        if (!p.lng || !p.lat || isNaN(p.lng) || isNaN(p.lat)) {
+          console.warn(`[TripMap Sync] Skipping marker ${idx}: ${p.name} - Invalid coordinates [${p.lng}, ${p.lat}]`);
+          return;
+        }
+
         const isCity = cities.some(cp => cp.name === p.name);
         const isDeparture = p.name === cities[0]?.name;
         const cityNumber = cityIndexMap.get(p.name);
@@ -612,6 +618,17 @@ const TripMap: React.FC<TripMapProps> = ({
       // Add Route Line
       if (cities && cities.length >= 2) {
         console.log('[TripMap Sync] Adding route line...');
+        
+        // Filter out cities with invalid coordinates
+        const validCities = cities.filter(p => 
+          p.lng && p.lat && !isNaN(p.lng) && !isNaN(p.lat)
+        );
+        
+        if (validCities.length < 2) {
+          console.warn('[TripMap Sync] Not enough valid cities for route line');
+          return;
+        }
+        
         const sourceId = 'route-source';
         // Remove existing route layers and source
         if (map.getLayer('route-line')) {
@@ -631,7 +648,7 @@ const TripMap: React.FC<TripMapProps> = ({
               properties: {},
               geometry: {
                 type: 'LineString',
-                coordinates: cities.map(p => [p.lng, p.lat])
+                coordinates: validCities.map(p => [p.lng, p.lat])
               }
             }
           });
@@ -652,9 +669,16 @@ const TripMap: React.FC<TripMapProps> = ({
 
           // Add plane icons at the midpoint of each route segment
           // Calculate midpoints and bearings for each city-to-city segment
-          for (let i = 0; i < cities.length - 1; i++) {
-            const from = cities[i];
-            const to = cities[i + 1];
+          for (let i = 0; i < validCities.length - 1; i++) {
+            const from = validCities[i];
+            const to = validCities[i + 1];
+            
+            // Validate coordinates before calculating midpoint
+            if (!from.lng || !from.lat || !to.lng || !to.lat || 
+                isNaN(from.lng) || isNaN(from.lat) || isNaN(to.lng) || isNaN(to.lat)) {
+              console.warn(`[TripMap Sync] Skipping plane marker - Invalid coordinates between ${from.name} and ${to.name}`);
+              continue;
+            }
             
             // Calculate midpoint
             const midLng = (from.lng + to.lng) / 2;
@@ -845,7 +869,17 @@ const TripMap: React.FC<TripMapProps> = ({
 
       // Fit bounds
       const bounds = new mapboxgl.LngLatBounds();
-      allPoints.forEach(p => bounds.extend([p.lng, p.lat]));
+      // Only extend bounds with valid coordinates
+      const validPoints = allPoints.filter(p => 
+        p.lng && p.lat && !isNaN(p.lng) && !isNaN(p.lat)
+      );
+      
+      if (validPoints.length === 0) {
+        console.warn('[TripMap Sync] No valid points to fit bounds');
+        return;
+      }
+      
+      validPoints.forEach(p => bounds.extend([p.lng, p.lat]));
       console.log('[TripMap Sync] Fitting bounds...');
       
       // Save global bounds for "Reset View" button

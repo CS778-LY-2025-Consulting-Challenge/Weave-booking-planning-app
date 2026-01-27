@@ -58,3 +58,5 @@ next-env.d.ts
 /.clerk/
 
 /src/generated/prisma
+# backups
+/backups/

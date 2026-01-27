@@ -12,7 +12,7 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours (tips don't change as fr
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { destination, userOrigin } = body;
+    const { destination, userOrigin, forceRefresh } = body;
 
     if (!destination) {
       return NextResponse.json(
@@ -21,12 +21,12 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('[Destination Tips] Generating tips for:', destination);
+    console.log('[Destination Tips] Generating tips for:', destination, forceRefresh ? '(force refresh)' : '');
 
-    // Check cache first
+    // Check cache first (unless force refresh is requested)
     const cacheKey = `tips-${destination.toLowerCase()}-${(userOrigin || 'global').toLowerCase()}`;
     const cached = cache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    if (!forceRefresh && cached && Date.now() - cached.timestamp < CACHE_DURATION) {
       console.log('[Destination Tips] Returning cached data');
       return NextResponse.json(cached.data);
     }

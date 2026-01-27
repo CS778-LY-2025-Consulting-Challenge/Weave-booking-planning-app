@@ -545,7 +545,7 @@ export default function Home() {
             {/* Card 3 - Journeys */}
             <div
               className="group relative cursor-pointer overflow-hidden rounded-lg shadow-lg transition-all duration-500 hover:shadow-2xl"
-              onClick={() => router.push('/packages')}
+              onClick={() => router.push('/ai-planner-intro')}
             >
               <div className="relative aspect-[3/4]">
                 <img
