@@ -32,6 +32,7 @@ import { useRouter } from 'next/navigation';
 import { getSavedTrips, saveTrip, updateTrip, deleteTrip } from '@/lib/savedTrips';
 import { getUserProfile, type UserProfile } from '@/lib/userProfile';
 import DashboardMap from '@/components/DashboardMap';
+import YourJourneys from '@/components/YourJourneys';
 
 interface Journey {
   id: number;
@@ -231,6 +232,9 @@ export default function Dashboard() {
             <DashboardMap destinations={mapDestinations} height={500} />
           </CardContent>
         </Card>
+
+        {/* Your Journeys Section */}
+        <YourJourneys journeys={journeys} />
 
         {/* Summary Cards */}
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
