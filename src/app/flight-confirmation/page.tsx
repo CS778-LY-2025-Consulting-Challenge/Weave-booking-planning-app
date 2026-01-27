@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
-import { saveFlightBooking } from '@/lib/bookingUtils';
 
 interface FlightBookingConfirmation {
   bookingReference: string;
@@ -74,26 +73,6 @@ export default function FlightConfirmationPage() {
             
             if (status === 'success') {
               toast.success('Flight booked successfully! Check your email for details.');
-              
-              // 🎫 Save to Dashboard Tickets
-              console.log('Saving flight to dashboard tickets:', foundBooking);
-              
-              // Extract clean airport codes from the "City (CODE)" format
-              const fromCode = foundBooking.flight.from.split('(')[1]?.replace(')', '') || foundBooking.flight.from;
-              const toCode = foundBooking.flight.to.split('(')[1]?.replace(')', '') || foundBooking.flight.to;
-              
-              saveFlightBooking({
-                id: foundBooking.bookingReference,
-                from: fromCode,
-                to: toCode,
-                departureDate: foundBooking.bookingDate.split('T')[0],
-                airline: foundBooking.flight.airline,
-                flightNumber: foundBooking.flight.id || `${foundBooking.flight.airline.substring(0, 2)}${Math.floor(Math.random() * 9000) + 1000}`,
-                cabinClass: foundBooking.flight.cabin,
-                price: foundBooking.totalPrice,
-              });
-              
-              console.log('Flight booking saved to dashboard successfully!');
             }
           } else {
             setError('Booking not found');

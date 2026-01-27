@@ -240,7 +240,7 @@ export default function Navbar() {
                 <Button
                   onClick={() => router.push('/auth')}
                   size="sm"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-purple-700 text-white"
+                  className="bg-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-gray-100 text-gray-900"
                 >
                   Sign In
                 </Button>
@@ -305,7 +305,7 @@ export default function Navbar() {
                       <div className="my-2 h-px bg-white/20" />
                       <Button
                         onClick={() => router.push('/auth')}
-                        className="mx-2 bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-purple-700 text-white"
+                        className="mx-2 bg-white shadow-lg transition-all duration-300 hover:bg-gray-100 text-gray-900"
                       >
                         Sign In
                       </Button>

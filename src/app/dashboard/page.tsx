@@ -32,7 +32,7 @@ import { useRouter } from 'next/navigation';
 import { getSavedTrips, saveTrip, updateTrip, deleteTrip } from '@/lib/savedTrips';
 import { getUserProfile, type UserProfile } from '@/lib/userProfile';
 import DashboardMap from '@/components/DashboardMap';
-import UpcomingBookingsTickets from '@/components/UpcomingBookingsTickets';
+import YourJourneys from '@/components/YourJourneys';
 
 interface Journey {
   id: number;
@@ -152,21 +152,23 @@ export default function Dashboard() {
   const [journeys, setJourneys] = useState<Journey[]>([
     {
       id: 1,
-      destination: 'Paris, France',
-      startDate: '2025-12-15',
-      endDate: '2025-12-22',
-      flightBooked: true,
-      hotelBooked: true,
-      type: 'upcoming',
-    },
-    {
-      id: 2,
       destination: 'Tokyo, Japan',
       startDate: '2026-02-10',
       endDate: '2026-02-20',
-      flightBooked: false,
-      hotelBooked: false,
+      flightBooked: true,
+      hotelBooked: true,
       type: 'upcoming',
+      image: '/images/tokyo-dashboard.jpg',
+    },
+    {
+      id: 2,
+      destination: 'Paris, France',
+      startDate: '2026-03-15',
+      endDate: '2026-03-22',
+      flightBooked: false,
+      hotelBooked: true,
+      type: 'upcoming',
+      image: '/images/paris-dashboard.jpg',
     },
     {
       id: 3,
@@ -186,6 +188,7 @@ export default function Dashboard() {
       flightBooked: false,
       hotelBooked: false,
       type: 'copied',
+      image: '/images/europe-dasboard.jpg',
       cities: [
         'Paris',
         'Amsterdam',
@@ -198,8 +201,20 @@ export default function Dashboard() {
     },
   ]);
 
-  const upcomingJourneys = journeys.filter((j) => j.type === 'upcoming');
-  const pastJourneys = journeys.filter((j) => j.type === 'past');
+  const upcomingJourneys = journeys.filter((j) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDate = new Date(j.startDate);
+    startDate.setHours(0, 0, 0, 0);
+    return startDate >= today;
+  });
+  const pastJourneys = journeys.filter((j) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(j.endDate);
+    endDate.setHours(0, 0, 0, 0);
+    return endDate < today;
+  });
   const copiedJourneys = journeys.filter((j) => j.type === 'copied');
 
   // Sample map destinations from journeys
@@ -226,402 +241,371 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* World Map Section */}
+        {/* World Map Section - Full Width */}
         <Card className="mb-8 overflow-hidden shadow-lg">
           <CardContent className="p-0">
             <DashboardMap destinations={mapDestinations} height={500} />
           </CardContent>
         </Card>
 
-        {/* Upcoming Bookings Tickets */}
-        <UpcomingBookingsTickets />
+        {/* Your Journeys Section */}
+        <YourJourneys 
+          journeys={journeys} 
+          savedTripsCount={Object.keys(savedTrips).length}
+          savedTrips={savedTrips}
+          savedLoading={savedLoading}
+          newTrip={newTrip}
+          setNewTrip={setNewTrip}
+          editTripId={editTripId}
+          setEditTripId={setEditTripId}
+          editTrip={editTrip}
+          setEditTrip={setEditTrip}
+          handleAddTrip={handleAddTrip}
+          handleEditTrip={handleEditTrip}
+          handleUpdateTrip={handleUpdateTrip}
+          handleDeleteTrip={handleDeleteTrip}
+        />
 
-        {/* Summary Cards */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Upcoming Trips</p>
-                  <p className="text-3xl">{upcomingJourneys.length}</p>
+        {/* Profile and Calendar Section */}
+        <div className="flex gap-6 mb-8">
+          {/* Profile */}
+          <Card className="flex-1">
+            <CardHeader>
+              <CardTitle>Profile</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {profileLoading ? (
+                <div className="space-y-4 animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                 </div>
-                <div className="rounded-full bg-blue-100 p-3">
-                  <Plane className="size-6 text-blue-600" />
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div>
+                    <Label className="text-sm text-gray-500">Name</Label>
+                    <p className="font-medium">
+                      {userProfile?.firstName && userProfile?.lastName
+                        ? `${userProfile.firstName} ${userProfile.lastName}`
+                        : user?.fullName || 'Traveler'}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-gray-500">Email</Label>
+                    <p className="break-all">
+                      {userProfile?.email || user?.emailAddresses?.[0]?.emailAddress || 'No email'}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-gray-500">Country</Label>
+                    <p>{userProfile?.nationality || 'Not Set'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-gray-500">
+                      Budget Preference
+                    </Label>
+                    <Badge variant={userProfile?.preferences?.budgetPreference ? 'default' : 'secondary'}>
+                      {userProfile?.preferences?.budgetPreference || 'Not Set'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-gray-500">
+                      Season Preference
+                    </Label>
+                    <Badge variant="outline">
+                      {userProfile?.preferences?.seasonPreference || 'Not Set'}
+                    </Badge>
+                  </div>
+                </>
+              )}
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => router.push('/profile')}
+              >
+                <Edit className="mr-2 size-4" />
+                Edit Profile
+              </Button>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Past Journeys</p>
-                  <p className="text-3xl">{pastJourneys.length}</p>
-                </div>
-                <div className="rounded-full bg-green-100 p-3">
-                  <MapPin className="size-6 text-green-600" />
-                </div>
+          {/* Calendar */}
+          <Card className="flex-1">
+            <CardHeader>
+              <div className="space-y-1">
+                <CardTitle>
+                  {(() => {
+                    if (upcomingJourneys.length === 0) {
+                      return 'Travel Calendar';
+                    }
+                    
+                    if (upcomingJourneys.length === 1) {
+                      const journey = upcomingJourneys[0];
+                      const startDate = new Date(journey.startDate);
+                      const endDate = new Date(journey.endDate);
+                      const startMonth = startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                      const endMonth = endDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                      
+                      if (startMonth === endMonth) {
+                        return `Travel Calendar — ${startMonth}`;
+                      } else {
+                        const startShort = startDate.toLocaleDateString('en-US', { month: 'short' });
+                        const endShort = endDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                        return `Travel Calendar — ${startShort}–${endShort}`;
+                      }
+                    }
+                    
+                    // Multiple trips - collect all unique months
+                    const monthsSet = new Set<string>();
+                    let year = '';
+                    
+                    upcomingJourneys.forEach(journey => {
+                      const start = new Date(journey.startDate);
+                      const end = new Date(journey.endDate);
+                      
+                      // Add all months between start and end
+                      const current = new Date(start);
+                      while (current <= end) {
+                        monthsSet.add(current.toLocaleDateString('en-US', { month: 'short' }));
+                        year = current.getFullYear().toString();
+                        current.setMonth(current.getMonth() + 1);
+                      }
+                    });
+                    
+                    const months = Array.from(monthsSet).join(', ');
+                    return `Travel Calendar - ${months} ${year}`;
+                  })()}
+                </CardTitle>
+                <p className="text-sm text-gray-500">Your next adventure starts here</p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Saved Journeys</p>
-                  <p className="text-3xl">{Object.keys(savedTrips).length}</p>
-                </div>
-                <div className="rounded-full bg-purple-100 p-3">
-                  <Calendar className="size-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Main Content */}
-          <div className="space-y-6 lg:col-span-2">
-            {/* Calendar */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Travel Calendar</CardTitle>
-                <CardDescription>
-                  View your upcoming trips at a glance
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+            </CardHeader>
+            <CardContent>
+              <style dangerouslySetInnerHTML={{__html: `
+                @keyframes fadeInTrip {
+                  from {
+                    opacity: 0;
+                    transform: translateY(-2px);
+                  }
+                  to {
+                    opacity: 1;
+                    transform: translateY(0);
+                  }
+                }
+                
+                .trip-date-0 {
+                  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+                  color: #1e40af !important;
+                  font-weight: 600;
+                  position: relative;
+                  animation: fadeInTrip 0.4s ease-out;
+                }
+                .trip-date-0:hover {
+                  background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%) !important;
+                  transform: scale(1.05);
+                  transition: all 0.2s ease;
+                }
+                
+                .trip-date-1 {
+                  background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%) !important;
+                  color: #be185d !important;
+                  font-weight: 600;
+                  position: relative;
+                  animation: fadeInTrip 0.4s ease-out;
+                }
+                .trip-date-1:hover {
+                  background: linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 100%) !important;
+                  transform: scale(1.05);
+                  transition: all 0.2s ease;
+                }
+                
+                .trip-date-2 {
+                  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
+                  color: #15803d !important;
+                  font-weight: 600;
+                  position: relative;
+                  animation: fadeInTrip 0.4s ease-out;
+                }
+                .trip-date-2:hover {
+                  background: linear-gradient(135deg, #bbf7d0 0%, #86efac 100%) !important;
+                  transform: scale(1.05);
+                  transition: all 0.2s ease;
+                }
+                
+                .trip-tooltip {
+                  position: absolute;
+                  bottom: 100%;
+                  left: 50%;
+                  transform: translateX(-50%) translateY(-4px);
+                  background: rgba(17, 24, 39, 0.95);
+                  color: white;
+                  padding: 8px 12px;
+                  border-radius: 8px;
+                  font-size: 11px;
+                  white-space: nowrap;
+                  pointer-events: none;
+                  opacity: 0;
+                  transition: opacity 0.2s, transform 0.2s;
+                  z-index: 50;
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                }
+                
+                .trip-tooltip::after {
+                  content: '';
+                  position: absolute;
+                  top: 100%;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  width: 0;
+                  height: 0;
+                  border-left: 6px solid transparent;
+                  border-right: 6px solid transparent;
+                  border-top: 6px solid rgba(17, 24, 39, 0.95);
+                }
+                
+                .trip-date-0:hover .trip-tooltip,
+                .trip-date-1:hover .trip-tooltip,
+                .trip-date-2:hover .trip-tooltip {
+                  opacity: 1;
+                  transform: translateX(-50%) translateY(-8px);
+                }
+                
+                .trip-label {
+                  font-size: 9px;
+                  font-weight: 700;
+                  letter-spacing: 0.3px;
+                  margin-top: 2px;
+                  line-height: 1;
+                  opacity: 0.9;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  max-width: 100%;
+                }
+                
+                .trip-start-badge {
+                  position: absolute;
+                  top: -2px;
+                  right: -2px;
+                  width: 6px;
+                  height: 6px;
+                  border-radius: 50%;
+                  background: currentColor;
+                  box-shadow: 0 0 0 2px white;
+                  animation: pulse 2s ease-in-out infinite;
+                }
+                
+                @keyframes pulse {
+                  0%, 100% {
+                    opacity: 1;
+                    transform: scale(1);
+                  }
+                  50% {
+                    opacity: 0.7;
+                    transform: scale(1.2);
+                  }
+                }
+                
+                .calendar-with-trips [data-trip] {
+                  border-radius: 8px;
+                  transition: all 0.2s ease;
+                }
+              `}} />
+              <div className="calendar-with-trips">
                 <CalendarComponent
                   mode="single"
                   selected={date}
                   onSelect={setDate}
-                  className="rounded-md border"
-                />
-                <div className="mt-4 space-y-2">
-                  {upcomingJourneys.map((journey) => (
-                    <div
-                      key={journey.id}
-                      className="flex items-center gap-2 rounded-lg bg-blue-50 p-2"
-                    >
-                      <Calendar className="size-4 text-blue-600" />
-                      <span className="text-sm">{journey.destination}</span>
-                      <span className="ml-auto text-sm text-gray-500">
-                        {new Date(journey.startDate).toLocaleDateString('en-US')} -{' '}
-                        {new Date(journey.endDate).toLocaleDateString('en-US')}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Journey Management */}
-            <Card>
-              <CardHeader>
-                <CardTitle>My Journeys</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="upcoming">
-
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="upcoming">Upcoming Journeys</TabsTrigger>
-                    <TabsTrigger value="past">Past Journeys</TabsTrigger>
-                    <TabsTrigger value="saved">Saved Journeys</TabsTrigger>
-                  </TabsList>
-
-
-                  <TabsContent value="upcoming" className="space-y-4">
-                    {upcomingJourneys.map((journey) => (
-                      <Card key={journey.id}>
-                        <CardContent className="p-4">
-                          <div className="mb-3 flex items-start justify-between">
-                            <div>
-                              <h3 className="text-lg">{journey.destination}</h3>
-                              <p className="text-sm text-gray-500">
-                                {new Date(
-                                  journey.startDate
-                                ).toLocaleDateString('en-US')}{' '}
-                                -{' '}
-                                {new Date(journey.endDate).toLocaleDateString('en-US')}
-                              </p>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm">
-                                <Edit className="size-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="size-4 text-red-600" />
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Badge
-                              variant={
-                                journey.flightBooked ? 'default' : 'secondary'
-                              }
-                            >
-                              {journey.flightBooked ? (
-                                <Check className="mr-1 size-3" />
-                              ) : (
-                                <X className="mr-1 size-3" />
-                              )}
-                              Flight
-                            </Badge>
-                            <Badge
-                              variant={
-                                journey.hotelBooked ? 'default' : 'secondary'
-                              }
-                            >
-                              {journey.hotelBooked ? (
-                                <Check className="mr-1 size-3" />
-                              ) : (
-                                <X className="mr-1 size-3" />
-                              )}
-                              Hotel
-                            </Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </TabsContent>
-
-
-                  <TabsContent value="past" className="space-y-4">
-                    {pastJourneys.map((journey) => (
-                      <Card key={journey.id}>
-                        <CardContent className="p-4">
-                          <div className="mb-3 flex items-start justify-between">
-                            <div>
-                              <h3 className="text-lg">{journey.destination}</h3>
-                              <p className="text-sm text-gray-500">
-                                {new Date(
-                                  journey.startDate
-                                ).toLocaleDateString('en-US')}{' '}
-                                -{' '}
-                                {new Date(journey.endDate).toLocaleDateString('en-US')}
-                              </p>
-                            </div>
-                            <Button variant="ghost" size="sm">
-                              <Edit className="size-4" />
-                            </Button>
-                          </div>
-                          {journey.notes && (
-                            <div className="mt-3 rounded-lg bg-gray-50 p-3">
-                              <p className="text-sm text-gray-600 italic">
-                                "{journey.notes}"
-                              </p>
-                            </div>
-                          )}
-                          <Button variant="outline" size="sm" className="mt-3">
-                            <Plus className="mr-2 size-4" />
-                            Add Photos & Notes
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </TabsContent>
-
-
-                  <TabsContent value="saved" className="space-y-4">
-                    <div className="max-w-2xl mx-auto p-2">
-                      <h2 className="text-xl font-bold mb-4 text-center">Saved Journeys</h2>
-                      {/* Add Trip Form */}
-                      <div className="mb-6 flex flex-col md:flex-row gap-4 items-center justify-center">
-                        <input
-                          type="text"
-                          placeholder="Destination"
-                          className="border rounded px-3 py-2 w-48"
-                          value={newTrip.destination}
-                          onChange={e => setNewTrip({ ...newTrip, destination: e.target.value })}
-                        />
-                        <input
-                          type="date"
-                          className="border rounded px-3 py-2 w-40"
-                          value={newTrip.date}
-                          onChange={e => setNewTrip({ ...newTrip, date: e.target.value })}
-                        />
-                        <span
-                          className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 bg-black text-white hover:bg-gray-900 transition-colors cursor-pointer"
-                          onClick={handleAddTrip}
-                          role="button"
-                          tabIndex={0}
-                        >
-                          Add Journey
-                        </span>
-                      </div>
-                      {/* Trips List */}
-                      <ul className="space-y-4">
-                        {savedLoading && <li className="text-center text-gray-500">Loading...</li>}
-                        {!savedLoading && Object.entries(savedTrips).length === 0 && (
-                          <li className="text-center text-gray-500">No saved journeys yet.</li>
-                        )}
-                        {Object.entries(savedTrips).map(([id, trip]) => (
-                          <li key={id} className="border rounded p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 shadow">
-                            {editTripId === id ? (
-                              <div className="flex flex-col md:flex-row gap-2 md:items-center w-full">
-                                <input
-                                  type="text"
-                                  className="border rounded px-2 py-1 w-40"
-                                  value={editTrip.destination}
-                                  onChange={e => setEditTrip({ ...editTrip, destination: e.target.value })}
-                                />
-                                <input
-                                  type="date"
-                                  className="border rounded px-2 py-1 w-32"
-                                  value={editTrip.date}
-                                  onChange={e => setEditTrip({ ...editTrip, date: e.target.value })}
-                                />
-                                <span
-                                  className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 bg-black text-white hover:bg-gray-900 transition-colors cursor-pointer"
-                                  onClick={handleUpdateTrip}
-                                  role="button"
-                                  tabIndex={0}
-                                >
-                                  Save
-                                </span>
-                                <span
-                                  className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 bg-black text-white hover:bg-gray-900 transition-colors cursor-pointer"
-                                  onClick={() => setEditTripId(null)}
-                                  role="button"
-                                  tabIndex={0}
-                                >
-                                  Cancel
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="flex flex-col md:flex-row gap-2 md:items-center w-full justify-between">
-                                <span className="font-semibold">{trip.destination}</span>
-                                <span className="text-gray-600">{trip.date}</span>
-                                <div className="flex gap-2 mt-2 md:mt-0">
-                                  <span
-                                    className="inline-flex items-center justify-center rounded-full border p-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors cursor-pointer"
-                                    onClick={() => handleEditTrip(id, trip)}
-                                    role="button"
-                                    tabIndex={0}
-                                    title="Edit"
-                                  >
-                                    <Edit className="size-4" />
-                                  </span>
-                                  <span
-                                    className="inline-flex items-center justify-center rounded-full border p-2 text-sm font-medium w-fit whitespace-nowrap shrink-0 hover:bg-gray-100 transition-colors cursor-pointer"
-                                    onClick={() => handleDeleteTrip(id)}
-                                    role="button"
-                                    tabIndex={0}
-                                    title="Delete"
-                                  >
-                                    <Trash2 className="size-4 text-red-600" />
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
+                  className="rounded-md border w-full"
+                  formatters={{
+                    formatDay: (date) => {
+                      const tripData = upcomingJourneys.map((journey, index) => {
+                        const start = new Date(journey.startDate);
+                        const end = new Date(journey.endDate);
+                        start.setHours(0, 0, 0, 0);
+                        end.setHours(0, 0, 0, 0);
+                        const checkDate = new Date(date);
+                        checkDate.setHours(0, 0, 0, 0);
+                        
+                        if (checkDate >= start && checkDate <= end) {
+                          const isStart = checkDate.getTime() === start.getTime();
+                          const destination = journey.destination.split(',')[0];
+                          const country = journey.destination.split(',')[1]?.trim() || '';
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const status = checkDate >= today ? 'Upcoming' : 'Past';
+                          
+                          // Get flag emoji based on country
+                          const flagMap: { [key: string]: string } = {
+                            'Japan': '🇯🇵',
+                            'France': '🇫🇷',
+                            'Indonesia': '🇮🇩',
+                            'USA': '🇺🇸',
+                            'UK': '🇬🇧',
+                            'Italy': '🇮🇹',
+                            'Spain': '🇪🇸',
+                            'Germany': '🇩🇪',
+                          };
+                          const flag = flagMap[country] || '🌍';
+                          
+                          return {
+                            index,
+                            destination,
+                            country,
+                            flag,
+                            isStart,
+                            status,
+                            startDate: start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                            endDate: end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                          };
+                        }
+                        return null;
+                      }).filter(Boolean)[0];
                       
-                      {/* View More Trips Button */}
-                      <div className="mt-6 text-center">
+                      if (tripData) {
+                        return `
+                          <div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 4px;">
+                            ${tripData.isStart ? '<div class="trip-start-badge"></div>' : ''}
+                            <div style="font-size: 14px; font-weight: 700;">${date.getDate()}</div>
+                            <div class="trip-label">${tripData.destination.substring(0, 5)}</div>
+                            <div class="trip-tooltip">
+                              <div style="font-weight: 700; margin-bottom: 4px;">${tripData.flag} ${tripData.destination}, ${tripData.country}</div>
+                              <div style="font-size: 10px; opacity: 0.9;">${tripData.startDate} → ${tripData.endDate}</div>
+                              <div style="margin-top: 4px; padding: 2px 6px; background: rgba(255,255,255,0.2); border-radius: 4px; font-size: 9px; font-weight: 600; display: inline-block;">${tripData.status}</div>
+                            </div>
+                          </div>
+                        `;
+                      }
+                      return `<div style="font-size: 14px;">${date.getDate()}</div>`;
+                    }
+                  }}
+                  components={{
+                    DayButton: ({ day, modifiers, children, ...props }: any) => {
+                      const tripIndex = upcomingJourneys.findIndex(journey => {
+                        const start = new Date(journey.startDate);
+                        const end = new Date(journey.endDate);
+                        start.setHours(0, 0, 0, 0);
+                        end.setHours(0, 0, 0, 0);
+                        const checkDate = new Date(day.date);
+                        checkDate.setHours(0, 0, 0, 0);
+                        return checkDate >= start && checkDate <= end;
+                      });
+                      
+                      return (
                         <button
-                          onClick={() => router.push('/trips/saved')}
-                          className="inline-flex items-center justify-center gap-2 rounded-lg border border-indigo-200 px-6 py-3 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                          </svg>
-                          View More Trips
-                        </button>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                </Tabs>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {profileLoading ? (
-                  <div className="space-y-4 animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                  </div>
-                ) : (
-                  <>
-                    <div>
-                      <Label className="text-sm text-gray-500">Name</Label>
-                      <p className="font-medium">
-                        {userProfile?.firstName && userProfile?.lastName
-                          ? `${userProfile.firstName} ${userProfile.lastName}`
-                          : user?.fullName || 'Traveler'}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-gray-500">Email</Label>
-                      <p className="break-all">
-                        {userProfile?.email || user?.emailAddresses?.[0]?.emailAddress || 'No email'}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-gray-500">Country</Label>
-                      <p>{userProfile?.nationality || 'Not Set'}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-gray-500">
-                        Budget Preference
-                      </Label>
-                      <Badge variant={userProfile?.preferences?.budgetPreference ? 'default' : 'secondary'}>
-                        {userProfile?.preferences?.budgetPreference || 'Not Set'}
-                      </Badge>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-gray-500">
-                        Season Preference
-                      </Label>
-                      <Badge variant="outline">
-                        {userProfile?.preferences?.seasonPreference || 'Not Set'}
-                      </Badge>
-                    </div>
-                  </>
-                )}
-                <Button
-                  className="w-full"
-                  variant="outline"
-                  onClick={() => router.push('/profile')}
-                >
-                  <Edit className="mr-2 size-4" />
-                  Edit Profile
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button className="w-full" variant="outline">
-                  <Plane className="mr-2 size-4" />
-                  Book a Flight
-                </Button>
-                <Button className="w-full" variant="outline">
-                  <Hotel className="mr-2 size-4" />
-                  Book a Hotel
-                </Button>
-                <Button className="w-full" variant="outline">
-                  <Plus className="mr-2 size-4" />
-                  Plan New Trip
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+                          {...props}
+                          className={`${props.className} ${tripIndex !== -1 ? `trip-date-${tripIndex % 3}` : ''}`}
+                          data-trip={tripIndex !== -1 ? 'true' : undefined}
+                          dangerouslySetInnerHTML={{
+                            __html: typeof children === 'string' ? children : children?.props?.children || ''
+                          }}
+                        />
+                      );
+                    }
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

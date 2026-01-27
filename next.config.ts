@@ -2,7 +2,6 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   images: {
-    qualities: [75, 95],
     remotePatterns: [
       {
         protocol: 'https',
@@ -51,42 +50,17 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'photos.hotelbeds.com',
+        hostname: '**.imgix.net',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'images.trvl-media.com',
+        hostname: 'lonelyplanetstatic.imgix.net',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'i.travelapi.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'static.cupid.travel',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'q-xx.bstatic.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'd2hyz2bfif3cr8.cloudfront.net',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cdn.worldota.net',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'p.fih.io',
+        hostname: 'lp-cms-production.imgix.net',
         pathname: '/**',
       },
     ],
