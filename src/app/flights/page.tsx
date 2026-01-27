@@ -44,6 +44,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FlightBookingFlow } from '@/components/FlightBookingFlow';
 import { toast } from 'sonner';
+import { saveFlightBooking } from '@/lib/bookingUtils';
 
 interface Flight {
   id: string;
@@ -1528,8 +1529,39 @@ export default function FlightBooking() {
                 <Button
                   className="flex-1"
                   onClick={() => {
-                    setShowConfirmation(false);
-                    alert('Proceeding to payment...');
+                    if (selectedFlight && departureDate) {
+                      try {
+                        // Save the booking to localStorage for dashboard display
+                        const bookingData = {
+                          id: selectedFlight.id.toString(),
+                          from: selectedFlight.from.split('(')[1]?.replace(')', '') || selectedFlight.from,
+                          to: selectedFlight.to.split('(')[1]?.replace(')', '') || selectedFlight.to,
+                          departureDate: departureDate.toISOString().split('T')[0],
+                          airline: selectedFlight.airline,
+                          flightNumber: `${selectedFlight.airline.substring(0, 2)}${Math.floor(Math.random() * 9000) + 1000}`,
+                          cabinClass: selectedFlight.cabin,
+                          price: selectedFlight.price * totalPassengers,
+                        };
+
+                        console.log('Saving booking data:', bookingData);
+                        saveFlightBooking(bookingData);
+
+                        // Close dialogs
+                        setShowConfirmation(false);
+                        
+                        // Show success message
+                        toast.success('Flight booked successfully! Check your dashboard.');
+                        
+                        // Wait a bit longer to ensure data is persisted and listener is triggered
+                        setTimeout(() => {
+                          console.log('Redirecting to dashboard');
+                          router.push('/dashboard');
+                        }, 800);
+                      } catch (error) {
+                        console.error('Error saving booking:', error);
+                        toast.error('Failed to save booking. Please try again.');
+                      }
+                    }
                   }}
                 >
                   <CheckCircle className="mr-2 size-4" />

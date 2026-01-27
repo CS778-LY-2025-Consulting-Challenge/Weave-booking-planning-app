@@ -162,15 +162,15 @@ export default function Navbar() {
     <nav
       className={`fixed top-0 z-50 w-full transition-all duration-500 ${isVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-full opacity-0'}`}
     >
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        <div className="rounded-full border border-white/20 bg-black/30 px-6 py-3 shadow-2xl backdrop-blur-xl text-white" style={{background: 'linear-gradient(90deg, rgba(34,34,34,0.85) 0%, rgba(34,34,34,0.7) 50%, rgba(34,34,34,0.85) 100%)'}}>
+      <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
+        <div className="rounded-full border border-white/20 bg-black/30 px-4 py-2 shadow-2xl backdrop-blur-xl text-white" style={{background: 'linear-gradient(90deg, rgba(34,34,34,0.85) 0%, rgba(34,34,34,0.7) 50%, rgba(34,34,34,0.85) 100%)'}}>
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link
               href="/"
               className="flex items-center gap-2 transition-transform duration-300 hover:scale-105"
             >
-              <span className="text-white text-5xl drop-shadow-lg" style={{ fontFamily: 'var(--font-butterfly-kids)' }}>Weave</span>
+              <span className="text-white text-3xl drop-shadow-lg" style={{ fontFamily: 'var(--font-butterfly-kids)' }}>Weave</span>
             </Link>
 
             {/* Desktop Navigation */}
