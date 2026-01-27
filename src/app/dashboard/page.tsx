@@ -30,9 +30,9 @@ import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { getSavedTrips, saveTrip, updateTrip, deleteTrip } from '@/lib/savedTrips';
+import { getUserProfile, type UserProfile } from '@/lib/userProfile';
 import DashboardMap from '@/components/DashboardMap';
 import UpcomingBookingsTickets from '@/components/UpcomingBookingsTickets';
-import { getUserProfile, type UserProfile } from '@/lib/userProfile';
 
 interface Journey {
   id: number;
