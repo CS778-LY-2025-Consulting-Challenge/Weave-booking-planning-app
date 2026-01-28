@@ -29,12 +29,15 @@ import {
   Sun
 } from 'lucide-react';
 import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState, useEffect } from 'react';
 
 export default function Journeys() {
   const router = useRouter();
-  const [viewMode, setViewMode] = useState<'myJourneys' | 'communityJourneys'>('myJourneys');
+  const searchParams = useSearchParams();
+  const [viewMode, setViewMode] = useState<'myJourneys' | 'communityJourneys'>(
+    (searchParams.get('tab') === 'community' ? 'communityJourneys' : 'myJourneys')
+  );
   const [favorites, setFavorites] = useState<number[]>([]);
   const [selectedSeasons, setSelectedSeasons] = useState<Set<string>>(new Set());
   const [selectedWeather, setSelectedWeather] = useState<Set<string>>(new Set());
