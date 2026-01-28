@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       metadata: {
+        type: 'hotel',
         hotelId,
         hotelName: hotelName.substring(0, 200),
         hotelLocation: (hotelLocation || '').substring(0, 450),
@@ -69,6 +70,10 @@ export async function POST(request: NextRequest) {
         guests: guests.toString(),
         userId: userId || 'guest',
         userEmail: userEmail || '',
+        // Add fields for easier display on dashboard without re-fetching
+        price: totalPrice.toString(),
+        bookingName: `${hotelName} - ${roomName}`,
+        bookingImage: 'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=500',
       },
       customer_email: userEmail,
       payment_intent_data: userEmail ? {

@@ -30,6 +30,7 @@ import {
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useUser } from '@clerk/nextjs';
 
 interface Flight {
   id: string;
@@ -43,6 +44,8 @@ interface Flight {
   cabin: string;
   price: number;
   logo: string;
+  fromCode?: string;
+  toCode?: string;
   departureTime: 'morning' | 'afternoon' | 'evening';
 }
 
@@ -102,6 +105,7 @@ export function FlightBookingFlow({
   totalPassengers,
   onClose,
 }: FlightBookingFlowProps) {
+  const { user } = useUser();
   const [step, setStep] = useState(1);
   const [booking, setBooking] = useState<BookingState>({
     ...INITIAL_BOOKING_STATE,
@@ -201,12 +205,15 @@ export function FlightBookingFlow({
           flightId: booking.flight?.id,
           airline: booking.flight?.airline,
           from: booking.flight?.from,
+          fromCode: booking.flight?.fromCode,
           to: booking.flight?.to,
+          toCode: booking.flight?.toCode,
           departure: booking.flight?.departure,
           arrival: booking.flight?.arrival,
+          duration: booking.flight?.duration,
           passengers: totalPassengers,
           totalPrice: prices.total,
-          userId: 'user-123', // Replace with actual user ID from auth
+          userId: user?.id || 'guest', // Use actual user ID
           bookingReference: bookingRef, // Include booking reference for tracking
         }),
       });
@@ -253,13 +260,12 @@ export function FlightBookingFlow({
           {[1, 2, 3, 4, 5].map((stepNum) => (
             <div
               key={stepNum}
-              className={`flex-1 h-2 rounded-full transition-all ${
-                stepNum <= step
-                  ? 'bg-blue-600'
-                  : stepNum === step + 1
-                    ? 'bg-blue-300'
-                    : 'bg-gray-200'
-              }`}
+              className={`flex-1 h-2 rounded-full transition-all ${stepNum <= step
+                ? 'bg-blue-600'
+                : stepNum === step + 1
+                  ? 'bg-blue-300'
+                  : 'bg-gray-200'
+                }`}
             />
           ))}
         </div>
@@ -518,7 +524,7 @@ export function FlightBookingFlow({
 
             <div className="space-y-4">
               {/* Seat Upgrade */}
-              <Card className="border-gray-200 cursor-pointer hover:border-blue-400" 
+              <Card className="border-gray-200 cursor-pointer hover:border-blue-400"
                 onClick={() =>
                   setBooking({
                     ...booking,
@@ -541,7 +547,7 @@ export function FlightBookingFlow({
                       <input
                         type="checkbox"
                         checked={booking.extras.seatUpgrade}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         className="h-4 w-4"
                       />
                       <p className="text-sm font-semibold mt-2">
@@ -607,7 +613,7 @@ export function FlightBookingFlow({
                       <input
                         type="checkbox"
                         checked={booking.extras.baggageUpgrade}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         className="h-4 w-4"
                       />
                       <p className="text-sm font-semibold mt-2">
@@ -642,7 +648,7 @@ export function FlightBookingFlow({
                       <input
                         type="checkbox"
                         checked={booking.extras.insurance}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         className="h-4 w-4"
                       />
                       <p className="text-sm font-semibold mt-2">

@@ -60,3 +60,6 @@ next-env.d.ts
 /src/generated/prisma
 # backups
 /backups/
+
+# Firebase Service Account (DO NOT COMMIT)
+service-account.json
