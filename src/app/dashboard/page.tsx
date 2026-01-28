@@ -33,6 +33,7 @@ import { getSavedTrips, saveTrip, updateTrip, deleteTrip } from '@/lib/savedTrip
 import { getUserProfile, type UserProfile } from '@/lib/userProfile';
 import DashboardMap from '@/components/DashboardMap';
 import YourJourneys from '@/components/YourJourneys';
+import UpcomingBookingsTickets from '@/components/UpcomingBookingsTickets';
 
 interface Journey {
   id: number;
@@ -237,10 +238,13 @@ export default function Dashboard() {
           <h1 className="mb-2 text-4xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }}>
             Welcome back, {user?.firstName || 'Nayak'}!
           </h1>
-          <p className="text-gray-600 text-2xl"  style={{ fontFamily: 'var(--font-special-elite)' }}>
+          <p className="text-gray-600 text-2xl" style={{ fontFamily: 'var(--font-special-elite)' }}>
             Manage your journeys and plan your next adventure.
           </p>
         </div>
+
+
+
 
         {/* World Map Section - Full Width */}
         <Card className="mb-8 overflow-hidden shadow-lg">
@@ -249,9 +253,17 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* Upcoming Bookings Tickets */}
+        {user?.id && (
+          <div className="mb-12">
+            <h3 className="text-2xl font-bold mb-6 text-gray-800">Your Tickets & Reservations</h3>
+            <UpcomingBookingsTickets userId={user.id} />
+          </div>
+        )}
+
         {/* Your Journeys Section */}
-        <YourJourneys 
-          journeys={journeys} 
+        <YourJourneys
+          journeys={journeys}
           savedTripsCount={Object.keys(savedTrips).length}
           savedTrips={savedTrips}
           savedLoading={savedLoading}
@@ -362,14 +374,14 @@ export default function Dashboard() {
                     if (upcomingJourneys.length === 0) {
                       return 'Travel Calendar';
                     }
-                    
+
                     if (upcomingJourneys.length === 1) {
                       const journey = upcomingJourneys[0];
                       const startDate = new Date(journey.startDate);
                       const endDate = new Date(journey.endDate);
                       const startMonth = startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
                       const endMonth = endDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                      
+
                       if (startMonth === endMonth) {
                         return `Travel Calendar — ${startMonth}`;
                       } else {
@@ -378,15 +390,15 @@ export default function Dashboard() {
                         return `Travel Calendar — ${startShort}–${endShort}`;
                       }
                     }
-                    
+
                     // Multiple trips - collect all unique months
                     const monthsSet = new Set<string>();
                     let year = '';
-                    
+
                     upcomingJourneys.forEach(journey => {
                       const start = new Date(journey.startDate);
                       const end = new Date(journey.endDate);
-                      
+
                       // Add all months between start and end
                       const current = new Date(start);
                       while (current <= end) {
@@ -395,7 +407,7 @@ export default function Dashboard() {
                         current.setMonth(current.getMonth() + 1);
                       }
                     });
-                    
+
                     const months = Array.from(monthsSet).join(', ');
                     return `Travel Calendar - ${months} ${year}`;
                   })()}
@@ -404,7 +416,8 @@ export default function Dashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <style dangerouslySetInnerHTML={{__html: `
+              <style dangerouslySetInnerHTML={{
+                __html: `
                 @keyframes fadeInTrip {
                   from {
                     opacity: 0;
@@ -549,7 +562,7 @@ export default function Dashboard() {
                         end.setHours(0, 0, 0, 0);
                         const checkDate = new Date(date);
                         checkDate.setHours(0, 0, 0, 0);
-                        
+
                         if (checkDate >= start && checkDate <= end) {
                           const isStart = checkDate.getTime() === start.getTime();
                           const destination = journey.destination.split(',')[0];
@@ -557,7 +570,7 @@ export default function Dashboard() {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
                           const status = checkDate >= today ? 'Upcoming' : 'Past';
-                          
+
                           // Get flag emoji based on country
                           const flagMap: { [key: string]: string } = {
                             'Japan': '🇯🇵',
@@ -570,7 +583,7 @@ export default function Dashboard() {
                             'Germany': '🇩🇪',
                           };
                           const flag = flagMap[country] || '🌍';
-                          
+
                           return {
                             index,
                             destination,
@@ -584,7 +597,7 @@ export default function Dashboard() {
                         }
                         return null;
                       }).filter(Boolean)[0];
-                      
+
                       if (tripData) {
                         return `
                           <div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 4px;">
@@ -613,7 +626,7 @@ export default function Dashboard() {
                         checkDate.setHours(0, 0, 0, 0);
                         return checkDate >= start && checkDate <= end;
                       });
-                      
+
                       return (
                         <button
                           {...props}
@@ -631,6 +644,8 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+
       </div>
     </div>
   );
