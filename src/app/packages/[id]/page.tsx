@@ -112,8 +112,7 @@ export default function PackageDetails() {
       destination: 'Auckland, Rotorua, Queenstown, Milford Sound',
       duration: '10 Days / 9 Nights',
       price: 2899,
-      image:
-        'https://images.unsplash.com/photo-1559827260-dc66d52bef19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuZXclMjB6ZWFsYW5kfGVufDB8fHx8fDA&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/new zealand.jpg',
       includes: [
         'Round-trip international flights',
         '9 nights accommodation in scenic locations',
@@ -170,25 +169,13 @@ export default function PackageDetails() {
           media: [
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhdWNrbGFuZCUyMGNpdHl8ZW58MXx8fHx8MA&ixlib=rb-4.1.0&q=80&w=1080',
+              url: '/images/day-1.jpg',
               caption: 'Auckland skyline with Sky Tower',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhdWNrbGFuZCUyMGhhcmJvdXJ8ZW58MXx8fHx8MA&ixlib=rb-4.1.0&q=80&w=1080',
+              url: '/images/day-1,1.jpg',
               caption: 'Auckland harbourfront',
-            },
-            {
-              type: 'photo',
-              url: 'https://images.unsplash.com/photo-1530521954074-e64f47ba6d21?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3YWl0ZW1vIHZpbGxhZ2UgYXVja2xhbmQlMjBtYW9yaSUyMGN1bHR1cmV8ZW58MXx8fHx8MA&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Waitematā Harbour sunset',
-            },
-            {
-              type: 'video',
-              url: 'https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c0fd273d2c6d9a064f3ae35579b2bbdf&profile_id=165',
-              thumbnail:
-                'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhdWNrbGFuZCUyMGNpdHk=&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Welcome to Auckland',
             },
           ],
         },
@@ -240,25 +227,23 @@ export default function PackageDetails() {
           media: [
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1577707627826-a9ce4901f264?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob2JiaXRvbiUyMG1vdmllJTIwc2V0fGVufDB8fHx8fDA&ixlib=rb-4.1.0&q=80&w=1080',
+              url: '/images/day-2.jpg',
               caption: 'Hobbiton Movie Set',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1642711220202-6c37badcc5f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyb3RvcnVhJTIwZ2V5c2VycyUyMG5ldyUyMHplYWxhbmR8ZW58MXx8fHx8MA&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Rotorua geothermal geysers',
+              url: '/images/day-2,2.jpg',
+              caption: 'Hobbiton Movie Set - Green Dragon Inn',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1582719471384-894fbb16e074?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyb3RvcnVhJTIwaG90JTIwcHJpbmdz&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Thermal hot springs',
+              url: '/images/day-2-3.jpg',
+              caption: 'Lake Tikitapu (Blue Lake)',
             },
             {
-              type: 'video',
-              url: 'https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c0fd273d2c6d9a064f3ae35579b2bbdf&profile_id=165',
-              thumbnail:
-                'https://images.unsplash.com/photo-1577707627826-a9ce4901f264?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob2JiaXRvbiUyMG1vdmllJTIwc2V0&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Hobbiton and Māori culture',
+              type: 'photo',
+              url: '/images/day-2-4.jpg',
+              caption: 'Lake Tarawera',
             },
           ],
         },
@@ -308,26 +293,19 @@ export default function PackageDetails() {
           ],
           media: [
             {
-              type: 'photo',
-              url: 'https://images.unsplash.com/photo-1642711220202-6c37badcc5f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyb3RvcnVhJTIwZ2V5c2VycyUyMG5ldyUyMHplYWxhbmQ|ZW58MXx8fHx8MA&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Pohutu Geyser eruption',
+               type: 'photo',
+              url: '/images/day-3.webp',
+              caption: 'Wai-O-Tapu Thermal Wonderland',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1582719471384-894fbb16e074?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyb3RvcnVhJTIwaG90JTIwcHJpbmdz&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Natural hot mineral springs',
+              url: '/images/day-3-1.webp',
+              caption: 'Skyline Rotorua Gondola',
             },
             {
-              type: 'photo',
-              url: 'https://images.unsplash.com/photo-1560088676-4daf3c3e5e97?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdWdlJTIwdHJhY2slMjBhZHZlbnR1cmU=&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Thrilling luge ride experience',
-            },
-            {
-              type: 'video',
-              url: 'https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c0fd273d2c6d9a064f3ae35579b2bbdf&profile_id=165',
-              thumbnail:
-                'https://images.unsplash.com/photo-1642711220202-6c37badcc5f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyb3RvcnVhJTIwdGhlcm1hbA==&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Rotorua thermal adventure highlights',
+               type: 'photo',
+              url: '/images/day-3-2.webp',
+              caption: 'Skyline Rotorua Friends on Luge',
             },
           ],
         },
@@ -379,25 +357,18 @@ export default function PackageDetails() {
           media: [
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxxdWVlbnN0b3duJTIwbGFrZQ==&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Queenstown scenic beauty',
+              url: '/images/day-4.jpg',
+              caption: 'Queenstown',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxxdWVlbnN0b3duJTIwY2l0eSUyMG5pZ2h0fGVufHx8fHww&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Queenstown downtown',
+              url: '/images/day-4-1.webp',
+              caption: 'Jet Boat Adventure',
             },
             {
-              type: 'photo',
-              url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsYWtlJTIwd2FrYXRpcHUlMjBqZXQlMjBib2F0&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Jet boat adventure',
-            },
-            {
-              type: 'video',
-              url: 'https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c0fd273d2c6d9a064f3ae35579b2bbdf&profile_id=165',
-              thumbnail:
-                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxxdWVlbnN0b3duJTIwYWR2ZW50dXJl&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Queenstown adventure activities',
+               type: 'photo',
+              url: '/images/day-4-2.webp',
+              caption: 'Jet Boat Adventure',
             },
           ],
         },
@@ -447,26 +418,19 @@ export default function PackageDetails() {
           ],
           media: [
             {
-              type: 'photo',
-              url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtaWxmb3JkJTIwc291bmQ=&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Milford Sound fjord landscape',
+                 type: 'photo',
+              url: '/images/day-5.webp',
+              caption: 'Scenic Drive to Milford Sound',
             },
             {
-              type: 'photo',
-              url: 'https://images.unsplash.com/photo-1511379938547-c1f69b13d835?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtaWxmb3JkJTIwd2F0ZXJmYWxs&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Stunning waterfalls',
+                type: 'photo',
+              url: '/images/day-5-1.webp',
+              caption: 'Milford Sound Cruise',
             },
             {
-              type: 'photo',
-              url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmaW9yZGxhbmQlMjBuYXRpb25hbCUyMHBhcms=&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Fiordland National Park scenery',
-            },
-            {
-              type: 'video',
-              url: 'https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c0fd273d2c6d9a064f3ae35579b2bbdf&profile_id=165',
-              thumbnail:
-                'https://images.unsplash.com/photo-1559827260-dc66d52bef19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtaWxmb3JkJTIwY3J1aXNl&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Milford Sound cruise highlights',
+               type: 'photo',
+              url: '/images/day-5-2.jpg',
+              caption: 'Milford Sound Cruise',
             },
           ],
         },
@@ -514,28 +478,24 @@ export default function PackageDetails() {
             },
           ],
           media: [
-            {
-              type: 'photo',
-              url: 'https://images.unsplash.com/photo-1611632736579-6b16e2b50449?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidW5nZWUlMjBqdW1wJTIwcXVlZW5zdG93bg==&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Bungee jumping from Kawarau Bridge',
+             {
+              type: 'video',
+              url: '/images/day-6.mp4',
+              thumbnail:
+                '/images/day-6-1.webp',
+              caption: 'Adventure sports highlights',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1516422340519-89d6d8424e26?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxza3lkaXZpbmc=&ixlib=rb-4.1.0&q=80&w=1080',
+              url: '/images/day-6-2.jpg',              
               caption: 'Skydiving adventure',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1552984779-dba8bc36f58f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZHZlbnR1cmUlMjBzcG9ydHM=&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Extreme sports in New Zealand',
+              url: '/images/day-6-3.jpg',
+              caption: 'Spa Relax',
             },
-            {
-              type: 'video',
-              url: 'https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c0fd273d2c6d9a064f3ae35579b2bbdf&profile_id=165',
-              thumbnail:
-                'https://images.unsplash.com/photo-1611632736579-6b16e2b50449?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZHZlbnR1cmU=&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Adventure sports highlights',
-            },
+           
           ],
         },
         {
@@ -584,18 +544,18 @@ export default function PackageDetails() {
           media: [
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1521763185298-1b434c919eba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnJvd3N0b3duJTIwYXV0dW1u&ixlib=rb-4.1.0&q=80&w=1080',
+              url: '/images/day-7.jpg',
               caption: 'Autumn colors in Arrowtown',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1432139555190-58524dae6a55?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aW5lJTIwdGFzdGluZyUyMHZpbmV5YXJk&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Wine tasting experience',
+              url: '/images/day-7-1.jpg',
+              caption: 'Autumn colors in Arrowtown',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnJvd3N0b3duJTIwc3RyZWV0&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Charming Arrowtown streets',
+              url: '/images/day-7-2.avif',
+              caption: 'Wine tasting experience',
             },
           ],
         },
@@ -639,18 +599,18 @@ export default function PackageDetails() {
           media: [
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxnbGVub3JjaHklMjBsYWtlfGVufDB8fHx8fDA&ixlib=rb-4.1.0&q=80&w=1080',
+              url: '/images/day-8.avif',
               caption: 'Glenorchy scenic landscape',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0c3MlMjBlYXJuc2xhd3xlbnwwfHx8fHww&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Historic TSS Earnslaw steamer',
+              url: '/images/day-8-1.jpg',
+              caption: 'TSS Earnslaw Vintage Steamer Cruise',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuZXclMjB6ZWFsYW5kJTIwc2hlZXAlMjBmYXJt&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Working sheep farm experience',
+              url: '/images/day-8-2.jpg',
+              caption: 'Lunch on the Lake',
             },
           ],
         },
@@ -700,17 +660,17 @@ export default function PackageDetails() {
           media: [
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1544161515-81e4e4e34f3f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx5b2dhJTIwbGFrZQ==&ixlib=rb-4.1.0&q=80&w=1080',
+              url: '/images/day-9.avif',
               caption: 'Morning yoga with lake views',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1600881333193-97bd6a5c79cd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzcGElMjByZWxheGF0aW9u&ixlib=rb-4.1.0&q=80&w=1080',
+              url: '/images/day-9-1.avif',
               caption: 'Spa wellness treatment',
             },
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuYXR1cmUlMjB3YWxrJTIwbW91bnRhaW4=&ixlib=rb-4.1.0&q=80&w=1080',
+              url: '/images/day-9-2.webp',
               caption: 'Scenic nature walk',
             },
           ],
@@ -749,13 +709,8 @@ export default function PackageDetails() {
           media: [
             {
               type: 'photo',
-              url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhdWNrbGFuZCUyMGFpcnBvcnQ=&ixlib=rb-4.1.0&q=80&w=1080',
+              url: '/images/day-10.webp',
               caption: 'Auckland airport farewell',
-            },
-            {
-              type: 'photo',
-              url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuZXclMjB6ZWFsYW5kJTIwZnJvbSUyMHRoZSUyMHNreSw=&ixlib=rb-4.1.0&q=80&w=1080',
-              caption: 'Scenic aerial views of New Zealand',
             },
           ],
         },
@@ -777,10 +732,7 @@ export default function PackageDetails() {
             'Room service 24/7',
             'Premium bedding',
           ],
-          images: [
-            'https://images.unsplash.com/photo-1566073771259-6a8506099945?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMHJvb20|ZW58MXx8fHx8MA&ixlib=rb-4.1.0&q=80&w=1080',
-            'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3RlbCUyMHNwYSUyMHRoZXJtYWwlMjBwb29s&ixlib=rb-4.1.0&q=80&w=1080',
-          ],
+          images: ['/images/millenium.jpg'],
         },
         {
           name: 'Rotorua Lakeland Resort',
@@ -797,10 +749,7 @@ export default function PackageDetails() {
             'Geothermal heating',
             'Multi-cuisine dining',
           ],
-          images: [
-            'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyZXNvcnQlMjByb29t&ixlib=rb-4.1.0&q=80&w=1080',
-            'https://images.unsplash.com/photo-1582719471384-894fbb16e074?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyb3RvcnVhJTIwaG90JTIwc3ByaW5ncw==&ixlib=rb-4.1.0&q=80&w=1080',
-          ],
+          images: ['/images/Rotorua Lakeland Resort.jpg'],
         },
         {
           name: 'The Ritz-Carlton Queenstown',
@@ -819,10 +768,7 @@ export default function PackageDetails() {
             '24-hour butler service',
             'Heated outdoor pools',
           ],
-          images: [
-            'https://images.unsplash.com/photo-1566073771259-6a8506099945?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjByZXNvcnQlMjByb29t&ixlib=rb-4.1.0&q=80&w=1080',
-            'https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb3VudGFpbiUyMHJlc29ydCUyMHBvb2w=&ixlib=rb-4.1.0&q=80&w=1080',
-          ],
+         images: ['/images/The Ritz-Carlton Queenstown.avif'],
         },
       ],
       transportation: [
@@ -877,8 +823,7 @@ export default function PackageDetails() {
           duration: '3 hours',
           difficulty: 'Advanced',
           price: 'Included in package',
-          image:
-            'https://images.unsplash.com/photo-1611632736579-6b16e2b50449?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidW5nZWUlMjBqdW1waW5nJTIwcXVlZW5zdG93bnxlbnwxfHx8fDA&ixlib=rb-4.1.0&q=80&w=1080',
+              image: '/images/day-6.mp4',
           category: 'Adventure',
         },
         {
@@ -888,8 +833,7 @@ export default function PackageDetails() {
           duration: '2 hours',
           difficulty: 'Easy',
           price: 'Included in package',
-          image:
-            'https://images.unsplash.com/photo-1559827260-dc66d52bef19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtaWxmb3JkJTIwc291bmQ=&ixlib=rb-4.1.0&q=80&w=1080',
+          image: '/images/1080.jpg',
           category: 'Nature',
         },
         {
@@ -899,8 +843,7 @@ export default function PackageDetails() {
           duration: '4 hours',
           difficulty: 'Easy',
           price: 'Included in package',
-          image:
-            'https://images.unsplash.com/photo-1577707627826-a9ce4901f264?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob2JiaXRvbiUyMG1vdmllJTIwc2V0fGVufDB8fHx8fDA&ixlib=rb-4.1.0&q=80&w=1080',
+          image: '/images/day-2.jpg',
           category: 'Cultural',
         },
         {
@@ -910,8 +853,7 @@ export default function PackageDetails() {
           duration: 'Full day',
           difficulty: 'Easy',
           price: 'Included in package',
-          image:
-            'https://images.unsplash.com/photo-1642711220202-6c37badcc5f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyb3RvcnVhJTIwZ2V5c2VycyUyMG5ldyUyMHplYWxhbmQ|ZW58MXx8fHx8MA&ixlib=rb-4.1.0&q=80&w=1080',
+          image: '/images/day-3.webp',
           category: 'Nature',
         },
         {
@@ -921,8 +863,7 @@ export default function PackageDetails() {
           duration: '4 hours',
           difficulty: 'Advanced',
           price: 'Additional cost - Optional',
-          image:
-            'https://images.unsplash.com/photo-1516422340519-89d6d8424e26?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxza3lkaXZpbmc=&ixlib=rb-4.1.0&q=80&w=1080',
+          image: '/images/skydive.mp4',
           category: 'Adventure',
         },
         {
@@ -932,8 +873,7 @@ export default function PackageDetails() {
           duration: '1-2 hours',
           difficulty: 'Moderate',
           price: 'Included in package',
-          image:
-            'https://images.unsplash.com/photo-1559827260-dc66d52bef19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsYWtlJTIwd2FrYXRpcHUlMjBqZXQlMjBib2F0&ixlib=rb-4.1.0&q=80&w=1080',
+          image: '/images/day-4-1.webp',
           category: 'Adventure',
         },
         {
@@ -943,8 +883,7 @@ export default function PackageDetails() {
           duration: '4 hours',
           difficulty: 'Easy',
           price: 'Included in package',
-          image:
-            'https://images.unsplash.com/photo-1432139555190-58524dae6a55?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aW5lJTIwdGFzdGluZyUyMHZpbmV5YXJk&ixlib=rb-4.1.0&q=80&w=1080',
+          image: '/images/day-7-2.avif',
           category: 'Culinary',
         },
       ],
@@ -2314,7 +2253,7 @@ export default function PackageDetails() {
                     <Card>
                       <CardContent className="p-6">
                         <div className="mb-4 flex items-center gap-3">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-r from-blue-600 to-purple-600 text-white">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black text-white">
                             {day.day}
                           </div>
                           <div>
@@ -2488,7 +2427,7 @@ export default function PackageDetails() {
                     <Card>
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-linear-to-r from-blue-600 to-purple-600">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-black">
                             <Plane className="size-6 text-white" />
                           </div>
                           <div className="flex-1">
@@ -2535,13 +2474,29 @@ export default function PackageDetails() {
                     <Card>
                       <CardContent className="p-0">
                         <div className="grid gap-6 md:grid-cols-2">
-                          {/* Activity Image */}
+                          {/* Activity Image or Video */}
                           <div className="relative h-64 md:h-auto">
-                            <img
-                              src={activity.image}
-                              alt={activity.name}
-                              className="h-full w-full object-cover"
-                            />
+                            {activity.image.endsWith('.mp4') ? (
+                              <video
+                                src={activity.image}
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                preload="auto"
+                                className="h-full w-full object-cover"
+                                onError={(e) => console.error('Video failed to load:', activity.image)}
+                              >
+                                <source src={activity.image} type="video/mp4" />
+                                Your browser does not support the video tag.
+                              </video>
+                            ) : (
+                              <img
+                                src={activity.image}
+                                alt={activity.name}
+                                className="h-full w-full object-cover"
+                              />
+                            )}
                             <div className="absolute top-4 left-4">
                               <Badge className="bg-blue-600 text-white">
                                 {activity.category}
@@ -2701,7 +2656,7 @@ export default function PackageDetails() {
                   </div>
 
                   <Button
-                    className="w-full bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    className="w-full bg-black hover:bg-gray-800"
                     onClick={() => { localStorage.setItem('selectedPackageId', String(packageData.id)); router.push(`/packages/${packageData.id}/book`); }}
                   >
                     Book This Package
