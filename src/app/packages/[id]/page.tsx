@@ -732,10 +732,7 @@ export default function PackageDetails() {
             'Room service 24/7',
             'Premium bedding',
           ],
-          images: [
-            'https://images.unsplash.com/photo-1566073771259-6a8506099945?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMHJvb20|ZW58MXx8fHx8MA&ixlib=rb-4.1.0&q=80&w=1080',
-            'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3RlbCUyMHNwYSUyMHRoZXJtYWwlMjBwb29s&ixlib=rb-4.1.0&q=80&w=1080',
-          ],
+          images: ['/images/millenium.jpg'],
         },
         {
           name: 'Rotorua Lakeland Resort',
@@ -752,10 +749,7 @@ export default function PackageDetails() {
             'Geothermal heating',
             'Multi-cuisine dining',
           ],
-          images: [
-            'https://images.unsplash.com/photo-1631049307038-da0ec56d8b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyZXNvcnQlMjByb29t&ixlib=rb-4.1.0&q=80&w=1080',
-            'https://images.unsplash.com/photo-1582719471384-894fbb16e074?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyb3RvcnVhJTIwaG90JTIwc3ByaW5ncw==&ixlib=rb-4.1.0&q=80&w=1080',
-          ],
+          images: ['/images/Rotorua Lakeland Resort.jpg'],
         },
         {
           name: 'The Ritz-Carlton Queenstown',
@@ -774,10 +768,7 @@ export default function PackageDetails() {
             '24-hour butler service',
             'Heated outdoor pools',
           ],
-          images: [
-            'https://images.unsplash.com/photo-1566073771259-6a8506099945?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjByZXNvcnQlMjByb29t&ixlib=rb-4.1.0&q=80&w=1080',
-            'https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb3VudGFpbiUyMHJlc29ydCUyMHBvb2w=&ixlib=rb-4.1.0&q=80&w=1080',
-          ],
+         images: ['/images/The Ritz-Carlton Queenstown.avif'],
         },
       ],
       transportation: [
