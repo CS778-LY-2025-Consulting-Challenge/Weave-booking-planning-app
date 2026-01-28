@@ -547,7 +547,7 @@ export default function AIPlanner() {
       guide: '', // User will fill this
       activities: day.activities?.map(act => ({
         name: act.title || '',
-        imageUrl: act.imageUrl,
+        imageUrl: act.imageUrl || activityImageCache[act.title || ''] || undefined,
         time: act.time,
         location: act.location,
       })) || [],
