@@ -57,6 +57,8 @@ interface Flight {
   cabin: string;
   price: number;
   logo: string;
+  fromCode?: string;
+  toCode?: string;
   departureTime: 'morning' | 'afternoon' | 'evening';
 }
 
@@ -180,18 +182,18 @@ export default function FlightBooking() {
     if (fromParam) setFromInput(fromParam);
     if (toParam) setToInput(toParam);
     if (dateParam) {
-        const date = new Date(dateParam);
-        // Valid date check
-        if (!isNaN(date.getTime())) {
-            setDepartureDate(date);
-            setTripType('one-way');
-        }
+      const date = new Date(dateParam);
+      // Valid date check
+      if (!isNaN(date.getTime())) {
+        setDepartureDate(date);
+        setTripType('one-way');
+      }
     }
     if (travellers) {
-        const count = parseInt(travellers);
-        if (!isNaN(count) && count > 0) {
-            setPassengerCounts(prev => ({ ...prev, adults: count }));
-        }
+      const count = parseInt(travellers);
+      if (!isNaN(count) && count > 0) {
+        setPassengerCounts(prev => ({ ...prev, adults: count }));
+      }
     }
   }, [searchParams]);
 
@@ -388,7 +390,9 @@ export default function FlightBooking() {
             id: index + 100, // Avoid conflict with mock IDs
             airline: firstFlight.airline || f.airline || 'Unknown Airline',
             from: firstFlight.departure_airport?.name || f.departure_airport?.name,
+            fromCode: firstFlight.departure_airport?.id || fromCode,
             to: firstFlight.arrival_airport?.name || f.arrival_airport?.name,
+            toCode: firstFlight.arrival_airport?.id || toCode,
             departure: firstFlight.departure_airport?.time || f.departure_airport?.time,
             arrival: firstFlight.arrival_airport?.time || f.arrival_airport?.time,
             duration: f.total_duration
@@ -443,9 +447,9 @@ export default function FlightBooking() {
     const autoSearch = searchParams.get('autoSearch');
     // Only search if not already searching and haven't auto-searched yet
     if (autoSearch === 'true' && !autoSearchRef.current && fromInput && toInput && departureDate && !isSearching) {
-        // Basic throttle/debounce could be useful but we rely on the flag
-        autoSearchRef.current = true;
-        fetchFlights();
+      // Basic throttle/debounce could be useful but we rely on the flag
+      autoSearchRef.current = true;
+      fetchFlights();
     }
   }, [searchParams, fromInput, toInput, departureDate, isSearching]);
 
@@ -1572,7 +1576,9 @@ export default function FlightBooking() {
                         const bookingData = {
                           id: selectedFlight.id.toString(),
                           from: selectedFlight.from.split('(')[1]?.replace(')', '') || selectedFlight.from,
+                          fromCode: selectedFlight.fromCode || selectedFlight.from.split('(')[1]?.replace(')', '') || selectedFlight.from.substring(0, 3).toUpperCase(),
                           to: selectedFlight.to.split('(')[1]?.replace(')', '') || selectedFlight.to,
+                          toCode: selectedFlight.toCode || selectedFlight.to.split('(')[1]?.replace(')', '') || selectedFlight.to.substring(0, 3).toUpperCase(),
                           departureDate: departureDate.toISOString().split('T')[0],
                           airline: selectedFlight.airline,
                           flightNumber: `${selectedFlight.airline.substring(0, 2)}${Math.floor(Math.random() * 9000) + 1000}`,
@@ -1582,10 +1588,10 @@ export default function FlightBooking() {
 
                         // Close dialogs
                         setShowConfirmation(false);
-                        
+
                         // Show success message
                         toast.success('Flight booked successfully! Check your dashboard.');
-                        
+
                         // Wait a bit longer to ensure data is persisted and listener is triggered
                         setTimeout(() => {
                           console.log('Redirecting to dashboard');
