@@ -28,7 +28,7 @@ interface SavedTrip {
 const destinationImages: { [key: string]: string } = {
   'Paris, France': '/images/paris-dashboard.jpg',
   'Tokyo, Japan': '/images/tokyo-dashboard.jpg',
-  'Bali, Indonesia': 'https://images.unsplash.com/photo-1522250925050-faabad1cb485?w=500&h=300&fit=crop',
+  'Bali, Indonesia': '/images/bali.jpg',
   'European Grand Tour': '/images/europe-dasboard.jpg',
   'New York': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=500&h=300&fit=crop',
   'Sydney': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=300&fit=crop',
@@ -81,6 +81,7 @@ export default function YourJourneys({
 }) {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [showAll, setShowAll] = useState(false);
+  const [showAllSaved, setShowAllSaved] = useState(false);
 
   // Determine trip status dynamically
   const getTripStatus = (journey: Journey) => {
@@ -236,73 +237,151 @@ export default function YourJourneys({
               <p>No saved journeys yet.</p>
             </div>
           )}
-          {Object.entries(savedTrips).map(([id, trip]) => (
-            <Card key={id} className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                {editTripId === id ? (
-                  <div className="flex flex-col md:flex-row gap-4 items-end">
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Destination</label>
-                      <input
-                        type="text"
-                        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={editTrip.destination}
-                        onChange={e => setEditTrip({ ...editTrip, destination: e.target.value })}
-                      />
+          
+          {/* Display saved trips as package cards */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {(showAllSaved ? Object.entries(savedTrips) : Object.entries(savedTrips).slice(0, 3)).map(([id, trip]: [string, any]) => (
+              <Card key={id} className="group overflow-hidden border border-gray-200 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                {/* Image Section */}
+                <div className="relative h-56 overflow-hidden bg-gray-200">
+                  {trip.image ? (
+                    <Image
+                      src={trip.image}
+                      alt={trip.name || trip.destination}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                      <MapPin className="h-16 w-16 text-white opacity-50" />
                     </div>
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                      <input
-                        type="date"
-                        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={editTrip.date}
-                        onChange={e => setEditTrip({ ...editTrip, date: e.target.value })}
-                      />
+                  )}
+                  
+                  {/* Type Badge */}
+                  {trip.type && (
+                    <div className="absolute left-3 top-3">
+                      <Badge className="bg-white text-gray-900 border-0">
+                        {trip.type}
+                      </Badge>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                        onClick={handleUpdateTrip}
-                        title="Save"
-                      >
-                        <Check className="h-5 w-5" />
-                      </button>
-                      <button
-                        className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                        onClick={() => setEditTripId(null)}
-                        title="Cancel"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    </div>
+                  )}
+
+                  {/* Edit/Delete buttons overlay */}
+                  <div className="absolute right-3 top-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      className="p-2 bg-white/90 text-gray-700 rounded-lg hover:bg-white transition-colors shadow-md"
+                      onClick={() => handleEditTrip(id, trip)}
+                      title="Edit"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      className="p-2 bg-red-500/90 text-white rounded-lg hover:bg-red-600 transition-colors shadow-md"
+                      onClick={() => handleDeleteTrip(id)}
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
+                </div>
+
+                {/* Content Section */}
+                <CardContent className="p-5">
+                  {/* Title */}
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1">
+                    {trip.name || trip.destination}
+                  </h3>
+
+                  {/* Location */}
+                  <div className="flex items-center gap-2 text-gray-600 mb-3">
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-sm line-clamp-1">{trip.destination}</span>
+                  </div>
+
+                  {/* Duration */}
+                  {trip.duration && (
+                    <div className="flex items-center gap-2 text-gray-600 mb-4">
+                      <Calendar className="h-4 w-4 flex-shrink-0" />
+                      <span className="text-sm">{trip.duration}</span>
+                    </div>
+                  )}
+
+                  {/* Package Includes */}
+                  {trip.description && (
+                    <div className="mb-4">
+                      <p className="text-xs font-semibold text-gray-700 mb-2">Package Includes:</p>
+                      <div className="space-y-1">
+                        {trip.description.split(', ').slice(0, 3).map((item: string, idx: number) => (
+                          <div key={idx} className="flex items-start gap-2">
+                            <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                            <span className="text-xs text-gray-600 line-clamp-1">{item}</span>
+                          </div>
+                        ))}
+                        {trip.description.split(', ').length > 3 && (
+                          <p className="text-xs text-gray-500 italic ml-6">
+                            + {trip.description.split(', ').length - 3} more
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Date saved */}
+                  {trip.date && (
+                    <div className="mb-4 pt-3 border-t">
+                      <p className="text-xs text-gray-500">Saved on</p>
+                      <p className="text-sm font-medium text-gray-700">{trip.date}</p>
+                    </div>
+                  )}
+
+                  {/* Price */}
+                  {trip.price && (
+                    <div className="border-t pt-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className="text-xs text-gray-500">Starting from</p>
+                          <p className="text-2xl font-bold text-blue-600">${trip.price}</p>
+                          <p className="text-xs text-gray-500">per person</p>
+                        </div>
+                      </div>
+                      <button
+                        className="w-full bg-black text-white py-2.5 rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm"
+                        onClick={() => window.location.href = `/packages/${trip.packageId}`}
+                      >
+                        View Details
+                      </button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Load More Button for Saved Journeys */}
+          {Object.entries(savedTrips).length > 3 && (
+            <div className="flex justify-center pt-6">
+              <button
+                onClick={() => setShowAllSaved(!showAllSaved)}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
+              >
+                {showAllSaved ? (
+                  <>
+                    View Less
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
+                  </>
                 ) : (
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-900">{trip.destination}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{trip.date}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                        onClick={() => handleEditTrip(id, trip)}
-                        title="Edit"
-                      >
-                        <Edit className="h-5 w-5" />
-                      </button>
-                      <button
-                        className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                        onClick={() => handleDeleteTrip(id)}
-                        title="Delete"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
+                  <>
+                    View More ({Object.entries(savedTrips).length - 3} more)
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </>
                 )}
-              </CardContent>
-            </Card>
-          ))}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <>
