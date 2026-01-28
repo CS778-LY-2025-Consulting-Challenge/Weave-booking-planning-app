@@ -79,8 +79,7 @@ export default function Packages() {
       destination: 'Auckland, Rotorua, Queenstown, Milford Sound',
       duration: '10 Days / 9 Nights',
       price: 2899,
-      image:
-        'https://images.unsplash.com/photo-1559827260-dc66d52bef19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuZXclMjB6ZWFsYW5kfGVufDB8fHx8fDA&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/new zealand - package.jpg',
       includes: [
         'Round-trip flights',
         '9 nights accommodation in scenic locations',
@@ -98,8 +97,7 @@ export default function Packages() {
       destination: 'Paris, Rome, Barcelona',
       duration: '14 Days / 13 Nights',
       price: 3299,
-      image:
-        'https://images.unsplash.com/photo-1431274172761-fca41d930114?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXJpcyUyMGVpZmZlbCUyMHRvd2VyfGVufDF8fHx8MTc2NDQ3MTg2NHww&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/europe - package.jpg',
       includes: [
         'International flights',
         '13 nights in 4-star hotels',
@@ -115,8 +113,7 @@ export default function Packages() {
       destination: 'Tokyo, Kyoto, Osaka',
       duration: '10 Days / 9 Nights',
       price: 2799,
-      image:
-        'https://images.unsplash.com/photo-1591194233688-dca69d406068?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0b2t5byUyMGphcGFuJTIwY2l0eXxlbnwxfHx8fDE3NjQ1MjYyNjR8MA&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/tokyo - package.jpg',
       includes: [
         'Round-trip flights',
         '9 nights accommodation',
@@ -132,8 +129,7 @@ export default function Packages() {
       destination: 'Athens, Santorini, Mykonos',
       duration: '10 Days / 9 Nights',
       price: 2199,
-      image:
-        'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzYW50b3JpbmklMjBncmVlY2V8ZW58MXx8fHwxNzY0NDIxNzYxfDA&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/greek - package.jpg',
       includes: [
         'International flights',
         'Ferry transfers',
@@ -149,8 +145,7 @@ export default function Packages() {
       destination: 'Dubai, UAE',
       duration: '5 Days / 4 Nights',
       price: 1899,
-      image:
-        'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkdWJhaSUyMHNreWxpbmV8ZW58MXx8fHwxNzY0NDk3MTA1fDA&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/dubai - package.jpg',
       includes: [
         'Round-trip flights',
         '4 nights in 5-star hotel',
@@ -166,8 +161,7 @@ export default function Packages() {
       destination: 'Ubud & Seminyak, Bali',
       duration: '8 Days / 7 Nights',
       price: 1699,
-      image:
-        'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiYWxpJTIwaW5kb25lc2lhfGVufDF8fHx8MTc2NDUzNzMxMXww&ixlib=rb-4.1.0&q=80&w=1080',
+      image: '/images/bali-package.jpg',
       includes: [
         'Round-trip flights',
         '7 nights accommodation',
