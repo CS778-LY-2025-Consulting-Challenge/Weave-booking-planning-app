@@ -83,7 +83,7 @@ export default function MediaViewer({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !currentMedia) return null;
 
   return (
     <AnimatePresence>
@@ -134,7 +134,7 @@ export default function MediaViewer({
 
           {/* Media Content */}
           <div
-            className="relative mx-4 max-h-[90vh] w-full max-w-7xl"
+            className="relative mx-4 mb-32 flex max-h-[90vh] w-full max-w-7xl flex-col items-center md:mb-28"
             onClick={(e) => e.stopPropagation()}
           >
             <AnimatePresence mode="wait">
@@ -150,7 +150,7 @@ export default function MediaViewer({
                   <img
                     src={currentMedia.url}
                     alt={currentMedia.caption}
-                    className="max-h-[80vh] w-auto rounded-lg object-contain"
+                    className="max-h-[70vh] w-auto rounded-lg object-contain shadow-2xl"
                   />
                 ) : (
                   <div className="relative">
@@ -161,7 +161,7 @@ export default function MediaViewer({
                       autoPlay
                       preload="metadata"
                       playsInline
-                      className="max-h-[80vh] w-auto rounded-lg"
+                      className="max-h-[70vh] w-auto rounded-lg shadow-2xl"
                       onPlay={() => setIsPlaying(true)}
                       onPause={() => setIsPlaying(false)}
                       onError={(e) => console.error('Video error:', e)}
@@ -172,14 +172,18 @@ export default function MediaViewer({
                   </div>
                 )}
 
-                {/* Caption */}
+                {/* Caption - Improved visibility and spacing */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="mt-6 max-w-2xl rounded-full bg-white/10 px-6 py-3 text-center text-white backdrop-blur-md"
+                  className="mt-8 w-full max-w-3xl px-4"
                 >
-                  {currentMedia.caption}
+                  <div className="rounded-2xl border border-white/20 bg-gradient-to-b from-black/80 to-black/60 px-8 py-5 shadow-xl backdrop-blur-xl">
+                    <p className="text-center text-base font-medium leading-relaxed text-white md:text-lg">
+                      {currentMedia.caption}
+                    </p>
+                  </div>
                 </motion.div>
               </motion.div>
             </AnimatePresence>
