@@ -48,8 +48,8 @@ const budgetData: { [key: string]: { spent: number; budget: number } } = {
   '4': { spent: 0, budget: 5000 },
 };
 
-export default function YourJourneys({ 
-  journeys, 
+export default function YourJourneys({
+  journeys,
   savedTripsCount,
   savedTrips,
   savedLoading,
@@ -63,8 +63,8 @@ export default function YourJourneys({
   handleEditTrip,
   handleUpdateTrip,
   handleDeleteTrip
-}: { 
-  journeys: Journey[]; 
+}: {
+  journeys: Journey[];
   savedTripsCount: number;
   savedTrips: Record<string, SavedTrip>;
   savedLoading: boolean;
@@ -148,7 +148,7 @@ export default function YourJourneys({
   const getBudgetInfo = (id: number) => {
     const data = budgetData[id.toString()];
     if (!data) return { spent: 0, budget: 1000, percentage: 0 };
-    
+
     return {
       ...data,
       percentage: (data.spent / data.budget) * 100
@@ -175,8 +175,9 @@ export default function YourJourneys({
 
       {/* Filter Tabs */}
       <div className="flex items-center justify-between">
-        <Tabs 
-          value={activeTab} 
+        <Tabs
+          id="your-journeys-tabs"
+          value={activeTab}
           onValueChange={setActiveTab}
           className="w-full"
         >
@@ -237,7 +238,7 @@ export default function YourJourneys({
               <p>No saved journeys yet.</p>
             </div>
           )}
-          
+
           {/* Display saved trips as package cards */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {(showAllSaved ? Object.entries(savedTrips) : Object.entries(savedTrips).slice(0, 3)).map(([id, trip]: [string, any]) => (
@@ -256,7 +257,7 @@ export default function YourJourneys({
                       <MapPin className="h-16 w-16 text-white opacity-50" />
                     </div>
                   )}
-                  
+
                   {/* Type Badge */}
                   {trip.type && (
                     <div className="absolute left-3 top-3">
@@ -386,133 +387,131 @@ export default function YourJourneys({
       ) : (
         <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredJourneys.length > 0 ? (
-          (showAll ? filteredJourneys : filteredJourneys.slice(0, 3)).map((journey) => {
-            const budget = getBudgetInfo(journey.id);
-            const activities = getActivities(journey.destination);
-            const country = getCountryFromDestination(journey.destination);
-            const imageUrl = getImageUrl(journey.destination);
-            const isOverBudget = budget.spent > budget.budget;
+            {filteredJourneys.length > 0 ? (
+              (showAll ? filteredJourneys : filteredJourneys.slice(0, 3)).map((journey) => {
+                const budget = getBudgetInfo(journey.id);
+                const activities = getActivities(journey.destination);
+                const country = getCountryFromDestination(journey.destination);
+                const imageUrl = getImageUrl(journey.destination);
+                const isOverBudget = budget.spent > budget.budget;
 
-            return (
-              <Card
-                key={journey.id}
-                className="group overflow-hidden border border-gray-200 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-              >
-                {/* Image Section with Rating */}
-                <div className="relative h-48 overflow-hidden bg-gray-200">
-                  <Image
-                    src={imageUrl}
-                    alt={journey.destination}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  
-                  {/* Rating Badge */}
-                  <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white bg-opacity-95 px-3 py-1 shadow-md">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm font-semibold text-gray-800">4.8</span>
-                  </div>
+                return (
+                  <Card
+                    key={journey.id}
+                    className="group overflow-hidden border border-gray-200 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                  >
+                    {/* Image Section with Rating */}
+                    <div className="relative h-48 overflow-hidden bg-gray-200">
+                      <Image
+                        src={imageUrl}
+                        alt={journey.destination}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
 
-                  {/* Status Badge */}
-                  <div className="absolute left-3 top-3">
-                    <Badge className={`${getStatusBadgeColor(journey.status)} border`}>
-                      {journey.status.charAt(0).toUpperCase() + journey.status.slice(1)}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Content Section */}
-                <CardContent className="p-5">
-                  {/* Destination */}
-                  <div className="mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 line-clamp-2">
-                      {journey.destination}
-                    </h3>
-                    <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                      <MapPin className="h-3 w-3" />
-                      {country}
-                    </p>
-                  </div>
-
-                  {/* Date Range */}
-                  <div className="mb-4 flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-700">
-                      {formatDate(journey.startDate)} - {formatDate(journey.endDate)}
-                    </span>
-                  </div>
-
-                  {/* Activities/Places Pills */}
-                  <div className="mb-4 flex flex-wrap gap-2">
-                    {activities.slice(0, 2).map((activity, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
-                      >
-                        {activity}
-                      </span>
-                    ))}
-                    {activities.length > 2 && (
-                      <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-                        +{activities.length - 2} more
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Budget Section */}
-                  <div className="space-y-2 border-t border-gray-200 pt-4">
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1 text-sm font-semibold text-gray-700">
-                        <TrendingUp className="h-4 w-4" />
-                        Budget Status
-                      </span>
-                      <span
-                        className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                          isOverBudget
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-green-100 text-green-700'
-                        }`}
-                      >
-                        {isOverBudget ? 'Over Budget' : 'Under Budget'}
-                      </span>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="space-y-1">
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                        <div
-                          className={`h-full transition-all duration-300 ${
-                            isOverBudget ? 'bg-red-500' : 'bg-green-500'
-                          }`}
-                          style={{ width: `${Math.min(budget.percentage, 100)}%` }}
-                        ></div>
+                      {/* Rating Badge */}
+                      <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white bg-opacity-95 px-3 py-1 shadow-md">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm font-semibold text-gray-800">4.8</span>
                       </div>
-                      <div className="flex justify-between text-xs text-gray-600">
-                        <span>${budget.spent.toLocaleString()}</span>
-                        <span>${budget.budget.toLocaleString()}</span>
+
+                      {/* Status Badge */}
+                      <div className="absolute left-3 top-3">
+                        <Badge className={`${getStatusBadgeColor(journey.status)} border`}>
+                          {journey.status.charAt(0).toUpperCase() + journey.status.slice(1)}
+                        </Badge>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        ) : (
-          <div className="col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center">
-            <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">No {activeTab} journeys</h3>
-            <p className="text-gray-600">
-              {activeTab === 'upcoming'
-                ? 'Plan your next adventure'
-                : activeTab === 'past'
-                ? 'Your memories are waiting for you'
-                : 'Start exploring'}
-            </p>
+
+                    {/* Content Section */}
+                    <CardContent className="p-5">
+                      {/* Destination */}
+                      <div className="mb-4">
+                        <h3 className="text-lg font-bold text-gray-900 line-clamp-2">
+                          {journey.destination}
+                        </h3>
+                        <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                          <MapPin className="h-3 w-3" />
+                          {country}
+                        </p>
+                      </div>
+
+                      {/* Date Range */}
+                      <div className="mb-4 flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2">
+                        <Calendar className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-700">
+                          {formatDate(journey.startDate)} - {formatDate(journey.endDate)}
+                        </span>
+                      </div>
+
+                      {/* Activities/Places Pills */}
+                      <div className="mb-4 flex flex-wrap gap-2">
+                        {activities.slice(0, 2).map((activity, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
+                          >
+                            {activity}
+                          </span>
+                        ))}
+                        {activities.length > 2 && (
+                          <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                            +{activities.length - 2} more
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Budget Section */}
+                      <div className="space-y-2 border-t border-gray-200 pt-4">
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1 text-sm font-semibold text-gray-700">
+                            <TrendingUp className="h-4 w-4" />
+                            Budget Status
+                          </span>
+                          <span
+                            className={`text-xs font-semibold px-2 py-1 rounded-full ${isOverBudget
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-green-100 text-green-700'
+                              }`}
+                          >
+                            {isOverBudget ? 'Over Budget' : 'Under Budget'}
+                          </span>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="space-y-1">
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                            <div
+                              className={`h-full transition-all duration-300 ${isOverBudget ? 'bg-red-500' : 'bg-green-500'
+                                }`}
+                              style={{ width: `${Math.min(budget.percentage, 100)}%` }}
+                            ></div>
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-600">
+                            <span>${budget.spent.toLocaleString()}</span>
+                            <span>${budget.budget.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            ) : (
+              <div className="col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center">
+                <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">No {activeTab} journeys</h3>
+                <p className="text-gray-600">
+                  {activeTab === 'upcoming'
+                    ? 'Plan your next adventure'
+                    : activeTab === 'past'
+                      ? 'Your memories are waiting for you'
+                      : 'Start exploring'}
+                </p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-      </>
+        </>
       )}
 
       {/* View More Button - Only for regular journeys */}
