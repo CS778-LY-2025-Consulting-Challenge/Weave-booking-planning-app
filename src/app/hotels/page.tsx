@@ -210,7 +210,11 @@ export default function HotelBooking() {
               transition={{ duration: 0.8 }}
               className="mb-8 text-white"
             >
-              {/* ...existing code... */}
+              <h1 className="mb-4 text-5xl md:text-9xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }} >Book Hotel's</h1>
+              <p className="text-xl text-gray-200 md:text-3xl" style={{ fontFamily: 'var(--font-special-elite)' }}>
+                Where contemporary design meets timeless elegance in the heart
+                of the city.
+              </p>
             </motion.div>
 
             {/* ...existing code... */}
