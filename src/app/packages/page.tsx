@@ -153,6 +153,7 @@ export default function Packages() {
   const [addedPackages, setAddedPackages] = useState<number[]>([]);
   const [isCursorOnContent, setIsCursorOnContent] = useState(false);
   const [addingId, setAddingId] = useState<number | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState<string>('All Packages');
 
   useEffect(() => {
     const fetchSaved = async () => {
@@ -171,6 +172,14 @@ export default function Packages() {
     fetchSaved();
   }, [userId]);
   // ...existing code...
+
+  // Get unique filter categories from packages
+  const filterCategories = ['All Packages', ...new Set(packages.map(pkg => pkg.type))];
+
+  // Filter packages based on selected filter
+  const filteredPackages = selectedFilter === 'All Packages' 
+    ? packages 
+    : packages.filter(pkg => pkg.type === selectedFilter);
 
   const handleAddToJourneys = async (pkg: Package) => {
     if (!userId) {
@@ -388,47 +397,25 @@ export default function Packages() {
 
         {/* Filter Tabs */}
         <div className="mb-8 flex flex-wrap justify-center gap-3">
-          <Badge
-            variant="outline"
-            className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-          >
-            All Packages
-          </Badge>
-          <Badge
-            variant="outline"
-            className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-          >
-            Luxury
-          </Badge>
-          <Badge
-            variant="outline"
-            className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-          >
-            Culture
-          </Badge>
-          <Badge
-            variant="outline"
-            className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-          >
-            Beach & Relaxation
-          </Badge>
-          <Badge
-            variant="outline"
-            className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-          >
-            Adventure
-          </Badge>
-          <Badge
-            variant="outline"
-            className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-          >
-            Wellness
-          </Badge>
+          {filterCategories.map((filter) => (
+            <Badge
+              key={filter}
+              variant={selectedFilter === filter ? "default" : "outline"}
+              className={`cursor-pointer px-4 py-2 transition-all ${
+                selectedFilter === filter 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                  : 'hover:bg-gray-100'
+              }`}
+              onClick={() => setSelectedFilter(filter)}
+            >
+              {filter}
+            </Badge>
+          ))}
         </div>
 
         {/* Package Grid */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {packages.map((pkg) => (
+          {filteredPackages.map((pkg) => (
             <Card
               key={pkg.id}
               className="group cursor-pointer overflow-hidden transition-shadow hover:shadow-xl"

@@ -33,6 +33,7 @@ import { toast } from 'sonner';
 import DailyRouteMap from '@/components/DailyRouteMap';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { CommentItem } from '@/components/CommentItem';
+import UGCSignalsPanel from '@/components/UGCSignalsPanel';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
@@ -794,6 +795,9 @@ export default function CommunityTripDetail() {
                 </CardContent>
               </Card>
             ) : null}
+
+            {/* UGC Signals - AI-Generated Insights from Comments */}
+            <UGCSignalsPanel tripId={tripId} onGenerate={fetchTripDetails} />
 
             {/* Comments Section - Enhanced */}
             <Card>
