@@ -955,6 +955,79 @@ export default function AIPlanner() {
     preloadImages();
   }, [activeState?.dayPlans, activityImageCache]);
 
+  // Preload activity alternatives when itinerary is generated or loaded
+  useEffect(() => {
+    const preloadActivityAlternatives = async () => {
+      if (!activeState?.dayPlans || !Array.isArray(activeState.dayPlans)) return;
+      if (isCaching) return; // Prevent concurrent caching
+      
+      // Extract unique cities from day plans
+      const cities = new Set<string>();
+      activeState.dayPlans.forEach(day => {
+        if (day.city) {
+          cities.add(day.city);
+        }
+      });
+      
+      if (cities.size === 0) {
+        console.log('[ActivityCache] No cities found in day plans');
+        return;
+      }
+      
+      console.log('[ActivityCache] Starting preload for cities:', Array.from(cities));
+      setIsCaching(true);
+      
+      try {
+        // Preload alternatives for each city
+        for (const city of cities) {
+          // Check if already cached for this city
+          const cacheKey = `city-${city}`;
+          if (alternativesCache[cacheKey]) {
+            console.log('[ActivityCache] Already cached for:', city);
+            continue;
+          }
+          
+          try {
+            console.log('[ActivityCache] Fetching alternatives for:', city);
+            const response = await fetch('/api/ai-planner/search-activities', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                query: 'Popular attractions and activities',
+                city,
+                context: {},
+              }),
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              if (data.results && data.results.length > 0) {
+                setAlternativesCache(prev => ({
+                  ...prev,
+                  [cacheKey]: data.results,
+                }));
+                console.log('[ActivityCache] Cached', data.results.length, 'alternatives for:', city);
+              }
+            }
+          } catch (err) {
+            console.error('[ActivityCache] Error fetching alternatives for', city, ':', err);
+          }
+          
+          // Small delay between requests to avoid overwhelming the API
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } finally {
+        setIsCaching(false);
+        console.log('[ActivityCache] Preload complete');
+      }
+    };
+    
+    // Only preload when itinerary exists and we haven't cached yet
+    if (activeState?.dayPlans?.length && Object.keys(alternativesCache).length === 0) {
+      preloadActivityAlternatives();
+    }
+  }, [activeState?.dayPlans, alternativesCache, isCaching]);
+
   // Load saved trip from URL parameter (tripId)
   useEffect(() => {
     const tripId = searchParams?.get('tripId');
@@ -972,8 +1045,9 @@ export default function AIPlanner() {
         const savedTrip = await response.json();
         
         // Restore planner state
+        let restoredState: TripState | null = null;
         if (savedTrip.plannerState) {
-          const restoredState = typeof savedTrip.plannerState === 'string' 
+          restoredState = typeof savedTrip.plannerState === 'string' 
             ? JSON.parse(savedTrip.plannerState) 
             : savedTrip.plannerState;
           setPlannerState(restoredState);
@@ -981,12 +1055,50 @@ export default function AIPlanner() {
         }
 
         // Restore chat history
+        let hasExistingChat = false;
         if (savedTrip.chatHistory) {
           const restoredMessages = typeof savedTrip.chatHistory === 'string'
             ? JSON.parse(savedTrip.chatHistory)
             : savedTrip.chatHistory;
-          setMessages(restoredMessages);
-          console.log('[LoadTrip] Restored', restoredMessages.length, 'messages');
+          
+          // Check if there's meaningful chat history (more than just the initial greeting)
+          if (restoredMessages.length > 1) {
+            setMessages(restoredMessages);
+            hasExistingChat = true;
+            console.log('[LoadTrip] Restored', restoredMessages.length, 'messages');
+          }
+        }
+
+        // If no chat history (imported trip or new trip), generate initial greeting with recommendations
+        if (!hasExistingChat && restoredState) {
+          const destination = Array.isArray(restoredState.destination) 
+            ? restoredState.destination.join(' and ') 
+            : restoredState.destination || 'your destination';
+          
+          const tripTitle = restoredState.tripTitle || savedTrip.title || 'your trip';
+          const duration = restoredState.dates?.durationDays || restoredState.summary?.days;
+          
+          let greetingMessage = `Hey! 🔥 Welcome back to **${tripTitle}**!\n\n`;
+          greetingMessage += `I see you're planning an adventure to **${destination}**`;
+          
+          if (duration) {
+            greetingMessage += ` for **${duration} days**`;
+          }
+          
+          greetingMessage += `! Excited to help you make the most of this journey.\n\n`;
+          greetingMessage += `**Here's what I can help you with:**\n`;
+          greetingMessage += `✨ Discover hidden gems and local favorites\n`;
+          greetingMessage += `🗺️ Optimize your daily routes\n`;
+          greetingMessage += `🏨 Find the perfect accommodations\n`;
+          greetingMessage += `🍽️ Recommend authentic dining experiences\n`;
+          greetingMessage += `💡 Share insider tips and local insights\n\n`;
+          greetingMessage += `What would you like to explore or adjust in your itinerary?`;
+          
+          setMessages([{
+            type: 'ai',
+            text: greetingMessage,
+          }]);
+          console.log('[LoadTrip] Generated initial greeting for imported trip');
         }
 
         // Mark as already saved
@@ -2626,14 +2738,33 @@ export default function AIPlanner() {
           onReplace={handleReplaceActivity}
           isAdding={changingActivity.isAdding || false}
           cachedAlternatives={(() => {
-            const cacheKey = `${changingActivity.dayNumber}-${changingActivity.activityIndex}`;
-            const cached = alternativesCache[cacheKey];
-            console.log('[AIPlanner] Passing cached alternatives:', {
-              cacheKey,
-              cached: cached?.length || 0,
-              allCacheKeys: Object.keys(alternativesCache),
-            });
-            return cached;
+            // Try to get cached alternatives based on the day's city
+            const dayPlan = activeState?.dayPlans?.find(d => d.day === changingActivity.dayNumber);
+            let cachedResults: any[] | undefined;
+            
+            // First, try to get the city from the day plan
+            if (dayPlan?.city) {
+              const cacheKey = `city-${dayPlan.city}`;
+              cachedResults = alternativesCache[cacheKey];
+              console.log('[AIPlanner] Using cached alternatives for city:', dayPlan.city, '- Found:', cachedResults?.length || 0);
+            }
+            
+            // If no cached results, try to extract city from activity location
+            if (!cachedResults && changingActivity.activity.location) {
+              const extractCity = (location: string): string => {
+                const parts = location.split(',').map(s => s.trim());
+                return parts[parts.length - 1] || parts[0] || '';
+              };
+              const city = extractCity(changingActivity.activity.location);
+              if (city) {
+                const cacheKey = `city-${city}`;
+                cachedResults = alternativesCache[cacheKey];
+                console.log('[AIPlanner] Using cached alternatives for extracted city:', city, '- Found:', cachedResults?.length || 0);
+              }
+            }
+            
+            console.log('[AIPlanner] All cache keys:', Object.keys(alternativesCache));
+            return cachedResults;
           })()}
         />
       )}

@@ -131,6 +131,7 @@ model CommunityTrip {
   
   comments        Comment[]
   likes           Like[]
+  signals         UGCSignal[]
   
   @@index([userId])
   @@index([destination])
@@ -186,4 +187,41 @@ model Like {
   
   @@unique([tripId, userId])
   @@index([tripId])
+}
+
+// UGC Signals - AI-generated insights from user comments
+model UGCSignal {
+  id              String        @id @default(uuid())
+  tripId          String
+  trip            CommunityTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  // Signal Classification
+  signalType      String        // "positive", "negative", "suggestion"
+  category        String        // "accommodation", "transportation", "food", "activity", "timing", "cost", "safety", "other"
+  
+  // Signal Content
+  title           String        // Short summary (e.g., "Hotel location concern")
+  content         String        // Detailed description
+  actionable      String?       // Suggested action (e.g., "Consider booking hotels near MRT stations")
+  
+  // Metadata
+  confidence      Float         @default(0.8) // AI confidence score (0-1)
+  commentCount    Int           @default(1)   // Number of comments this signal is based on
+  commentIds      String        // JSON array of comment IDs
+  
+  // Impact Assessment
+  priority        String        @default("medium") // "high", "medium", "low"
+  impactArea      String?       // Which part of trip is affected (e.g., "Day 2 afternoon")
+  
+  // Status
+  isActive        Boolean       @default(true)
+  reviewedBy      String?       // Admin/Guide user ID who reviewed this
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([tripId])
+  @@index([signalType])
+  @@index([category])
+  @@index([priority])
 }

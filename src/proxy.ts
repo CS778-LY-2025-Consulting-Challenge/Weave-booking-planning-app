@@ -23,6 +23,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/travel-safety(.*)',
   '/api/update-user-type(.*)',
   '/api/serpapi(.*)',
+  '/api/community-trips(.*)',
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
