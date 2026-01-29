@@ -8,9 +8,8 @@ export default function PrivateJetPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Load the private jet site content directly into the page
-    // This ensures all scripts and styles work correctly
-    window.location.href = 'https://d30mgvfwc9sz4j.cloudfront.net/private-jet/index.html';
+    // Redirect to the private jet site served from public folder
+    window.location.href = '/private-jet/index.html';
   }, []);
 
   return (

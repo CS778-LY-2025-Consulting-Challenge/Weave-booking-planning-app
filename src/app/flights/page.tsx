@@ -1412,7 +1412,7 @@ export default function FlightBooking() {
                 key={index}
                 whileHover={{ y: -8 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                onClick={() => setFromInput(destination.city)}
+                onClick={() => router.push('/packages')}
                 className="group cursor-pointer"
               >
                 <div className="relative overflow-hidden rounded-lg bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">
@@ -1457,7 +1457,6 @@ export default function FlightBooking() {
                       <div className="text-sm text-gray-600">from</div>
                       <div className="text-xl font-bold text-gray-900">
                         {destination.price}
-                        <span className="text-xs text-gray-500">*</span>
                       </div>
                     </div>
                   </div>
