@@ -109,6 +109,7 @@ type CommunityTrip = {
     userAvatar: string | null;
     content: string;
     createdAt: string;
+    parentId?: string | null;
   }>;
   likes: Array<{
     userId: string;
@@ -147,7 +148,7 @@ export default function CommunityTripDetail() {
     try {
       setLoading(true);
       const response = await fetch(`/api/community-trips/${tripId}`);
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch trip details');
       }
@@ -155,7 +156,7 @@ export default function CommunityTripDetail() {
       const data = await response.json();
       setTrip(data);
       setLikeCount(data._count.likes);
-      
+
       // Check if current user has liked this trip
       if (user && data.likes) {
         setIsLiked(data.likes.some((like: any) => like.userId === user.id));
@@ -248,7 +249,7 @@ export default function CommunityTripDetail() {
 
       const data = await response.json();
       toast.success('Trip imported to your saved trips!');
-      
+
       // Redirect to AI planner with the imported trip
       setTimeout(() => {
         router.push(`/ai-planner?tripId=${data.savedTripId}`);
@@ -279,7 +280,7 @@ export default function CommunityTripDetail() {
       }
 
       toast.success('Trip deleted successfully!');
-      
+
       // Redirect to journeys page with community tab
       setTimeout(() => {
         router.push('/journeys?tab=community');
@@ -357,16 +358,16 @@ export default function CommunityTripDetail() {
                   <ArrowLeft className="size-4 mr-2" />
                   Back
                 </Button>
-                
+
                 <h1 className="font-cormorant text-4xl md:text-5xl font-bold flex-1">
                   {trip.title}
                 </h1>
-                
+
                 <Badge className="bg-white/20 backdrop-blur-sm text-white border-white/30 shrink-0">
                   {trip.duration}
                 </Badge>
               </div>
-              
+
               {/* Location and Rating - Aligned with title */}
               <div className="flex items-center gap-4 mb-3 text-white/90 ml-[88px]">
                 <div className="flex items-center gap-2">
@@ -495,7 +496,7 @@ export default function CommunityTripDetail() {
               <div className="space-y-8 bg-white">
                 <h3 className="font-bold text-2xl text-zinc-800 mb-4 px-4">Travel Guide</h3>
                 <div className="h-px bg-zinc-200 mb-6"></div>
-                
+
                 {trip.dayGuides.map((dayGuide, dayIndex) => (
                   <div key={dayIndex} className="px-4">
                     {/* Day Header */}
@@ -506,13 +507,13 @@ export default function CommunityTripDetail() {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="border-l-4 border-zinc-800 pl-4 mb-6">
                       <h3 className="text-2xl font-bold text-zinc-800">
                         {dayGuide.dayTitle}
                       </h3>
                     </div>
-                    
+
                     {/* Grid Layout: 1/3 Left (Activities) + 2/3 Right (Guide) */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                       {/* Left Column: Activity Cards with Arrow Connections - 1/3 width */}
@@ -521,29 +522,29 @@ export default function CommunityTripDetail() {
                         style={{ minHeight: `${(dayGuide.activities.length || 1) * 172}px` }}
                       >
                         {/* SVG for connecting arrows */}
-                        <svg 
-                          className="absolute inset-0 w-full h-full pointer-events-none" 
+                        <svg
+                          className="absolute inset-0 w-full h-full pointer-events-none"
                           style={{ zIndex: 0 }}
                         >
                           {dayGuide.activities.map((_, actIndex) => {
                             if (actIndex === dayGuide.activities.length - 1) return null;
-                            
+
                             const cardHeight = 150; // Approximate card height
                             const spacing = 14;
-                            
+
                             // Calculate positions (staggered layout)
                             const isCurrentLeft = actIndex % 2 === 0;
                             const isNextLeft = (actIndex + 1) % 2 === 0;
-                            
+
                             const currentY = actIndex * (cardHeight + spacing) + cardHeight / 2;
                             const nextY = (actIndex + 1) * (cardHeight + spacing) + cardHeight / 2;
-                            
+
                             const currentX = isCurrentLeft ? 75 : 225; // Left or right position
                             const nextX = isNextLeft ? 75 : 225;
-                            
+
                             // Calculate middle point for the elbow
                             const midY = (currentY + nextY) / 2;
-                            
+
                             return (
                               <g key={actIndex}>
                                 {/* Elbow arrow path */}
@@ -572,12 +573,12 @@ export default function CommunityTripDetail() {
                             );
                           })}
                         </svg>
-                        
+
                         {/* Activity Cards */}
                         {dayGuide.activities.map((activity, actIndex) => {
                           const isLeft = actIndex % 2 === 0;
                           const topPosition = actIndex * (150 + 14); // Card height + spacing
-                          
+
                           return (
                             <div
                               key={actIndex}
@@ -605,13 +606,13 @@ export default function CommunityTripDetail() {
                                       </div>
                                     </div>
                                   )}
-                                  
+
                                   {/* Activity Details */}
                                   <div className="px-2 py-1">
                                     <h4 className="font-semibold text-xs text-zinc-800 leading-tight line-clamp-2">
                                       {activity.name}
                                     </h4>
-                                    
+
                                     {activity.time && (
                                       <div className="flex items-center gap-1 text-xs text-zinc-500 mt-0.5">
                                         <Clock className="size-3 shrink-0" />
@@ -625,7 +626,7 @@ export default function CommunityTripDetail() {
                           );
                         })}
                       </div>
-                      
+
                       {/* Right Column: Travel Guide - 2/3 width with left dashed border */}
                       <div className="md:col-span-2 md:pl-8 md:border-l-2 md:border-dashed md:border-zinc-300">
                         {dayGuide.guide ? (
@@ -635,8 +636,8 @@ export default function CommunityTripDetail() {
                               <h4 className="font-semibold text-lg text-zinc-800">Travel Tips</h4>
                             </div>
                             <div className="prose prose-zinc max-w-none">
-                              <MarkdownRenderer 
-                                content={dayGuide.guide} 
+                              <MarkdownRenderer
+                                content={dayGuide.guide}
                                 className="text-zinc-700 leading-relaxed"
                               />
                             </div>
@@ -650,7 +651,7 @@ export default function CommunityTripDetail() {
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Separator Line */}
                     {dayIndex < (trip.dayGuides?.length || 0) - 1 && (
                       <div className="mt-8 pt-8 border-t border-zinc-300"></div>
@@ -785,7 +786,7 @@ export default function CommunityTripDetail() {
                                 }))}
                               dayNumber={currentDayPlan.day}
                               dayTitle={currentDayPlan.title}
-                              onClose={() => {}}
+                              onClose={() => { }}
                             />
                           </div>
                         </div>

@@ -1618,6 +1618,7 @@ export default function FlightBooking() {
           flight={selectedFlight}
           totalPassengers={totalPassengers}
           onClose={() => setShowBookingFlow(false)}
+          selectedDate={departureDate || new Date()}
         />
       )}
     </div>
