@@ -1,4 +1,4 @@
-import { ChevronDown, ArrowRight } from 'lucide-react';
+import { ChevronDown, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'motion/react';
@@ -199,6 +199,11 @@ const ParallaxHero = () => {
                             )}
                           >
                             <div className="flex items-center gap-4">
+                              {/* Left Arrow for AI Trip Planner, Hotels, Community Journeys */}
+                              {(item.title === 'AI Trip Planner' || item.title === 'Hotels' || item.title === 'Community Journeys') && (
+                                <ArrowLeft className="size-5 flex-shrink-0 text-white/40 transition-all group-hover:-translate-x-1 group-hover:text-white" />
+                              )}
+
                               {/* Icon */}
                               <div className="h-16 w-16 flex-shrink-0">
                                 <img
@@ -218,8 +223,10 @@ const ParallaxHero = () => {
                                 </p>
                               </div>
 
-                              {/* Arrow */}
-                              <ArrowRight className="size-5 flex-shrink-0 text-white/40 transition-all group-hover:translate-x-1 group-hover:text-white" />
+                              {/* Right Arrow for Packages, Flights, Local Guides */}
+                              {(item.title === 'Packages' || item.title === 'Flights' || item.title === 'Local Guides') && (
+                                <ArrowRight className="size-5 flex-shrink-0 text-white/40 transition-all group-hover:translate-x-1 group-hover:text-white" />
+                              )}
                             </div>
                           </motion.a>
                         </motion.div>
