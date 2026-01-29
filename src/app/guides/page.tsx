@@ -295,27 +295,22 @@ export default function Guides() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Hero Section - Centered Container with Full Video Background */}
+      {/* Hero Section - Centered Container with S3 Video Background */}
       <section className="flex min-h-screen items-center justify-center px-4 pt-29 pb-10 sm:px-6 lg:px-12">
         <div className="mx-auto w-full max-w-7xl">
           {/* Premium Hero Container - Clean rounded design */}
           <div className="relative h-[700px] overflow-hidden rounded-3xl sm:h-[750px] lg:h-[800px]">
-            {/* YouTube Video Background - Full Container */}
-            <div className="absolute inset-0">
-              <iframe
-                className="absolute top-1/2 left-1/2 h-[56.25vw] min-h-full w-[177.77vh] min-w-full -translate-x-1/2 -translate-y-1/2"
-                src="https://www.youtube.com/embed/mUqtC3eNjnI?si=XbpbHYMKivN5JBnz&start=22&autoplay=1&mute=1&loop=1&controls=0&playlist=mUqtC3eNjnI&modestbranding=1&showinfo=0&rel=0"
-                title="Travel video"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                style={{ pointerEvents: 'none' }}
-              />
-            </div>
-
+            {/* S3 Video Background - Full Container */}
+            <video
+              className="absolute top-1/2 left-1/2 h-full w-full object-cover -translate-x-1/2 -translate-y-1/2"
+              src="https://d30mgvfwc9sz4j.cloudfront.net/hero-videos/guides-hero.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
-
             {/* Content Overlay */}
             <div className="relative z-10 flex h-full flex-col">
               {/* Header Area with Text */}
