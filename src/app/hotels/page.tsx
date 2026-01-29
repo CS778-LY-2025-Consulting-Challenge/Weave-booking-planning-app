@@ -190,19 +190,16 @@ export default function HotelBooking() {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <div className="relative h-screen overflow-hidden">
-        {/* YouTube Video Background */}
-        <div className="pointer-events-none absolute inset-0 h-full w-full">
-          <iframe
-            className="absolute top-1/2 left-1/2 h-[100vh] min-h-[56.25vw] w-[100vw] min-w-[177.77vh] -translate-x-1/2 -translate-y-1/2"
-            src="https://www.youtube.com/embed/WGqBzbVUTCA?autoplay=1&mute=1&controls=0&showinfo=0&loop=1&playlist=WGqBzbVUTCA&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&playsinline=1"
-            title="YouTube video player"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-          />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        {/* S3 Video Background */}
+        <video
+          className="absolute top-1/2 left-1/2 h-full w-full object-cover -translate-x-1/2 -translate-y-1/2"
+          src="https://d30mgvfwc9sz4j.cloudfront.net/hero-videos/hotels-hero.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
 
         {/* Hero Content */}
         <div className="absolute inset-0 flex flex-col justify-end px-4 pb-20 sm:px-6 lg:px-8">
@@ -213,15 +210,10 @@ export default function HotelBooking() {
               transition={{ duration: 0.8 }}
               className="mb-8 text-white"
             >
-
-              <h1 className="mb-4 text-5xl md:text-9xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }} >Book Hotel's</h1>
-              <p className="text-xl text-gray-200 md:text-3xl" style={{ fontFamily: 'var(--font-special-elite)' }}>
-                Where contemporary design meets timeless elegance in the heart
-                of the city.
-              </p>
+              {/* ...existing code... */}
             </motion.div>
 
-            {/* Hotel Search Bar */}
+            {/* ...existing code... */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -229,194 +221,7 @@ export default function HotelBooking() {
               className="relative"
             >
               <HotelSearch onSearch={handleHotelSearch} isLoading={isSearching} />
-
-              {/* Calendar Popup */}
-              <AnimatePresence>
-                {showCalendar && (
-                  <>
-                    {/* Overlay */}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
-                      onClick={() => setShowCalendar(false)}
-                    />
-
-                    {/* Calendar Modal */}
-                    <motion.div
-                      initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                      transition={{ duration: 0.3, ease: 'easeOut' }}
-                      className="fixed top-1/2 left-1/2 z-[101] mx-4 w-full max-w-4xl -translate-x-1/2 -translate-y-1/2"
-                    >
-                      <Card className="max-h-[90vh] overflow-hidden overflow-y-auto border-0 bg-white shadow-2xl backdrop-blur-xl">
-                        <CardContent className="p-8">
-                          {/* Calendar Header */}
-                          <div className="mb-6 flex items-center justify-between">
-                            <button
-                              onClick={() => {
-                                const newMonth = new Date(currentMonth);
-                                newMonth.setMonth(newMonth.getMonth() - 1);
-                                setCurrentMonth(newMonth);
-                              }}
-                              className="rounded-full p-2 transition-colors hover:bg-gray-100"
-                            >
-                              <ChevronRight className="size-5 rotate-180" />
-                            </button>
-                            <h3 className="text-xl">
-                              {currentMonth.toLocaleDateString('en-US', {
-                                month: 'long',
-                                year: 'numeric',
-                              })}
-                            </h3>
-                            <button
-                              onClick={() => {
-                                const newMonth = new Date(currentMonth);
-                                newMonth.setMonth(newMonth.getMonth() + 1);
-                                setCurrentMonth(newMonth);
-                              }}
-                              className="rounded-full p-2 transition-colors hover:bg-gray-100"
-                            >
-                              <ChevronRight className="size-5" />
-                            </button>
-                          </div>
-
-                          {/* Selection Info */}
-                          <div className="mb-6 rounded-lg bg-amber-50 p-4">
-                            <p className="mb-2 text-sm text-gray-600">
-                              {selectingCheckIn
-                                ? 'Select check-in date'
-                                : 'Select check-out date'}
-                            </p>
-                            <div className="flex items-center gap-4">
-                              <div>
-                                <p className="text-xs text-gray-500">
-                                  Check-in
-                                </p>
-                                <p className="font-medium">
-                                  {formatDate(checkIn)}
-                                </p>
-                              </div>
-                              <ArrowRight className="size-4 text-gray-400" />
-                              <div>
-                                <p className="text-xs text-gray-500">
-                                  Check-out
-                                </p>
-                                <p className="font-medium">
-                                  {formatDate(checkOut)}
-                                </p>
-                              </div>
-                              <div className="ml-auto text-right">
-                                <p className="text-xs text-gray-500">
-                                  {calculateNights()} nights
-                                </p>
-                                <p className="text-xl">
-                                  ${calculateNights() * 299}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Day Headers */}
-                          <div className="mb-4 grid grid-cols-7 gap-2">
-                            {[
-                              'Sun',
-                              'Mon',
-                              'Tue',
-                              'Wed',
-                              'Thu',
-                              'Fri',
-                              'Sat',
-                            ].map((day) => (
-                              <div
-                                key={day}
-                                className="py-2 text-center text-sm text-gray-500"
-                              >
-                                {day}
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Calendar Days */}
-                          <div className="grid grid-cols-7 gap-2">
-                            {calendarDays.map((dayInfo, index) => {
-                              if (!dayInfo) {
-                                return (
-                                  <div
-                                    key={`empty-${index}`}
-                                    className="aspect-square"
-                                  />
-                                );
-                              }
-
-                              const dateStr = dayInfo.date
-                                .toISOString()
-                                .split('T')[0];
-                              const isSelected =
-                                dateStr === checkIn || dateStr === checkOut;
-                              const inRange = isDateInRange(dateStr);
-                              const isPast =
-                                dayInfo.date <
-                                new Date(new Date().setHours(0, 0, 0, 0));
-
-                              return (
-                                <motion.button
-                                  key={dateStr}
-                                  onClick={() =>
-                                    !isPast && handleDateSelect(dateStr)
-                                  }
-                                  disabled={isPast}
-                                  whileHover={!isPast ? { scale: 1.05 } : {}}
-                                  whileTap={!isPast ? { scale: 0.95 } : {}}
-                                  className={`relative aspect-square rounded-lg p-2 transition-all ${isPast ? 'cursor-not-allowed opacity-30' : 'cursor-pointer'} ${isSelected ? 'bg-black text-white' : ''} ${inRange && !isSelected ? 'bg-amber-100' : ''} ${!isSelected && !inRange && !isPast ? 'hover:bg-gray-100' : ''} ${dayInfo.isWeekend && !isSelected && !inRange ? 'bg-blue-50' : ''} `}
-                                >
-                                  <div className="mb-1 text-sm">
-                                    {dayInfo.day}
-                                  </div>
-                                  <div
-                                    className={`text-xs ${isSelected
-                                      ? 'text-amber-200'
-                                      : inRange
-                                        ? 'text-amber-600'
-                                        : 'text-gray-500'
-                                      }`}
-                                  >
-                                    ${dayInfo.price}
-                                  </div>
-                                </motion.button>
-                              );
-                            })}
-                          </div>
-
-                          {/* Legend */}
-                          <div className="mt-6 flex items-center justify-between border-t pt-6 text-sm">
-                            <div className="flex items-center gap-6">
-                              <div className="flex items-center gap-2">
-                                <div className="h-4 w-4 rounded bg-blue-50" />
-                                <span className="text-gray-600">Weekend</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <div className="h-4 w-4 rounded bg-amber-100" />
-                                <span className="text-gray-600">
-                                  Selected Range
-                                </span>
-                              </div>
-                            </div>
-                            <Button
-                              onClick={() => setShowCalendar(false)}
-                              variant="outline"
-                            >
-                              Close
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+              {/* ...existing code... */}
             </motion.div>
           </div>
         </div>
@@ -507,7 +312,7 @@ export default function HotelBooking() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="relative h-[500px] overflow-hidden rounded-lg shadow-2xl"
+              className="relative h-125 overflow-hidden rounded-lg shadow-2xl"
             >
               <img
                 src="https://images.unsplash.com/photo-1761303411707-8be2deb33826?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBob3RlbCUyMGV4dGVyaW9yJTIwbmlnaHR8ZW58MXx8fHwxNzY0NjIyOTc5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
@@ -556,7 +361,7 @@ export default function HotelBooking() {
                     alt={exp.title}
                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
                   <div className="absolute right-0 bottom-0 left-0 p-6">
                     <h3 className="mb-2 text-2xl">{exp.title}</h3>
                     <p className="text-gray-300">{exp.description}</p>

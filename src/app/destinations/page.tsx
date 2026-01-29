@@ -69,24 +69,19 @@ export default function TrendingDestinations() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Hero Section with Video Background - Full Screen */}
+      {/* Hero Section with S3 Video Background - Full Screen */}
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden">
-        {/* YouTube Video Background */}
-        <div className="absolute inset-0">
-          <iframe
-            className="absolute top-1/2 left-1/2 h-[56.25vw] min-h-full w-[177.77vh] min-w-full -translate-x-1/2 -translate-y-1/2"
-            src="https://www.youtube.com/embed/LQuLAbG62vY?si=OINNSloSE4hmXHRy&start=17&autoplay=1&mute=1&loop=1&controls=0&playlist=LQuLAbG62vY&modestbranding=1&showinfo=0&rel=0"
-            title="YouTube video player"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            style={{ pointerEvents: 'none' }}
-          />
-        </div>
-
+        {/* S3 Video Background */}
+        <video
+          className="absolute top-1/2 left-1/2 h-full w-full object-cover -translate-x-1/2 -translate-y-1/2"
+          src="https://d30mgvfwc9sz4j.cloudfront.net/hero-videos/destinations-hero.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60" />
-
         {/* Content Overlay */}
         <div className="relative z-10 mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
           <motion.div

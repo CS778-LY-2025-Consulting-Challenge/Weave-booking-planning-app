@@ -41,6 +41,112 @@ interface Package {
 }
 
 export default function Packages() {
+      // Travel packages data
+      const packages: Package[] = [
+        {
+          id: 1,
+          name: 'New Zealand Adventure',
+          destination: 'Auckland, Rotorua, Queenstown, Milford Sound',
+          duration: '10 Days / 9 Nights',
+          price: 2899,
+          image: '/images/new zealand - package.jpg',
+          includes: [
+            'Round-trip flights',
+            '9 nights accommodation in scenic locations',
+            'Milford Sound cruise',
+            'Hobbiton movie set tour',
+            'Adventure activities (bungee jumping, sky diving)',
+            'Thermal pools of Rotorua',
+            'Scenic drives and nature hikes',
+          ],
+          type: 'Adventure',
+        },
+        {
+          id: 2,
+          name: 'European Highlights Tour',
+          destination: 'Paris, Rome, Barcelona',
+          duration: '14 Days / 13 Nights',
+          price: 3299,
+          image: '/images/europe - package.jpg',
+          includes: [
+            'International flights',
+            '13 nights in 4-star hotels',
+            'Daily breakfast',
+            'Guided city tours',
+            'Museum passes',
+          ],
+          type: 'Culture',
+        },
+        {
+          id: 3,
+          name: 'Tokyo Cultural Experience',
+          destination: 'Tokyo, Kyoto, Osaka',
+          duration: '10 Days / 9 Nights',
+          price: 2799,
+          image: '/images/tokyo - package.jpg',
+          includes: [
+            'Round-trip flights',
+            '9 nights accommodation',
+            'JR Pass included',
+            'Traditional tea ceremony',
+            'Sushi making class',
+          ],
+          type: 'Culture',
+        },
+        {
+          id: 4,
+          name: 'Greek Island Adventure',
+          destination: 'Athens, Santorini, Mykonos',
+          duration: '10 Days / 9 Nights',
+          price: 2199,
+          image: '/images/greek - package.jpg',
+          includes: [
+            'International flights',
+            'Ferry transfers',
+            '9 nights in hotels',
+            'Sunset cruise',
+            'Archaeological tours',
+          ],
+          type: 'Beach & Culture',
+        },
+        {
+          id: 5,
+          name: 'Dubai Luxury Escape',
+          destination: 'Dubai, UAE',
+          duration: '5 Days / 4 Nights',
+          price: 1899,
+          image: '/images/dubai - package.jpg',
+          includes: [
+            'Round-trip flights',
+            '4 nights in 5-star hotel',
+            'Desert safari',
+            'Burj Khalifa tickets',
+            'Dubai Mall tour',
+          ],
+          type: 'Luxury',
+        },
+        {
+          id: 6,
+          name: 'Bali Wellness Retreat',
+          destination: 'Ubud & Seminyak, Bali',
+          duration: '8 Days / 7 Nights',
+          price: 1699,
+          image: '/images/bali-package.jpg',
+          includes: [
+            'Round-trip flights',
+            '7 nights accommodation',
+            'Daily yoga classes',
+            'Spa treatments',
+            'Healthy meals',
+          ],
+          type: 'Wellness',
+        },
+      ];
+    // Booking dialog state
+    const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+    const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
+    const [numberOfTravelers, setNumberOfTravelers] = useState(1);
+    const [bookingStep, setBookingStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const router = useRouter();
   const { user } = useUser();
   const userId = user?.id;
@@ -65,114 +171,7 @@ export default function Packages() {
     };
     fetchSaved();
   }, [userId]);
-
-  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
-  const [numberOfTravelers, setNumberOfTravelers] = useState(1);
-  const [bookingStep, setBookingStep] = useState<
-    'details' | 'payment' | 'confirmation'
-  >('details');
-
-  const packages: Package[] = [
-    {
-      id: 1,
-      name: 'New Zealand Adventure',
-      destination: 'Auckland, Rotorua, Queenstown, Milford Sound',
-      duration: '10 Days / 9 Nights',
-      price: 2899,
-      image: '/images/new zealand - package.jpg',
-      includes: [
-        'Round-trip flights',
-        '9 nights accommodation in scenic locations',
-        'Milford Sound cruise',
-        'Hobbiton movie set tour',
-        'Adventure activities (bungee jumping, sky diving)',
-        'Thermal pools of Rotorua',
-        'Scenic drives and nature hikes',
-      ],
-      type: 'Adventure',
-    },
-    {
-      id: 2,
-      name: 'European Highlights Tour',
-      destination: 'Paris, Rome, Barcelona',
-      duration: '14 Days / 13 Nights',
-      price: 3299,
-      image: '/images/europe - package.jpg',
-      includes: [
-        'International flights',
-        '13 nights in 4-star hotels',
-        'Daily breakfast',
-        'Guided city tours',
-        'Museum passes',
-      ],
-      type: 'Culture',
-    },
-    {
-      id: 3,
-      name: 'Tokyo Cultural Experience',
-      destination: 'Tokyo, Kyoto, Osaka',
-      duration: '10 Days / 9 Nights',
-      price: 2799,
-      image: '/images/tokyo - package.jpg',
-      includes: [
-        'Round-trip flights',
-        '9 nights accommodation',
-        'JR Pass included',
-        'Traditional tea ceremony',
-        'Sushi making class',
-      ],
-      type: 'Culture',
-    },
-    {
-      id: 4,
-      name: 'Greek Island Adventure',
-      destination: 'Athens, Santorini, Mykonos',
-      duration: '10 Days / 9 Nights',
-      price: 2199,
-      image: '/images/greek - package.jpg',
-      includes: [
-        'International flights',
-        'Ferry transfers',
-        '9 nights in hotels',
-        'Sunset cruise',
-        'Archaeological tours',
-      ],
-      type: 'Beach & Culture',
-    },
-    {
-      id: 5,
-      name: 'Dubai Luxury Escape',
-      destination: 'Dubai, UAE',
-      duration: '5 Days / 4 Nights',
-      price: 1899,
-      image: '/images/dubai - package.jpg',
-      includes: [
-        'Round-trip flights',
-        '4 nights in 5-star hotel',
-        'Desert safari',
-        'Burj Khalifa tickets',
-        'Dubai Mall tour',
-      ],
-      type: 'Luxury',
-    },
-    {
-      id: 6,
-      name: 'Bali Wellness Retreat',
-      destination: 'Ubud & Seminyak, Bali',
-      duration: '8 Days / 7 Nights',
-      price: 1699,
-      image: '/images/bali-package.jpg',
-      includes: [
-        'Round-trip flights',
-        '7 nights accommodation',
-        'Daily yoga classes',
-        'Spa treatments',
-        'Healthy meals',
-      ],
-      type: 'Wellness',
-    },
-  ];
+  // ...existing code...
 
   // Get unique filter categories from packages
   const filterCategories = ['All Packages', ...new Set(packages.map(pkg => pkg.type))];
