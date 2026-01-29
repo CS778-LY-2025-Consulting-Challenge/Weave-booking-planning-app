@@ -199,8 +199,8 @@ const ParallaxHero = () => {
                             )}
                           >
                             <div className="flex items-center gap-4">
-                              {/* Left Arrow (for right-aligned items) */}
-                              {!isLeft && (
+                              {/* Left Arrow for AI Trip Planner, Hotels, Community Journeys */}
+                              {(item.title === 'AI Trip Planner' || item.title === 'Hotels' || item.title === 'Community Journeys') && (
                                 <ArrowLeft className="size-5 flex-shrink-0 text-white/40 transition-all group-hover:-translate-x-1 group-hover:text-white" />
                               )}
 
@@ -223,8 +223,8 @@ const ParallaxHero = () => {
                                 </p>
                               </div>
 
-                              {/* Right Arrow (for left-aligned items) */}
-                              {isLeft && (
+                              {/* Right Arrow for Packages, Flights, Local Guides */}
+                              {(item.title === 'Packages' || item.title === 'Flights' || item.title === 'Local Guides') && (
                                 <ArrowRight className="size-5 flex-shrink-0 text-white/40 transition-all group-hover:translate-x-1 group-hover:text-white" />
                               )}
                             </div>

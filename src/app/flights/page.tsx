@@ -387,14 +387,14 @@ export default function FlightBooking() {
           const firstFlight = f.flights?.[0] || f;
 
           return {
-            id: index + 100, // Avoid conflict with mock IDs
-            airline: firstFlight.airline || f.airline || 'Unknown Airline',
-            from: firstFlight.departure_airport?.name || f.departure_airport?.name,
-            fromCode: firstFlight.departure_airport?.id || fromCode,
-            to: firstFlight.arrival_airport?.name || f.arrival_airport?.name,
-            toCode: firstFlight.arrival_airport?.id || toCode,
-            departure: firstFlight.departure_airport?.time || f.departure_airport?.time,
-            arrival: firstFlight.arrival_airport?.time || f.arrival_airport?.time,
+            id: f.id || index.toString(),
+            airline: f.airline || firstFlight.airline || '',
+            from: firstFlight.departure_airport?.name || f.departure_airport?.name || '',
+            fromCode: firstFlight.departure_airport?.id || '',
+            to: firstFlight.arrival_airport?.name || f.arrival_airport?.name || '',
+            toCode: firstFlight.arrival_airport?.id || '',
+            departure: firstFlight.departure_airport?.time || f.departure_airport?.time || '',
+            arrival: firstFlight.arrival_airport?.time || f.arrival_airport?.time || '',
             duration: f.total_duration
               ? `${Math.floor(f.total_duration / 60)}h ${f.total_duration % 60}m`
               : `${Math.floor((f.duration || 0) / 60)}h ${(f.duration || 0) % 60}m`,
@@ -1412,7 +1412,7 @@ export default function FlightBooking() {
                 key={index}
                 whileHover={{ y: -8 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                onClick={() => setFromInput(destination.city)}
+                onClick={() => router.push('/packages')}
                 className="group cursor-pointer"
               >
                 <div className="relative overflow-hidden rounded-lg bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">
@@ -1457,7 +1457,6 @@ export default function FlightBooking() {
                       <div className="text-sm text-gray-600">from</div>
                       <div className="text-xl font-bold text-gray-900">
                         {destination.price}
-                        <span className="text-xs text-gray-500">*</span>
                       </div>
                     </div>
                   </div>
