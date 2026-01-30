@@ -33,7 +33,7 @@ import {
   Wine,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { HotelSearch, HotelSearchParams } from '@/components/HotelSearch';
 import { HotelResults } from '@/components/HotelResults';
 import { HotelResult } from '@/types/hotel';
@@ -63,6 +63,14 @@ export default function HotelBooking() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to results when search completes
+  useEffect(() => {
+    if (hasSearched && !isSearching && resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [hasSearched, isSearching]);
 
   const generateCalendarDays = (date: Date) => {
     const year = date.getFullYear();
@@ -234,6 +242,7 @@ export default function HotelBooking() {
       {/* Hotel Search Results */}
       {hasSearched && (
         <motion.div
+          ref={resultsRef}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}

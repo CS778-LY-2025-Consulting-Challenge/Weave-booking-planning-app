@@ -194,12 +194,38 @@ export function FlightBookingFlow({
       const [hours, minutes] = time.split(':');
 
       const flightDate = new Date(selectedDate);
-      let hour = parseInt(hours);
+
+      // Determine hour and minute
+      let hour = 12;
+      let minute = 0;
+
+      if (hours && !isNaN(parseInt(hours))) {
+        hour = parseInt(hours);
+      }
+
+      if (minutes && !isNaN(parseInt(minutes))) {
+        minute = parseInt(minutes);
+      }
+
       if (period === 'PM' && hour !== 12) hour += 12;
       if (period === 'AM' && hour === 12) hour = 0;
 
-      flightDate.setHours(hour, parseInt(minutes), 0, 0);
-      const formattedDepartureDate = flightDate.toISOString();
+      // Check if flightDate is valid before setting hours
+      if (isNaN(flightDate.getTime())) {
+        console.warn('[FlightBooking] Invalid selectedDate, defaulting to now');
+        // Reset to current date if invalid
+        flightDate.setTime(Date.now());
+      }
+
+      flightDate.setHours(hour, minute, 0, 0);
+
+      // Final check
+      let formattedDepartureDate: string;
+      if (isNaN(flightDate.getTime())) {
+        formattedDepartureDate = new Date().toISOString();
+      } else {
+        formattedDepartureDate = flightDate.toISOString();
+      }
 
       // Save booking data to localStorage BEFORE redirecting to Stripe
       const bookingData = {

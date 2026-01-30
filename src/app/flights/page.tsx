@@ -402,7 +402,7 @@ export default function FlightBooking() {
               ? (f.layovers.length === 0 ? 'Non-stop' : `${f.layovers.length} Stop${f.layovers.length > 1 ? 's' : ''}`)
               : 'Non-stop',
             cabin: f.travel_class || firstFlight.travel_class || 'Economy',
-            price: f.price || 0,
+            price: typeof f.price === 'number' ? f.price : (parseFloat(f.price) || 0),
             logo: pickLogoUrl(firstFlight.airline_logo, f.airline_logo),
             departureTime: timeOfDay,
           };

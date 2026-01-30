@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!airline || !from || !to || !totalPrice || !passengers) {
+    if (!airline || !from || !to || totalPrice === undefined || !passengers) {
       return NextResponse.json(
         { error: 'Missing required booking information' },
         { status: 400 }
