@@ -33,7 +33,7 @@ import {
   Wine,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { HotelSearch, HotelSearchParams } from '@/components/HotelSearch';
 import { HotelResults } from '@/components/HotelResults';
 import { HotelResult } from '@/types/hotel';
@@ -63,6 +63,26 @@ export default function HotelBooking() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to results when search completes
+  // Scroll to results when search completes
+  useEffect(() => {
+    if (hasSearched) {
+      // Use setTimeout to ensure DOM is ready and ref is attached on first render
+      const timer = setTimeout(() => {
+        if (resultsRef.current) {
+          // Calculate position with offset for sticky navbar (approx 100px)
+          const yOffset = -20;
+          const element = resultsRef.current;
+          const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [hasSearched, isSearching, searchResults]);
 
   const generateCalendarDays = (date: Date) => {
     const year = date.getFullYear();
@@ -234,10 +254,11 @@ export default function HotelBooking() {
       {/* Hotel Search Results */}
       {hasSearched && (
         <motion.div
+          ref={resultsRef}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="bg-white px-4 py-20 sm:px-6 lg:px-8"
+          className="bg-white px-4 py-20 sm:px-6 lg:px-8 scroll-mt-24"
         >
           <div className="mx-auto max-w-7xl">
             <div className="mb-16 text-center">

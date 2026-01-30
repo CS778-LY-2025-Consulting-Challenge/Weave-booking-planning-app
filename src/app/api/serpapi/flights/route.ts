@@ -169,11 +169,11 @@ export async function GET(request: NextRequest) {
             if (!response.ok) {
                 console.error(`[SerpAPI] API error: ${response.status} ${response.statusText}`);
                 console.error(`[SerpAPI] Error response body:`, JSON.stringify(data, null, 2));
-                
+
                 // Return the actual error message from SerpAPI if available
                 const errorMessage = data.error || `SerpAPI request failed with status ${response.status}`;
                 return NextResponse.json(
-                    { 
+                    {
                         error: errorMessage,
                         details: data,
                         status: response.status
@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
 
         } catch (fetchError) {
             clearTimeout(timeoutId);
-            
+
             if (fetchError instanceof Error) {
                 if (fetchError.name === 'AbortError') {
                     console.error('[SerpAPI] Request timed out after 30 seconds');
@@ -217,14 +217,14 @@ export async function GET(request: NextRequest) {
                         { status: 504 }
                     );
                 }
-                
+
                 console.error('[SerpAPI] Network error:', fetchError.message);
                 return NextResponse.json(
                     { error: `Network error: ${fetchError.message}` },
                     { status: 503 }
                 );
             }
-            
+
             throw fetchError;
         }
 

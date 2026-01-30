@@ -14,10 +14,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Calendar as CalendarIcon, 
-  Clock, 
-  Check, 
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  Check,
   MapPin,
   Video,
   BadgeCheck
@@ -25,7 +25,7 @@ import {
 import { format } from 'date-fns';
 
 interface Guide {
-  id: string;
+  id: string | number;
   name: string;
   country: string;
   specialties: string[];
@@ -225,11 +225,10 @@ export function GuideBookingDialog({
                     <button
                       key={slot}
                       onClick={() => handleTimeSlotSelect(slot)}
-                      className={`rounded-lg border-2 px-4 py-3 text-sm font-medium transition-all ${
-                        selectedTimeSlot === slot
+                      className={`rounded-lg border-2 px-4 py-3 text-sm font-medium transition-all ${selectedTimeSlot === slot
                           ? 'border-blue-600 bg-blue-50 text-blue-700'
                           : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
-                      }`}
+                        }`}
                     >
                       {slot}
                     </button>
