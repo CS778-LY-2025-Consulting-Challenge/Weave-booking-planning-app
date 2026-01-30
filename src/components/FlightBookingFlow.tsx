@@ -187,19 +187,54 @@ export function FlightBookingFlow({
       // Generate booking reference before creating checkout session
       const bookingRef = `WV${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
+      // Validate selectedDate first - ensure it's a valid Date object
+      let validDate: Date;
+      if (!selectedDate || isNaN(new Date(selectedDate).getTime())) {
+        console.warn('[FlightBooking] Invalid selectedDate received, using current date as fallback');
+        validDate = new Date();
+      } else {
+        validDate = new Date(selectedDate);
+      }
+
       // Construct proper date object combining selectedDate and flight time
       // flight.departure is like "10:30 AM"
       const timeString = booking.flight?.departure || '12:00 PM';
       const [time, period] = timeString.split(' ');
       const [hours, minutes] = time.split(':');
 
-      const flightDate = new Date(selectedDate);
-      let hour = parseInt(hours);
+      const flightDate = new Date(validDate);
+
+      // Determine hour and minute
+      let hour = 12;
+      let minute = 0;
+
+      if (hours && !isNaN(parseInt(hours))) {
+        hour = parseInt(hours);
+      }
+
+      if (minutes && !isNaN(parseInt(minutes))) {
+        minute = parseInt(minutes);
+      }
+
       if (period === 'PM' && hour !== 12) hour += 12;
       if (period === 'AM' && hour === 12) hour = 0;
 
-      flightDate.setHours(hour, parseInt(minutes), 0, 0);
-      const formattedDepartureDate = flightDate.toISOString();
+      // Check if flightDate is valid before setting hours
+      if (isNaN(flightDate.getTime())) {
+        console.warn('[FlightBooking] Invalid selectedDate, defaulting to now');
+        // Reset to current date if invalid
+        flightDate.setTime(Date.now());
+      }
+
+      flightDate.setHours(hour, minute, 0, 0);
+
+      // Final check
+      let formattedDepartureDate: string;
+      if (isNaN(flightDate.getTime())) {
+        formattedDepartureDate = new Date().toISOString();
+      } else {
+        formattedDepartureDate = flightDate.toISOString();
+      }
 
       // Save booking data to localStorage BEFORE redirecting to Stripe
       const bookingData = {
