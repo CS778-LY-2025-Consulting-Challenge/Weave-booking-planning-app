@@ -532,16 +532,16 @@ export default function Packages() {
 
             <ul className="space-y-4">
               {[
-                'Roadbook with local tips and expert recommendations',
-                '24/7 on-the-ground support',
-                'On-trip concierge service',
-                'Personalized trip crafting',
-                'Entry and exit information and assistance',
-                '13 nights of accommodations, with daily breakfast included',
-                'All ground transfers, trains, and transport mentioned in the itinerary',
-                'All activities mentioned in the itinerary',
-                'All guided tours, experiences, and entrance fees mentioned in the itinerary',
-                'All classes and workshops mentioned in the itinerary',
+                'Roadbook with local tips and expert recommendations.',
+                '24/7 on-the-ground support.',
+                'On-trip concierge service.',
+                'Personalized trip crafting.',
+                'Entry and exit information and assistance.',
+                '13 nights of accommodations, with daily breakfast included.',
+                'All ground transfers, trains, and transport mentioned in the itinerary.',
+                'All activities mentioned in the itinerary.',
+                'All guided tours, experiences, and entrance fees mentioned in the itinerary.',
+                'All classes and workshops mentioned in the itinerary.',
               ].map((item, index) => (
                 <li key={index} className="flex items-start gap-3">
                   <Check className="mt-1 size-5 text-green-600" />
@@ -559,10 +559,10 @@ export default function Packages() {
 
             <ul className="space-y-4">
               {[
-                'International arrival and departure flights',
-                'Travel insurance',
-                'Personal expenses and gratuities',
-                'Anything else not included or listed as optional in the itinerary',
+                'International arrival and departure flights.',
+                'Travel insurance.',
+                'Personal expenses and gratuities.',
+                'Anything else not included or listed as optional in the itinerary.',
               ].map((item, index) => (
                 <li key={index} className="flex items-start gap-3">
                   <X className="mt-1 size-5 text-red-600" />
