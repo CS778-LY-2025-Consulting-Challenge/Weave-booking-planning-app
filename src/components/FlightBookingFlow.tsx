@@ -98,12 +98,14 @@ interface FlightBookingFlowProps {
   flight: Flight;
   totalPassengers: number;
   onClose: () => void;
+  selectedDate: Date;
 }
 
 export function FlightBookingFlow({
   flight,
   totalPassengers,
   onClose,
+  selectedDate,
 }: FlightBookingFlowProps) {
   const { user } = useUser();
   const [step, setStep] = useState(1);
@@ -185,10 +187,27 @@ export function FlightBookingFlow({
       // Generate booking reference before creating checkout session
       const bookingRef = `WV${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
+      // Construct proper date object combining selectedDate and flight time
+      // flight.departure is like "10:30 AM"
+      const timeString = booking.flight?.departure || '12:00 PM';
+      const [time, period] = timeString.split(' ');
+      const [hours, minutes] = time.split(':');
+
+      const flightDate = new Date(selectedDate);
+      let hour = parseInt(hours);
+      if (period === 'PM' && hour !== 12) hour += 12;
+      if (period === 'AM' && hour === 12) hour = 0;
+
+      flightDate.setHours(hour, parseInt(minutes), 0, 0);
+      const formattedDepartureDate = flightDate.toISOString();
+
       // Save booking data to localStorage BEFORE redirecting to Stripe
       const bookingData = {
         bookingReference: bookingRef,
-        flight: booking.flight,
+        flight: {
+          ...booking.flight,
+          departure: formattedDepartureDate // Use proper ISO date
+        },
         passengers: booking.passengers,
         extras: booking.extras,
         totalPrice: prices.total,
@@ -208,7 +227,7 @@ export function FlightBookingFlow({
           fromCode: booking.flight?.fromCode,
           to: booking.flight?.to,
           toCode: booking.flight?.toCode,
-          departure: booking.flight?.departure,
+          departure: formattedDepartureDate, // Pass proper ISO date to API
           arrival: booking.flight?.arrival,
           duration: booking.flight?.duration,
           passengers: totalPassengers,

@@ -39,10 +39,15 @@ Create detailed, honest advice that travelers MUST know before arriving. Be spec
 
 Provide 5-8 categories with the following structure:
 
-Categories to include:
-1. **Internet & Communication** - VPN requirements, blocked services (Google, Facebook, WhatsApp), local SIM, WiFi
+Categories to include (adjust importance and content to the destination):
+1. **Internet & Communication**
+   - Decide importance based on internet freedom:
+     - Use <strong>Critical</strong> ONLY for heavily restricted/censored destinations (e.g., China, Iran, North Korea, Turkmenistan).
+     - Use <strong>Important</strong> for partially restricted or costly roaming contexts.
+     - Use <strong>Good to Know</strong> for open internet destinations (e.g., US, EU, AU/NZ), focusing on SIM/eSIM, WiFi quality, speed, roaming costs.
+   - Include tips on local SIM/eSIM, best networks, expected speeds, WiFi reliability, and roaming cost traps.
 2. **Visa & Entry Requirements** - Visa types, visa-on-arrival, entry restrictions, passport validity  
-3. **Currency & Payment Systems** - Local currency, card acceptance, mobile payments (Alipay, WeChat Pay), ATM tips, cashless vs cash culture
+3. **Currency & Payment Systems** - Local currency, card acceptance, mobile payments, ATM tips, cashless vs cash culture
 4. **Language & Translation** - English proficiency levels, essential phrases, which translation apps work
 5. **Cultural Etiquette & Social Norms** - Dress codes, tipping culture, religious/cultural taboos, social customs
 6. **Transportation & Getting Around** - Public transit, ride-hailing apps, IC cards, taxi situations, platform etiquette
@@ -54,15 +59,11 @@ Format your response as JSON with this EXACT structure:
   "destination": "${destination}",
   "categories": [
     {
-      "category": "Internet & Communication",
-      "emoji": "🚩",
-      "importance": "Critical",
-      "subtitle": "Stay connected in a restricted online environment",
-      "tips": [
-        "<strong>Google, Facebook, Instagram, most Western apps are blocked</strong> due to some reasons, which can render your usual communication tools useless.",
-        "<strong>Download a reliable VPN before arriving</strong> (such as ExpressVPN or NordVPN), as accessing blocked services without one is nearly impossible.",
-        "<strong>WeChat is essential</strong>—everyone uses it for messaging, payments, and even restaurant reservations, so make sure to set it up before your trip."
-      ]
+      "category": "<Category name>",
+      "emoji": "<Emoji>",
+      "importance": "<Critical|Important|Good to Know based on destination context>",
+      "subtitle": "<Short subtitle>",
+      "tips": ["<tip1>", "<tip2>", "<tip3>"]
     }
   ],
   "lastUpdated": "${new Date().toISOString()}"
@@ -127,6 +128,48 @@ Respond ONLY with valid JSON, no markdown formatting.`;
     if (!tipsData.categories || !Array.isArray(tipsData.categories)) {
       throw new Error('Invalid tips data structure from AI');
     }
+
+    // Post-process Internet & Communication for open internet destinations
+    const restrictiveInternetDestinations = [
+      'china', 'people\'s republic of china', 'prc', 'mainland china',
+      'iran', 'islamic republic of iran',
+      'north korea', 'dprk',
+      'turkmenistan',
+      'cuba',
+      'russia',
+      'united arab emirates', 'uae', 'united arab emirates (uae)',
+      'oman',
+      'qatar'
+    ];
+
+    const destinationLc = destination.toLowerCase();
+    const isRestrictive = restrictiveInternetDestinations.some((d) => destinationLc.includes(d));
+
+    const openInternetDefaultTips = [
+      '<strong>Pick up a local SIM or eSIM</strong> (e.g., airport kiosks or convenience stores) for cheaper data and better coverage than roaming.',
+      '<strong>Check typical speeds and coverage</strong> of major carriers before you buy—dense urban areas are fast, but rural/coastal regions may be slower.',
+      '<strong>WiFi is widely available</strong> in cafes, hotels, and public spaces, but avoid sensitive work on open networks—use a password-protected network or personal hotspot.'
+    ];
+
+    tipsData.categories = tipsData.categories.map((cat: any) => {
+      if (cat.category?.toLowerCase() === 'internet & communication' && !isRestrictive) {
+        // For open internet destinations, downshift importance and remove censorship/VPN-specific messaging
+        const filteredTips = (cat.tips || []).filter(
+          (tip: string) => !/(blocked|vpn|firewall|censorship|wechat|restricted|ban|filter)/i.test(tip)
+        );
+
+        const mergedTips = [...filteredTips, ...openInternetDefaultTips].slice(0, 5);
+
+        return {
+          ...cat,
+          importance: cat.importance === 'Critical' ? 'Important' : (cat.importance || 'Important'),
+          subtitle: 'Stay connected with local SIM/eSIM and reliable WiFi',
+          emoji: cat.emoji || '📶',
+          tips: mergedTips,
+        };
+      }
+      return cat;
+    });
 
     console.log('[Destination Tips] Generated', tipsData.categories.length, 'categories');
 

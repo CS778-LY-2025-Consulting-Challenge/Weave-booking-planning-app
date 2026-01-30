@@ -41,12 +41,119 @@ interface Package {
 }
 
 export default function Packages() {
+      // Travel packages data
+      const packages: Package[] = [
+        {
+          id: 1,
+          name: 'New Zealand Adventure',
+          destination: 'Auckland, Rotorua, Queenstown, Milford Sound',
+          duration: '10 Days / 9 Nights',
+          price: 2899,
+          image: '/images/new zealand - package.jpg',
+          includes: [
+            'Round-trip flights',
+            '9 nights accommodation in scenic locations',
+            'Milford Sound cruise',
+            'Hobbiton movie set tour',
+            'Adventure activities (bungee jumping, sky diving)',
+            'Thermal pools of Rotorua',
+            'Scenic drives and nature hikes',
+          ],
+          type: 'Adventure',
+        },
+        {
+          id: 2,
+          name: 'European Highlights Tour',
+          destination: 'Paris, Rome, Barcelona',
+          duration: '14 Days / 13 Nights',
+          price: 3299,
+          image: '/images/europe - package.jpg',
+          includes: [
+            'International flights',
+            '13 nights in 4-star hotels',
+            'Daily breakfast',
+            'Guided city tours',
+            'Museum passes',
+          ],
+          type: 'Culture',
+        },
+        {
+          id: 3,
+          name: 'Tokyo Cultural Experience',
+          destination: 'Tokyo, Kyoto, Osaka',
+          duration: '10 Days / 9 Nights',
+          price: 2799,
+          image: '/images/tokyo - package.jpg',
+          includes: [
+            'Round-trip flights',
+            '9 nights accommodation',
+            'JR Pass included',
+            'Traditional tea ceremony',
+            'Sushi making class',
+          ],
+          type: 'Culture',
+        },
+        {
+          id: 4,
+          name: 'Greek Island Adventure',
+          destination: 'Athens, Santorini, Mykonos',
+          duration: '10 Days / 9 Nights',
+          price: 2199,
+          image: '/images/greek - package.jpg',
+          includes: [
+            'International flights',
+            'Ferry transfers',
+            '9 nights in hotels',
+            'Sunset cruise',
+            'Archaeological tours',
+          ],
+          type: 'Beach & Culture',
+        },
+        {
+          id: 5,
+          name: 'Dubai Luxury Escape',
+          destination: 'Dubai, UAE',
+          duration: '5 Days / 4 Nights',
+          price: 1899,
+          image: '/images/dubai - package.jpg',
+          includes: [
+            'Round-trip flights',
+            '4 nights in 5-star hotel',
+            'Desert safari',
+            'Burj Khalifa tickets',
+            'Dubai Mall tour',
+          ],
+          type: 'Luxury',
+        },
+        {
+          id: 6,
+          name: 'Bali Wellness Retreat',
+          destination: 'Ubud & Seminyak, Bali',
+          duration: '8 Days / 7 Nights',
+          price: 1699,
+          image: '/images/bali-package.jpg',
+          includes: [
+            'Round-trip flights',
+            '7 nights accommodation',
+            'Daily yoga classes',
+            'Spa treatments',
+            'Healthy meals',
+          ],
+          type: 'Wellness',
+        },
+      ];
+    // Booking dialog state
+    const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+    const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
+    const [numberOfTravelers, setNumberOfTravelers] = useState(1);
+    const [bookingStep, setBookingStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const router = useRouter();
   const { user } = useUser();
   const userId = user?.id;
   const [addedPackages, setAddedPackages] = useState<number[]>([]);
   const [isCursorOnContent, setIsCursorOnContent] = useState(false);
   const [addingId, setAddingId] = useState<number | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState<string>('All Packages');
 
   useEffect(() => {
     const fetchSaved = async () => {
@@ -64,114 +171,15 @@ export default function Packages() {
     };
     fetchSaved();
   }, [userId]);
+  // ...existing code...
 
-  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
-  const [numberOfTravelers, setNumberOfTravelers] = useState(1);
-  const [bookingStep, setBookingStep] = useState<
-    'details' | 'payment' | 'confirmation'
-  >('details');
+  // Get unique filter categories from packages
+  const filterCategories = ['All Packages', ...new Set(packages.map(pkg => pkg.type))];
 
-  const packages: Package[] = [
-    {
-      id: 1,
-      name: 'New Zealand Adventure',
-      destination: 'Auckland, Rotorua, Queenstown, Milford Sound',
-      duration: '10 Days / 9 Nights',
-      price: 2899,
-      image: '/images/new zealand - package.jpg',
-      includes: [
-        'Round-trip flights',
-        '9 nights accommodation in scenic locations',
-        'Milford Sound cruise',
-        'Hobbiton movie set tour',
-        'Adventure activities (bungee jumping, sky diving)',
-        'Thermal pools of Rotorua',
-        'Scenic drives and nature hikes',
-      ],
-      type: 'Adventure',
-    },
-    {
-      id: 2,
-      name: 'European Highlights Tour',
-      destination: 'Paris, Rome, Barcelona',
-      duration: '14 Days / 13 Nights',
-      price: 3299,
-      image: '/images/europe - package.jpg',
-      includes: [
-        'International flights',
-        '13 nights in 4-star hotels',
-        'Daily breakfast',
-        'Guided city tours',
-        'Museum passes',
-      ],
-      type: 'Culture',
-    },
-    {
-      id: 3,
-      name: 'Tokyo Cultural Experience',
-      destination: 'Tokyo, Kyoto, Osaka',
-      duration: '10 Days / 9 Nights',
-      price: 2799,
-      image: '/images/tokyo - package.jpg',
-      includes: [
-        'Round-trip flights',
-        '9 nights accommodation',
-        'JR Pass included',
-        'Traditional tea ceremony',
-        'Sushi making class',
-      ],
-      type: 'Culture',
-    },
-    {
-      id: 4,
-      name: 'Greek Island Adventure',
-      destination: 'Athens, Santorini, Mykonos',
-      duration: '10 Days / 9 Nights',
-      price: 2199,
-      image: '/images/greek - package.jpg',
-      includes: [
-        'International flights',
-        'Ferry transfers',
-        '9 nights in hotels',
-        'Sunset cruise',
-        'Archaeological tours',
-      ],
-      type: 'Beach & Culture',
-    },
-    {
-      id: 5,
-      name: 'Dubai Luxury Escape',
-      destination: 'Dubai, UAE',
-      duration: '5 Days / 4 Nights',
-      price: 1899,
-      image: '/images/dubai - package.jpg',
-      includes: [
-        'Round-trip flights',
-        '4 nights in 5-star hotel',
-        'Desert safari',
-        'Burj Khalifa tickets',
-        'Dubai Mall tour',
-      ],
-      type: 'Luxury',
-    },
-    {
-      id: 6,
-      name: 'Bali Wellness Retreat',
-      destination: 'Ubud & Seminyak, Bali',
-      duration: '8 Days / 7 Nights',
-      price: 1699,
-      image: '/images/bali-package.jpg',
-      includes: [
-        'Round-trip flights',
-        '7 nights accommodation',
-        'Daily yoga classes',
-        'Spa treatments',
-        'Healthy meals',
-      ],
-      type: 'Wellness',
-    },
-  ];
+  // Filter packages based on selected filter
+  const filteredPackages = selectedFilter === 'All Packages' 
+    ? packages 
+    : packages.filter(pkg => pkg.type === selectedFilter);
 
   const handleAddToJourneys = async (pkg: Package) => {
     if (!userId) {
@@ -389,47 +397,25 @@ export default function Packages() {
 
         {/* Filter Tabs */}
         <div className="mb-8 flex flex-wrap justify-center gap-3">
-          <Badge
-            variant="outline"
-            className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-          >
-            All Packages
-          </Badge>
-          <Badge
-            variant="outline"
-            className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-          >
-            Luxury
-          </Badge>
-          <Badge
-            variant="outline"
-            className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-          >
-            Culture
-          </Badge>
-          <Badge
-            variant="outline"
-            className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-          >
-            Beach & Relaxation
-          </Badge>
-          <Badge
-            variant="outline"
-            className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-          >
-            Adventure
-          </Badge>
-          <Badge
-            variant="outline"
-            className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-          >
-            Wellness
-          </Badge>
+          {filterCategories.map((filter) => (
+            <Badge
+              key={filter}
+              variant={selectedFilter === filter ? "default" : "outline"}
+              className={`cursor-pointer px-4 py-2 transition-all ${
+                selectedFilter === filter 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                  : 'hover:bg-gray-100'
+              }`}
+              onClick={() => setSelectedFilter(filter)}
+            >
+              {filter}
+            </Badge>
+          ))}
         </div>
 
         {/* Package Grid */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {packages.map((pkg) => (
+          {filteredPackages.map((pkg) => (
             <Card
               key={pkg.id}
               className="group cursor-pointer overflow-hidden transition-shadow hover:shadow-xl"
