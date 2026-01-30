@@ -66,11 +66,23 @@ export default function HotelBooking() {
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // Scroll to results when search completes
+  // Scroll to results when search completes
   useEffect(() => {
-    if (hasSearched && !isSearching && resultsRef.current) {
-      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (hasSearched) {
+      // Use setTimeout to ensure DOM is ready and ref is attached on first render
+      const timer = setTimeout(() => {
+        if (resultsRef.current) {
+          // Calculate position with offset for sticky navbar (approx 100px)
+          const yOffset = -20;
+          const element = resultsRef.current;
+          const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [hasSearched, isSearching]);
+  }, [hasSearched, isSearching, searchResults]);
 
   const generateCalendarDays = (date: Date) => {
     const year = date.getFullYear();
@@ -246,7 +258,7 @@ export default function HotelBooking() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="bg-white px-4 py-20 sm:px-6 lg:px-8"
+          className="bg-white px-4 py-20 sm:px-6 lg:px-8 scroll-mt-24"
         >
           <div className="mx-auto max-w-7xl">
             <div className="mb-16 text-center">

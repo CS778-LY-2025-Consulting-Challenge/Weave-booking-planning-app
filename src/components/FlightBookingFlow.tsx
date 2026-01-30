@@ -187,13 +187,22 @@ export function FlightBookingFlow({
       // Generate booking reference before creating checkout session
       const bookingRef = `WV${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
+      // Validate selectedDate first - ensure it's a valid Date object
+      let validDate: Date;
+      if (!selectedDate || isNaN(new Date(selectedDate).getTime())) {
+        console.warn('[FlightBooking] Invalid selectedDate received, using current date as fallback');
+        validDate = new Date();
+      } else {
+        validDate = new Date(selectedDate);
+      }
+
       // Construct proper date object combining selectedDate and flight time
       // flight.departure is like "10:30 AM"
       const timeString = booking.flight?.departure || '12:00 PM';
       const [time, period] = timeString.split(' ');
       const [hours, minutes] = time.split(':');
 
-      const flightDate = new Date(selectedDate);
+      const flightDate = new Date(validDate);
 
       // Determine hour and minute
       let hour = 12;

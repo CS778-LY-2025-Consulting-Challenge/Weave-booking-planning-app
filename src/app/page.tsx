@@ -775,7 +775,7 @@ export default function Home() {
                 <div
                   key={idx}
                   className="flex-shrink-0 w-56 snap-start cursor-pointer group"
-                  onClick={() => router.push(`/destinations/${dest.name.toLowerCase().replace(/ /g, '-')}`)}
+                  onClick={() => router.push('/destinations')}
                 >
                   <div className="relative h-64 overflow-hidden bg-gray-300">
                     <img
