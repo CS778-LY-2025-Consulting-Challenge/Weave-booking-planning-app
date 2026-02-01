@@ -5,7 +5,7 @@ export interface BookingData {
   id?: string;
   type: 'flight' | 'hotel';
   userId: string;
-  status: 'confirmed' | 'pending' | 'cancelled';
+  status: 'confirmed' | 'pending' | 'cancelled' | 'success' | 'failed';
   stripeSessionId: string;
   createdAt: any; // Firebase timestamp
   details: any; // Flexible to store flight or hotel specific details
