@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { subscribeToBudget, subscribeToExpenses, createBudget, getBudgetByTripId } from '@/services/budgetService';
 import { getUserProfile } from '@/lib/userProfile';
 import { calculateBalances } from '@/utils/balanceCalculator';
@@ -13,7 +14,7 @@ import ShareBudget from '@/components/budget/ShareBudget';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Share2, Plus } from 'lucide-react';
+import { Loader2, Share2, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface BudgetViewProps {
@@ -34,6 +35,7 @@ export default function BudgetView({
     serverError
 }: BudgetViewProps) {
     const { user } = useUser();
+    const router = useRouter();
 
     // Use initial data if provided
     const [budget, setBudget] = useState<Budget | null>(initialBudget || null);
@@ -176,7 +178,39 @@ export default function BudgetView({
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold">{budget.name}</h2>
+                    <h2 className="text-2xl font-bold flex items-center gap-2">
+                        {budget.name}
+                        {user?.id === budget.createdBy && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                onClick={async () => {
+                                    if (!confirm('Are you sure you want to delete this budget? This cannot be undone.')) return;
+
+                                    try {
+                                        setLoading(true);
+                                        const { deleteBudgetAction } = await import('@/app/actions/budgetActions');
+                                        const result = await deleteBudgetAction(budget.id, user.id);
+
+                                        if (result.success) {
+                                            toast.success('Budget deleted');
+                                            router.push('/dashboard');
+                                        } else {
+                                            const errorMsg = (result as any).error || 'Failed to delete';
+                                            toast.error(errorMsg);
+                                            setLoading(false);
+                                        }
+                                    } catch (err) {
+                                        toast.error('Error deleting budget');
+                                        setLoading(false);
+                                    }
+                                }}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </h2>
                     <p className="text-gray-500">
                         {participants.length} Participant{participants.length !== 1 ? 's' : ''} • {responseTotal(expenses, budget.currency)}
                     </p>

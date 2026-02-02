@@ -269,3 +269,29 @@ export async function deleteExpenseAction(budgetId: string, expenseId: string) {
         return getError(error);
     }
 }
+
+export async function deleteBudgetAction(budgetId: string, userId: string) {
+    if (!budgetId || !userId) return { success: false, error: 'Missing fields' };
+
+    try {
+        const budgetRef = adminRtdb.ref(`budgets/${budgetId}`);
+        const snapshot = await budgetRef.once('value');
+
+        if (!snapshot.exists()) return { success: false, error: 'Budget not found' };
+
+        const budget = snapshot.val();
+
+        // Ownership check
+        if (budget.createdBy !== userId && (!budget.adminIds || !budget.adminIds.includes(userId))) {
+            return { success: false, error: 'Not authorized to delete this budget' };
+        }
+
+        // Delete the budget
+        await budgetRef.remove();
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('Delete Budget Error:', error);
+        return getError(error);
+    }
+}
