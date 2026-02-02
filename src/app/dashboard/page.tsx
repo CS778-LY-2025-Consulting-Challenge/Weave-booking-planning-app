@@ -36,16 +36,17 @@ import YourJourneys from '@/components/YourJourneys';
 import UpcomingBookingsTickets from '@/components/UpcomingBookingsTickets';
 
 interface Journey {
-  id: number;
+  id: number | string;
   destination: string;
   startDate: string;
   endDate: string;
   flightBooked: boolean;
   hotelBooked: boolean;
-  type: 'upcoming' | 'past' | 'copied';
+  type: 'upcoming' | 'past' | 'copied' | 'current';
   notes?: string;
   photos?: string[];
   cities?: string[];
+  bookingType?: string;
   image?: string;
 }
 
@@ -202,6 +203,104 @@ export default function Dashboard() {
       ],
     },
   ]);
+
+  // Fetch real bookings and merge into journeys
+  useEffect(() => {
+    if (!user?.id) return;
+
+    import('@/lib/bookings').then(async ({ getBookings }) => {
+      try {
+        const bookings = await getBookings(user.id);
+        const newJourneys: Journey[] = bookings.map(b => {
+          const isFlight = b.type === 'flight';
+          const isHotel = b.type === 'hotel';
+          const isPackage = b.type === 'package';
+
+          let destination = 'Unknown Destination';
+          let startDate = new Date().toISOString().split('T')[0];
+          let endDate = new Date().toISOString().split('T')[0];
+          let image: string | undefined = undefined;
+          let cities: string[] | undefined = undefined;
+          let packageId: string | undefined = undefined;
+
+          if (isPackage) {
+            // Display Package Name as the main "Destination" (Title)
+            destination = b.details?.pkgName || b.details?.destination || 'Travel Package';
+            // Show the actual location in the subtitle (cities)
+            if (b.details?.destination) {
+              cities = [b.details.destination];
+            }
+            startDate = b.details?.startDate || startDate;
+            endDate = b.details?.endDate || endDate;
+            // Generic package image or from details
+            image = b.details?.bookingImage || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=3421&auto=format&fit=crop';
+            // Use metadata packageId if available, or fallback to parsing from somewhere if possible
+            packageId = b.details?.packageId || b.details?.pkgId;
+          } else if (isHotel) {
+            destination = b.details?.hotelLocation || b.details?.hotelName || 'Hotel Stay';
+            startDate = b.details?.checkInDate || startDate;
+            endDate = b.details?.checkOutDate || endDate;
+            image = b.details?.bookingImage;
+          } else if (isFlight) {
+            destination = `${b.details?.toCode} - ${b.details?.to?.split(',')[0]}`;
+            startDate = b.details?.departureDate?.split('T')[0] || startDate;
+            endDate = startDate; // Flights are single day usually for this view
+          }
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(endDate);
+          end.setHours(0, 0, 0, 0);
+
+
+
+          // Allow packages starting within 3 days to show as 'current' (Active/Starting Soon)
+          const nearFuture = new Date(today);
+          nearFuture.setDate(today.getDate() + 3);
+
+          let type: 'upcoming' | 'past' | 'current' = 'past';
+
+          if (isPackage && start <= nearFuture && end >= today) {
+            type = 'current';
+          } else if (start >= today || (start <= today && end >= today)) {
+            // If it's today (but not a package) or future, it's upcoming
+            type = 'upcoming';
+          } else {
+            type = 'past';
+          }
+
+          // If the item specifically has a 'type' from db that isn't date based (like copied), we might want to respect it?
+          // But for bookings 'upcoming'/'past' is dynamic based on dates.
+
+          return {
+            id: b.id || b.stripeSessionId || Math.random().toString(),
+            destination,
+            startDate,
+            endDate,
+            flightBooked: isFlight || isPackage,
+            hotelBooked: isHotel || isPackage,
+            type,
+            image,
+            packageId,
+            cities,
+            bookingType: b.type // Pass the actual booking type for debugging/display
+          };
+        });
+
+        // Avoid duplicates if possible (simple id check against hardcoded)
+        setJourneys(prev => {
+          const hardcodedIds = new Set([1, 2, 3, 4]);
+          // Filter out any previous dynamic additions if we re-fetch (optional, but good practice)
+          const baseJourneys = prev.filter(j => hardcodedIds.has(j.id as any));
+          return [...baseJourneys, ...newJourneys];
+        });
+
+      } catch (error) {
+        console.error("Failed to fetch bookings for dashboard:", error);
+      }
+    });
+  }, [user?.id]);
 
   const upcomingJourneys = journeys.filter((j) => {
     const today = new Date();

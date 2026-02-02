@@ -3,7 +3,7 @@ import { ref, set, push, get, child, serverTimestamp, remove } from "firebase/da
 
 export interface BookingData {
   id?: string;
-  type: 'flight' | 'hotel';
+  type: 'flight' | 'hotel' | 'package';
   userId: string;
   status: 'confirmed' | 'pending' | 'cancelled' | 'success' | 'failed';
   stripeSessionId: string;

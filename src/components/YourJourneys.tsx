@@ -4,20 +4,23 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Calendar, TrendingUp, Star, Plane, Edit, Trash2, Plus, Check, X } from 'lucide-react';
+import { MapPin, Calendar, TrendingUp, Star, Plane, Edit, Trash2, Plus, Check, X, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 
 interface Journey {
-  id: number;
+  id: number | string;
   destination: string;
   startDate: string;
   endDate: string;
   flightBooked: boolean;
   hotelBooked: boolean;
-  type: 'upcoming' | 'past' | 'copied';
+  type: 'upcoming' | 'past' | 'copied' | 'current';
   notes?: string;
   photos?: string[];
   cities?: string[];
+
+  packageId?: string; // Added field for package navigation
+  bookingType?: string;
 }
 
 interface SavedTrip {
@@ -82,15 +85,32 @@ export default function YourJourneys({
   const [activeTab, setActiveTab] = useState('upcoming');
   const [showAll, setShowAll] = useState(false);
   const [showAllSaved, setShowAllSaved] = useState(false);
+  const [selectedJourney, setSelectedJourney] = useState<Journey | null>(null);
 
   // Determine trip status dynamically
   const getTripStatus = (journey: Journey) => {
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const startDate = new Date(journey.startDate);
+    startDate.setHours(0, 0, 0, 0);
     const endDate = new Date(journey.endDate);
+    endDate.setHours(0, 0, 0, 0);
 
     if (endDate < today) return 'past';
-    if (startDate <= today && today <= endDate) return 'current';
+
+    // Only allow 'current' status for PACKAGES
+    // Allow packages starting within 3 days to be considered 'current'
+    const nearFuture = new Date(today);
+    nearFuture.setDate(today.getDate() + 3);
+
+    if (startDate <= nearFuture && endDate >= today) {
+      if (journey.bookingType === 'package' || journey.packageId) {
+        return 'current';
+      }
+      // For flights/hotels happening today, keep them as 'upcoming'
+      return 'upcoming';
+    }
+
     if (startDate > today) return 'upcoming';
     return journey.type;
   };
@@ -145,7 +165,7 @@ export default function YourJourneys({
     return activitiesByDestination[destination] || ['Popular Activities', 'Local Culture', 'Dining'];
   };
 
-  const getBudgetInfo = (id: number) => {
+  const getBudgetInfo = (id: number | string) => {
     const data = budgetData[id.toString()];
     if (!data) return { spent: 0, budget: 1000, percentage: 0 };
 
@@ -347,7 +367,17 @@ export default function YourJourneys({
                       </div>
                       <button
                         className="w-full bg-black text-white py-2.5 rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm"
-                        onClick={() => window.location.href = `/packages/${trip.packageId}`}
+                        onClick={() => {
+                          // Prefer navigating to our new Booking Details page if we have a real booking ID
+                          if (trip.id && typeof trip.id === 'string' && (trip.id.startsWith('cs_') || trip.id.length > 10)) {
+                            window.location.href = `/bookings/${trip.id}`;
+                          } else if (trip.packageId) {
+                            // Fallback to package page if no specific booking ID (e.g. legacy/saved)
+                            window.location.href = `/packages/${trip.packageId}`;
+                          } else {
+                            console.log("No navigation target for trip", trip);
+                          }
+                        }}
                       >
                         View Details
                       </button>
@@ -395,13 +425,96 @@ export default function YourJourneys({
                 const imageUrl = getImageUrl(journey.destination);
                 const isOverBudget = budget.spent > budget.budget;
 
+                // Check if this is a Current Package to use the "Rich Ticket" layout
+                const isCurrentPackage = journey.status === 'current' && (journey.bookingType === 'package' || journey.packageId);
+
+                if (isCurrentPackage) {
+                  return (
+                    <div key={journey.id} className="flex flex-col rounded-2xl overflow-hidden shadow-md bg-white border border-gray-100 h-full hover:shadow-lg transition-shadow">
+                      {/* Image Header with Overlay Text */}
+                      <div className="h-40 relative shrink-0">
+                        <Image
+                          src={imageUrl}
+                          alt={journey.destination}
+                          fill
+                          className="object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                        <div className="absolute bottom-4 left-5 right-5">
+                          <Badge className="mb-2 bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-md uppercase tracking-wider text-[10px] px-2 py-0.5">
+                            PACKAGE
+                          </Badge>
+                          <h3 className="text-xl font-bold text-white truncate leading-tight shadow-sm filter drop-shadow-md">
+                            {journey.destination}
+                          </h3>
+                          <p className="text-sm text-gray-200 font-medium flex items-center mt-1 truncate">
+                            <MapPin className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                            {country}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Body */}
+                      <div className="p-5 flex-grow flex flex-col justify-between">
+                        <div>
+                          {/* Dates Box */}
+                          <div className="flex items-center justify-between mb-5 bg-purple-50/60 p-3.5 rounded-xl border border-purple-100/60">
+                            <div className="text-center min-w-[30%]">
+                              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-0.5">Start</p>
+                              <p className="text-sm font-bold text-gray-900">
+                                {new Date(journey.startDate).toLocaleDateString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </p>
+                              <p className="text-[10px] text-gray-400 font-medium">
+                                {new Date(journey.startDate).getFullYear()}
+                              </p>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-purple-300 transform scale-110" />
+                            <div className="text-center min-w-[30%]">
+                              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-0.5">End</p>
+                              <p className="text-sm font-bold text-gray-900">
+                                {new Date(journey.endDate).toLocaleDateString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </p>
+                              <p className="text-[10px] text-gray-400 font-medium">
+                                {new Date(journey.endDate).getFullYear()}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Duration & Tier */}
+                          <div className="flex justify-between items-center text-xs mb-4 px-1">
+                            <span className="text-gray-500 font-medium">Duration: <span className="text-gray-900 font-bold text-sm ml-1">
+                              {Math.ceil((new Date(journey.endDate).getTime() - new Date(journey.startDate).getTime()) / (1000 * 60 * 60 * 24)) + ' Days'}
+                            </span></span>
+                            <span className="text-gray-500 font-medium">Tier: <span className="text-gray-900 font-bold text-sm ml-1">Suite</span></span>
+                          </div>
+                        </div>
+
+                        <div className="mt-2 pt-4 border-t border-gray-100 flex gap-3">
+                          <button
+                            onClick={() => window.location.href = `/bookings/${journey.id}`}
+                            className="flex-1 rounded-lg bg-gray-900 h-9 text-xs font-semibold text-white transition-colors hover:bg-black w-full"
+                          >
+                            View Details
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <Card
                     key={journey.id}
-                    className="group overflow-hidden border border-gray-200 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                    className="group overflow-hidden border border-gray-200 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full flex flex-col"
                   >
                     {/* Image Section with Rating */}
-                    <div className="relative h-48 overflow-hidden bg-gray-200">
+                    <div className="relative h-48 overflow-hidden bg-gray-200 shrink-0">
                       <Image
                         src={imageUrl}
                         alt={journey.destination}
@@ -409,22 +522,30 @@ export default function YourJourneys({
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
 
-                      {/* Rating Badge */}
-                      <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white bg-opacity-95 px-3 py-1 shadow-md">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-semibold text-gray-800">4.8</span>
-                      </div>
+                      {/* Badge for Type Debugging/Info */}
+                      <div className="absolute right-3 top-3 flex flex-col gap-2 items-end">
+                        <div className="flex items-center gap-1 rounded-full bg-white bg-opacity-95 px-3 py-1 shadow-md">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="text-sm font-semibold text-gray-800">4.8</span>
+                        </div>
 
-                      {/* Status Badge */}
-                      <div className="absolute left-3 top-3">
-                        <Badge className={`${getStatusBadgeColor(journey.status)} border`}>
+                        {journey.bookingType && (
+                          <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-[10px] px-2 py-0.5 border shadow-sm">
+                            {journey.bookingType.toUpperCase()}
+                          </Badge>
+                        )}
+                        <Badge
+                          className={`pl-2 pr-2 py-0.5 text-xs font-semibold rounded-full border shadow-sm ${getStatusBadgeColor(journey.status)}`}
+                          variant="outline"
+                        >
                           {journey.status.charAt(0).toUpperCase() + journey.status.slice(1)}
                         </Badge>
                       </div>
                     </div>
 
+
                     {/* Content Section */}
-                    <CardContent className="p-5">
+                    <CardContent className="p-5 flex flex-col justify-between grow">
                       {/* Destination */}
                       <div className="mb-4">
                         <h3 className="text-lg font-bold text-gray-900 line-clamp-2">
@@ -435,63 +556,43 @@ export default function YourJourneys({
                           {country}
                         </p>
                       </div>
-
-                      {/* Date Range */}
-                      <div className="mb-4 flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2">
-                        <Calendar className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm text-gray-700">
-                          {formatDate(journey.startDate)} - {formatDate(journey.endDate)}
-                        </span>
-                      </div>
-
-                      {/* Activities/Places Pills */}
-                      <div className="mb-4 flex flex-wrap gap-2">
-                        {activities.slice(0, 2).map((activity, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
-                          >
-                            {activity}
-                          </span>
-                        ))}
-                        {activities.length > 2 && (
-                          <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-                            +{activities.length - 2} more
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Budget Section */}
-                      <div className="space-y-2 border-t border-gray-200 pt-4">
-                        <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-1 text-sm font-semibold text-gray-700">
-                            <TrendingUp className="h-4 w-4" />
-                            Budget Status
-                          </span>
-                          <span
-                            className={`text-xs font-semibold px-2 py-1 rounded-full ${isOverBudget
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-green-100 text-green-700'
-                              }`}
-                          >
-                            {isOverBudget ? 'Over Budget' : 'Under Budget'}
-                          </span>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="space-y-1">
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                            <div
-                              className={`h-full transition-all duration-300 ${isOverBudget ? 'bg-red-500' : 'bg-green-500'
-                                }`}
-                              style={{ width: `${Math.min(budget.percentage, 100)}%` }}
-                            ></div>
-                          </div>
-                          <div className="flex justify-between text-xs text-gray-600">
-                            <span>${budget.spent.toLocaleString()}</span>
-                            <span>${budget.budget.toLocaleString()}</span>
+                      {/* Dates & Status */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          <div className="flex flex-col">
+                            <span className="text-xs font-medium text-gray-500">Dates</span>
+                            <span className="text-sm font-semibold text-gray-900">
+                              {new Date(journey.startDate).toLocaleDateString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                              {' - '}
+                              {new Date(journey.endDate).toLocaleDateString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </span>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="mt-5 flex gap-3">
+                        <button
+                          onClick={() => {
+                            if (journey.id && journey.bookingType === 'package') {
+                              window.location.href = `/bookings/${journey.id}`;
+                            } else if (journey.packageId) {
+                              window.location.href = `/packages/${journey.packageId}`;
+                            } else {
+                              setSelectedJourney(journey);
+                            }
+                          }}
+                          className="flex-1 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
+                        >
+                          View Details
+                        </button>
                       </div>
                     </CardContent>
                   </Card>
@@ -510,35 +611,38 @@ export default function YourJourneys({
                 </p>
               </div>
             )}
-          </div>
+          </div >
         </>
-      )}
+      )
+      }
 
       {/* View More Button - Only for regular journeys */}
-      {activeTab !== 'saved' && filteredJourneys.length > 3 && (
-        <div className="flex justify-center pt-4">
-          <button
-            onClick={() => setShowAll(!showAll)}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
-          >
-            {showAll ? (
-              <>
-                View Less
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                </svg>
-              </>
-            ) : (
-              <>
-                View More ({filteredJourneys.length - 3} more)
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </>
-            )}
-          </button>
-        </div>
-      )}
-    </div>
+      {
+        activeTab !== 'saved' && filteredJourneys.length > 3 && (
+          <div className="flex justify-center pt-4">
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
+            >
+              {showAll ? (
+                <>
+                  View Less
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  </svg>
+                </>
+              ) : (
+                <>
+                  View More ({filteredJourneys.length - 3} more)
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </>
+              )}
+            </button>
+          </div>
+        )
+      }
+    </div >
   );
 }
