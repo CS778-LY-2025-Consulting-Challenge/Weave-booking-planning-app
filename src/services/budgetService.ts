@@ -1,28 +1,23 @@
 import {
-    collection,
-    addDoc,
-    updateDoc,
-    deleteDoc,
-    doc,
-    getDoc,
-    getDocs,
+    ref,
+    set,
+    push,
+    get,
     query,
-    where,
-    onSnapshot,
-    orderBy,
+    orderByChild,
+    equalTo,
+    onValue,
     serverTimestamp,
-    limit,
-    arrayUnion,
-    Transaction,
+    update,
+    remove,
     runTransaction
-} from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { firestore, storage } from '@/lib/firebase';
-import { Budget, Expense, Participant, Invite } from '@/types/budget';
+} from 'firebase/database';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '@/lib/firebase';
+import { Budget, Expense, Invite } from '@/types/budget';
 
-const BUDGETS_COLLECTION = 'budgets';
-const EXPENSES_COLLECTION = 'expenses';
-const INVITES_COLLECTION = 'invites';
+const BUDGETS_REF = 'budgets';
+const INVITES_REF = 'invites';
 
 // --- Budgets ---
 
@@ -35,8 +30,10 @@ export async function createBudget(
 ) {
     try {
         const allParticipants = Array.from(new Set([userId, ...participants]));
+        const budgetRef = push(ref(db, BUDGETS_REF));
 
         const budgetData = {
+            id: budgetRef.key,
             name,
             currency,
             participants: allParticipants,
@@ -48,8 +45,8 @@ export async function createBudget(
             tripId: tripId || null
         };
 
-        const docRef = await addDoc(collection(firestore, BUDGETS_COLLECTION), budgetData);
-        return docRef.id;
+        await set(budgetRef, budgetData);
+        return budgetRef.key;
     } catch (error) {
         console.error("Error creating budget:", error);
         throw error;
@@ -57,37 +54,56 @@ export async function createBudget(
 }
 
 export async function getUserBudgets(userId: string): Promise<Budget[]> {
-    const q = query(
-        collection(firestore, BUDGETS_COLLECTION),
-        where("participants", "array-contains", userId),
-        orderBy("updatedAt", "desc")
-    );
+    // RTDB doesn't support array-contains directly. 
+    // We fetch all budgets (or a reasonable limit) and filter client-side, 
+    // or ideally we would maintain a user_budgets/{userId} index.
+    // For this app's scale, fetching and filtering is okay for now, 
+    // OR we can query by createdBy if that covers most cases? No, collaborators need to see it too.
+    // Let's filter client side for now as it's simplest without changing data structure.
 
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Budget));
+    try {
+        const budgetsRef = ref(db, BUDGETS_REF);
+        // We can't query array contains. We'll fetch all and filter. 
+        // NOTE: In production, use a denormalized index: `users/{userId}/budgets/{budgetId}: true`
+        const snapshot = await get(budgetsRef);
+
+        if (!snapshot.exists()) return [];
+
+        const budgets: Budget[] = [];
+        snapshot.forEach((child) => {
+            const val = child.val();
+            if (val.participants && Array.isArray(val.participants) && val.participants.includes(userId)) {
+                budgets.push({ id: child.key!, ...val });
+            }
+        });
+
+        // Sort by updatedAt desc
+        return budgets.sort((a, b) => {
+            const timeA = new Date(a.updatedAt || 0).getTime();
+            const timeB = new Date(b.updatedAt || 0).getTime();
+            return timeB - timeA;
+        });
+    } catch (error) {
+        console.error("Error fetching user budgets:", error);
+        return [];
+    }
 }
 
 export async function getBudgetByTripId(tripId: string): Promise<Budget | null> {
-    const q = query(
-        collection(firestore, BUDGETS_COLLECTION),
-        where("tripId", "==", tripId),
-        limit(1)
-    );
+    const budgetsQuery = query(ref(db, BUDGETS_REF), orderByChild('tripId'), equalTo(tripId));
+    const snapshot = await get(budgetsQuery);
 
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        return { id: doc.id, ...doc.data() } as Budget;
+    if (snapshot.exists()) {
+        const key = Object.keys(snapshot.val())[0];
+        return { id: key, ...snapshot.val()[key] } as Budget;
     }
     return null;
 }
 
 export async function getBudget(budgetId: string): Promise<Budget | null> {
-    const docRef = doc(firestore, BUDGETS_COLLECTION, budgetId);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as Budget;
+    const snapshot = await get(ref(db, `${BUDGETS_REF}/${budgetId}`));
+    if (snapshot.exists()) {
+        return { id: snapshot.key!, ...snapshot.val() } as Budget;
     }
     return null;
 }
@@ -95,18 +111,20 @@ export async function getBudget(budgetId: string): Promise<Budget | null> {
 const defaultOnError = (error: any) => console.error("Snapshot error:", error);
 
 export function subscribeToBudget(budgetId: string, callback: (budget: Budget | null) => void, onError = defaultOnError) {
-    const docRef = doc(firestore, BUDGETS_COLLECTION, budgetId);
-    return onSnapshot(docRef, (doc) => {
-        if (doc.exists()) {
-            callback({ id: doc.id, ...doc.data() } as Budget);
+    const budgetRef = ref(db, `${BUDGETS_REF}/${budgetId}`);
+    return onValue(budgetRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            // Expenses are inside the budget object in RTDB, remove them to keep Budget clean?
+            // The type definition might expect them separate or not. 
+            // In the previous Firestore code, it returned {id, ...data}.
+            const { expenses: _, ...cleanBudget } = val;
+            callback({ id: snapshot.key!, ...cleanBudget } as Budget);
         } else {
             callback(null);
         }
     }, onError);
 }
-
-// ...
-
 
 
 // --- Invites ---
@@ -118,49 +136,41 @@ export async function createInvite(
     userName: string,
     options: { expiresInDays?: number; maxUses?: number } = {}
 ): Promise<Invite> {
-    // 1. Check for existing active invite for this user and budget
-    // Note: This optimization prevents spamming new invites and speeds up the UI
-    // We filter in memory to avoid needing a complex composite index immediately
-    const q = query(
-        collection(firestore, INVITES_COLLECTION),
-        where("budgetId", "==", budgetId),
-        where("createdBy", "==", userId),
-        limit(10) // Fetch a few recent invites
-    );
+    // 1. Check existing
+    // RTDB filtering is limited. We'll simplify and just create new or fetch by budgetId and filter in memory.
+    const invitesQuery = query(ref(db, INVITES_REF), orderByChild('budgetId'), equalTo(budgetId));
+    const snapshot = await get(invitesQuery);
 
-    try {
-        const snapshot = await getDocs(q);
-        const now = new Date();
+    const now = new Date();
+    let existingInvite: Invite | null = null;
 
-        // Sort in memory (newest first) and find valid one
-        const activeInviteDoc = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() } as Invite))
-            .sort((a, b) => {
-                const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-                const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
-                return timeB - timeA;
-            })
-            .find(invite => {
-                // Check expiration
-                if (invite.expiresAt && invite.expiresAt.toDate() < now) return false;
-                // Check max usage
-                if (invite.maxUses && invite.usedCount >= invite.maxUses) return false;
-                return true;
-            });
+    if (snapshot.exists()) {
+        snapshot.forEach((child) => {
+            const val = child.val();
+            if (val.createdBy === userId) {
+                const expiresAt = val.expiresAt ? new Date(val.expiresAt) : null;
+                const isExpired = expiresAt && expiresAt < now;
+                const isMaxed = val.maxUses && val.usedCount >= val.maxUses;
 
-        if (activeInviteDoc) {
-            console.log("Reusing existing active invite");
-            return activeInviteDoc;
-        }
-    } catch (error) {
-        console.warn("Failed to check existing invites, proceeding to create new one:", error);
+                if (!isExpired && !isMaxed) {
+                    existingInvite = { id: child.key!, ...val };
+                }
+            }
+        });
     }
 
-    // 2. Create new invite if none found
-    // Generate a random 6-character code (uppercase alphanumeric)
-    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    if (existingInvite) return existingInvite;
 
-    const inviteData: Omit<Invite, 'id'> = {
+    // 2. Create New
+    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const newInviteRef = push(ref(db, INVITES_REF));
+
+    let expiresAt: number | null = null;
+    if (options.expiresInDays) {
+        expiresAt = Date.now() + (options.expiresInDays * 24 * 60 * 60 * 1000);
+    }
+
+    const inviteData = {
         inviteCode,
         budgetId,
         budgetName,
@@ -169,120 +179,109 @@ export async function createInvite(
         createdAt: serverTimestamp(),
         usedCount: 0,
         maxUses: options.maxUses || null,
+        expiresAt
     };
 
-    if (options.expiresInDays) {
-        const expirationDate = new Date();
-        expirationDate.setDate(expirationDate.getDate() + options.expiresInDays);
-        inviteData.expiresAt = expirationDate;
-    }
-
-    const docRef = await addDoc(collection(firestore, INVITES_COLLECTION), inviteData);
-    return { id: docRef.id, ...inviteData } as Invite;
+    await set(newInviteRef, inviteData);
+    return { id: newInviteRef.key!, ...inviteData } as any;
 }
 
 export async function getInviteByCode(code: string): Promise<Invite | null> {
-    const q = query(
-        collection(firestore, INVITES_COLLECTION),
-        where("inviteCode", "==", code),
-        limit(1)
-    );
+    const invitesQuery = query(ref(db, INVITES_REF), orderByChild('inviteCode'), equalTo(code));
+    const snapshot = await get(invitesQuery);
 
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) return null;
-
-    const doc = snapshot.docs[0];
-    return { id: doc.id, ...doc.data() } as Invite;
+    if (snapshot.exists()) {
+        const key = Object.keys(snapshot.val())[0];
+        return { id: key, ...snapshot.val()[key] } as Invite;
+    }
+    return null;
 }
 
 export async function joinBudgetWithInvite(inviteCode: string, userId: string): Promise<{ success: boolean; budgetId?: string; message: string }> {
     const invite = await getInviteByCode(inviteCode);
+    if (!invite) return { success: false, message: "Invalid invite code" };
 
-    if (!invite) {
-        return { success: false, message: "Invalid invite code" };
-    }
+    const now = Date.now();
+    const expiresAt = invite.expiresAt instanceof Date ? invite.expiresAt.getTime() : invite.expiresAt;
 
-    // Check Expiration
-    if (invite.expiresAt && invite.expiresAt.toDate() < new Date()) {
-        return { success: false, message: "Invite has expired" };
-    }
+    if (expiresAt && expiresAt < now) return { success: false, message: "Invite expired" };
+    if (invite.maxUses && invite.usedCount >= invite.maxUses) return { success: false, message: "Invite limit reached" };
 
-    // Check Max Uses
-    if (invite.maxUses && invite.usedCount >= invite.maxUses) {
-        return { success: false, message: "Invite limit reached" };
-    }
-
-    // Check if user is already in the budget (optional optimization, but good UX)
-    const budget = await getBudget(invite.budgetId);
-    if (budget && budget.participants.includes(userId)) {
-        return { success: true, budgetId: invite.budgetId, message: "You are already a member of this budget" };
-    }
+    const budgetRef = ref(db, `${BUDGETS_REF}/${invite.budgetId}`);
+    const inviteRef = ref(db, `${INVITES_REF}/${invite.id}`);
 
     try {
-        await runTransaction(firestore, async (transaction) => {
-            const inviteRef = doc(firestore, INVITES_COLLECTION, invite.id);
-            const budgetRef = doc(firestore, BUDGETS_COLLECTION, invite.budgetId);
-
-            // Increment used count
-            transaction.update(inviteRef, { usedCount: invite.usedCount + 1 });
-
-            // Add user to budget participants
-            transaction.update(budgetRef, {
-                participants: arrayUnion(userId),
-                updatedAt: serverTimestamp()
-            });
+        await runTransaction(budgetRef, (currentBudget) => {
+            if (currentBudget) {
+                if (!currentBudget.participants) currentBudget.participants = [];
+                if (!currentBudget.participants.includes(userId)) {
+                    currentBudget.participants.push(userId);
+                    currentBudget.updatedAt = serverTimestamp();
+                }
+            }
+            return currentBudget;
         });
 
-        return { success: true, budgetId: invite.budgetId, message: "Successfully joined budget" };
-    } catch (error) {
-        console.error("Error joining budget:", error);
-        return { success: false, message: "Failed to join budget. Please try again." };
+        await runTransaction(inviteRef, (currentInvite) => {
+            if (currentInvite) {
+                currentInvite.usedCount = (currentInvite.usedCount || 0) + 1;
+            }
+            return currentInvite;
+        });
+
+        return { success: true, budgetId: invite.budgetId, message: "Successfully joined" };
+    } catch (e: any) {
+        return { success: false, message: e.message };
     }
 }
 
 // --- Expenses ---
 
 export async function addExpense(budgetId: string, expense: Omit<Expense, 'id' | 'createdAt'>) {
-    try {
-        const expensesRef = collection(firestore, BUDGETS_COLLECTION, budgetId, EXPENSES_COLLECTION);
+    const expenseRef = push(ref(db, `${BUDGETS_REF}/${budgetId}/expenses`));
+    await set(expenseRef, {
+        ...expense,
+        createdAt: serverTimestamp()
+    });
 
-        const expenseData = {
-            ...expense,
-            createdAt: serverTimestamp()
-        };
+    // Update budget timestamp
+    await update(ref(db, `${BUDGETS_REF}/${budgetId}`), {
+        updatedAt: serverTimestamp()
+    });
 
-        const docRef = await addDoc(expensesRef, expenseData);
-
-        // Update budget updated timestamp
-        const budgetRef = doc(firestore, BUDGETS_COLLECTION, budgetId);
-        await updateDoc(budgetRef, { updatedAt: serverTimestamp() });
-
-        return docRef.id;
-    } catch (error) {
-        console.error("Error adding expense:", error);
-        throw error;
-    }
+    return expenseRef.key;
 }
 
 export function subscribeToExpenses(budgetId: string, callback: (expenses: Expense[]) => void, onError = defaultOnError) {
-    const expensesRef = collection(firestore, BUDGETS_COLLECTION, budgetId, EXPENSES_COLLECTION);
-    const q = query(expensesRef, orderBy("date", "desc"));
-
-    return onSnapshot(q, (snapshot) => {
-        const expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Expense));
-        callback(expenses);
+    const expensesRef = ref(db, `${BUDGETS_REF}/${budgetId}/expenses`);
+    return onValue(expensesRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const expensesObj = snapshot.val();
+            const expensesList = Object.entries(expensesObj).map(([key, val]: [string, any]) => ({
+                id: key,
+                ...val
+            })).sort((a: any, b: any) => {
+                // Sort desc by date
+                return new Date(b.date).getTime() - new Date(a.date).getTime();
+            });
+            callback(expensesList);
+        } else {
+            callback([]);
+        }
     }, onError);
 }
 
 export async function deleteExpense(budgetId: string, expenseId: string) {
-    const expenseRef = doc(firestore, BUDGETS_COLLECTION, budgetId, EXPENSES_COLLECTION, expenseId);
-    await deleteDoc(expenseRef);
+    await remove(ref(db, `${BUDGETS_REF}/${budgetId}/expenses/${expenseId}`));
+    await update(ref(db, `${BUDGETS_REF}/${budgetId}`), {
+        updatedAt: serverTimestamp()
+    });
 }
 
 // --- Storage ---
 
 export async function uploadReceipt(file: File, budgetId: string): Promise<string> {
-    const fileRef = ref(storage, `receipts/${budgetId}/${Date.now()}_${file.name}`);
+    const fileRef = storageRef(storage, `receipts/${budgetId}/${Date.now()}_${file.name}`);
     await uploadBytes(fileRef, file);
     return getDownloadURL(fileRef);
 }
