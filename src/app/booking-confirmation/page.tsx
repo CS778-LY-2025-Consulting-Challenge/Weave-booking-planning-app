@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
+import { useUser } from '@clerk/nextjs';
+import { saveBooking } from '@/lib/bookings';
 
 interface BookingConfirmation {
   bookingId: string;
@@ -33,11 +35,13 @@ interface BookingConfirmation {
   nights: number;
   isMockBooking?: boolean;
   bookingDate?: string;
+  stripeSessionId?: string;
 }
 
 export default function BookingConfirmationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useUser();
   const bookingId = searchParams.get('bookingId');
   const sessionId = searchParams.get('session_id');
   const status = searchParams.get('status');
@@ -55,33 +59,93 @@ export default function BookingConfirmationPage() {
           if (storedBookings) {
             const bookings = JSON.parse(storedBookings);
             const foundBooking = bookings.find((b: any) => b.bookingId === bookingId);
-            
+
             if (foundBooking) {
               setBooking(foundBooking);
               setIsLoading(false);
+
+              // Consider saving to Firebase if it's a mock booking that just got confirmed? 
+              // But mock bookings usually don't go through stripe flow in the same way.
+              // We'll focus on the session_id flow primarily for syncing verified bookings.
+
+              // If we are just showing a confirmation page for a booking that was *just* made locally (mock),
+              // we might want to sync it if the user is logged in.
+              if (user?.id && !foundBooking.syncedToFirebase) {
+                try {
+                  await saveBooking(user.id, {
+                    type: 'hotel',
+                    status: foundBooking.status,
+                    userId: user.id,
+                    stripeSessionId: foundBooking.stripeSessionId || foundBooking.bookingId,
+                    details: foundBooking
+                  });
+                  console.log('Hotel booking synced to Firebase (mock/local flow)');
+
+                  // Mark as synced to avoid duplicates if page reloads
+                  foundBooking.syncedToFirebase = true;
+                  localStorage.setItem('hotelBookings', JSON.stringify(bookings));
+                } catch (err) {
+                  console.error("Failed to sync hotel booking", err);
+                }
+              }
+
               return;
             }
           }
         }
 
-        // If we have a session ID, fetch from backend
+        // If we have a session ID, fetch from backend (or simulate backend fetch/update)
         if (sessionId) {
-          // In production, fetch booking details from your backend
-          const mockBooking: BookingConfirmation = {
-            bookingId: `BK-${Date.now()}`,
-            hotelName: 'Luxury City Hotel',
-            roomName: 'Deluxe Room',
-            checkInDate: '2026-02-01',
-            checkOutDate: '2026-02-05',
-            guests: 2,
-            totalPrice: 1400,
-            status: status === 'success' ? 'success' : status === 'cancelled' ? 'failed' : 'pending',
-            confirmationEmail: 'guest@example.com',
-            nights: 4,
-            isMockBooking: false,
-          };
 
-          setBooking(mockBooking);
+          // In a real app we would verifying the session with the backend.
+          // Here we might look it up in local storage to find the pending booking
+          const storedBookings = localStorage.getItem('hotelBookings');
+          let foundBooking: any = null;
+          if (storedBookings) {
+            const bookings = JSON.parse(storedBookings);
+            foundBooking = bookings.find((b: any) => b.stripeSessionId === sessionId);
+
+            if (foundBooking) {
+              foundBooking.status = status === 'success' ? 'confirmed' : 'failed';
+              localStorage.setItem('hotelBookings', JSON.stringify(bookings));
+              setBooking(foundBooking);
+
+              if (status === 'success' && user?.id) {
+                try {
+                  await saveBooking(user.id, {
+                    type: 'hotel',
+                    status: 'confirmed',
+                    userId: user.id,
+                    stripeSessionId: sessionId,
+                    details: foundBooking
+                  });
+                  console.log('Hotel booking synced to Firebase (Stripe flow)');
+                } catch (firebaseError) {
+                  console.error('Failed to sync hotel booking to Firebase:', firebaseError);
+                }
+              }
+            }
+          }
+
+          if (!foundBooking) {
+            // Fallback if not found in local storage (e.g. cleared cache) but we have session_id
+            // In production, fetch booking details from your backend
+            const mockBooking: BookingConfirmation = {
+              bookingId: `BK-${Date.now()}`,
+              hotelName: 'Luxury City Hotel',
+              roomName: 'Deluxe Room',
+              checkInDate: '2026-02-01',
+              checkOutDate: '2026-02-05',
+              guests: 2,
+              totalPrice: 1400,
+              status: status === 'success' ? 'success' : status === 'cancelled' ? 'failed' : 'pending',
+              confirmationEmail: 'guest@example.com',
+              nights: 4,
+              isMockBooking: false,
+            };
+            setBooking(mockBooking);
+          }
+
 
           if (status === 'success') {
             toast.success('Booking confirmed! Check your email for details.');
@@ -89,7 +153,10 @@ export default function BookingConfirmationPage() {
             toast.error('Booking was cancelled');
           }
         } else {
-          setError('No booking information found');
+          // Only show error if we didn't find anything by bookingId either
+          if (!bookingId) {
+            setError('No booking information found');
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load booking details');
@@ -100,7 +167,7 @@ export default function BookingConfirmationPage() {
     };
 
     fetchBookingDetails();
-  }, [bookingId, sessionId, status]);
+  }, [bookingId, sessionId, status, user?.id]);
 
   if (isLoading) {
     return (

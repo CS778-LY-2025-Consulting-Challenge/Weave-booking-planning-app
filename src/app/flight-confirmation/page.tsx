@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
+import { saveBooking } from '@/lib/bookings';
+import { useUser } from '@clerk/nextjs';
 
 interface FlightBookingConfirmation {
   bookingReference: string;
@@ -43,6 +45,7 @@ interface FlightBookingConfirmation {
 export default function FlightConfirmationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useUser();
   const sessionId = searchParams.get('session_id');
   const status = searchParams.get('status');
 
@@ -58,20 +61,40 @@ export default function FlightConfirmationPage() {
         if (storedBookings) {
           const bookings = JSON.parse(storedBookings);
           const foundBooking = bookings.find((b: any) => b.stripeSessionId === sessionId);
-          
+
           if (foundBooking) {
             // Update status to success
             foundBooking.status = status === 'success' ? 'success' : 'failed';
-            
+
             // Update in localStorage
-            const updatedBookings = bookings.map((b: any) => 
+            const updatedBookings = bookings.map((b: any) =>
               b.stripeSessionId === sessionId ? foundBooking : b
             );
             localStorage.setItem('flightBookings', JSON.stringify(updatedBookings));
-            
+
             setBooking(foundBooking);
-            
+
             if (status === 'success') {
+              // Save to Firebase if user is logged in
+              if (user?.id) {
+                try {
+                  await saveBooking(user.id, {
+                    type: 'flight',
+                    status: 'confirmed',
+                    userId: user.id,
+                    stripeSessionId: sessionId || foundBooking.bookingReference,
+                    details: {
+                      ...foundBooking.flight,
+                      passengers: foundBooking.passengers,
+                      bookingReference: foundBooking.bookingReference
+                    }
+                  });
+                  console.log('Booking synced to Firebase');
+                } catch (firebaseError) {
+                  console.error('Failed to sync booking to Firebase:', firebaseError);
+                }
+              }
+
               toast.success('Flight booked successfully! Check your email for details.');
             }
           } else {
@@ -95,7 +118,7 @@ export default function FlightConfirmationPage() {
       setError('No session ID provided');
       setIsLoading(false);
     }
-  }, [sessionId, status]);
+  }, [sessionId, status, user?.id]);
 
   if (isLoading) {
     return (

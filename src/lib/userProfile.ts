@@ -35,8 +35,21 @@ export function updateUserProfile(userId: string, data: Partial<UserProfile>) {
     return update(profileRef, data);
 }
 
+// Simple in-memory cache
+const profileCache = new Map<string, UserProfile>();
+
 // Get user profile
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
+    // if (profileCache.has(userId)) {
+    //     return profileCache.get(userId) || null;
+    // }
+
     const snapshot = await get(ref(db, `users/${userId}/profile`));
-    return snapshot.exists() ? snapshot.val() : null;
+    if (snapshot.exists()) {
+        const data = snapshot.val();
+        profileCache.set(userId, data);
+        return data;
+    }
+
+    return null;
 }
