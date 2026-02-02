@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from 'react';
+
 import PackageBookingFlow from '@/components/PackageBookingFlow';
 import { getPackageById } from '@/lib/packages';
 import { useParams, useRouter } from 'next/navigation';
@@ -10,8 +12,13 @@ export default function PackageBookPage() {
   const id = Number(params.id);
   const pkg = getPackageById(id);
 
+  useEffect(() => {
+    if (!pkg) {
+      router.push('/packages');
+    }
+  }, [pkg, router]);
+
   if (!pkg) {
-    router.push('/packages');
     return null;
   }
 
