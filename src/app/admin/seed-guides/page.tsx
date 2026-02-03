@@ -111,12 +111,44 @@ export default function SeedGuidesPage() {
         }
     };
 
+    const handleDeleteSeeded = async () => {
+        setStatus('Deleting seeded guides...');
+        try {
+            const { getAllGuides, removeGuideProfile } = await import('@/lib/guides');
+            const guides = await getAllGuides();
+            const namesToDelete = [
+                'Yuki Tanaka',
+                'Marco Rossi',
+                'Sofia Martinez',
+                'Amara Ndiaye',
+                'Liam O’Connor'
+            ];
+
+            let count = 0;
+            for (const [id, guide] of Object.entries(guides)) {
+                if (guide.fullName && namesToDelete.includes(guide.fullName)) {
+                    await removeGuideProfile(id);
+                    count++;
+                }
+            }
+            setStatus(`Deleted ${count} seeded guides.`);
+        } catch (e: any) {
+            console.error(e);
+            setStatus('Error deleting: ' + e.message);
+        }
+    };
+
     return (
         <div className="p-20">
             <h1 className="text-2xl font-bold mb-4">Seed Famous Guides</h1>
             <Button onClick={handleSeed} disabled={status === 'Seeding...'}>
                 {status === 'Seeding...' ? 'Adding...' : 'Add Featured Guides'}
             </Button>
+            <div className="mt-4">
+                <Button variant="destructive" onClick={handleDeleteSeeded} disabled={status.startsWith('Deleting')}>
+                    Delete Seeded Guides
+                </Button>
+            </div>
             <p className="mt-4">{status}</p>
         </div>
     );

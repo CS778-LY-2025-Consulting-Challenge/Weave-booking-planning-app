@@ -69,8 +69,12 @@ export function FeaturedGuidesCarousel({ guides, onBookAppointment }: FeaturedGu
     return (
         <div
             className="relative"
-            onMouseEnter={() => setIsCarouselHovered(true)}
-            onMouseLeave={() => setIsCarouselHovered(false)}
+            onMouseEnter={() => {
+                if (!isCarouselHovered) setIsCarouselHovered(true);
+            }}
+            onMouseLeave={() => {
+                if (isCarouselHovered) setIsCarouselHovered(false);
+            }}
         >
             <div
                 ref={carouselRef}
@@ -97,18 +101,20 @@ export function FeaturedGuidesCarousel({ guides, onBookAppointment }: FeaturedGu
                                                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                                             />
 
-                                            {/* Video Play Button - Show on all cards */}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setPlayingVideoId(cardId);
-                                                }}
-                                                className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 hover:bg-black/20"
-                                            >
-                                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-xl transition-transform duration-300 group-hover:scale-110">
-                                                    <div className="ml-1 h-0 w-0 border-t-10 border-b-10 border-l-16 border-t-transparent border-b-transparent border-l-blue-600"></div>
-                                                </div>
-                                            </button>
+                                            {/* Video Play Button - Show only if video exists */}
+                                            {guide.video && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPlayingVideoId(cardId);
+                                                    }}
+                                                    className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 hover:bg-black/20"
+                                                >
+                                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-xl transition-transform duration-300 group-hover:scale-110">
+                                                        <div className="ml-1 h-0 w-0 border-t-10 border-b-10 border-l-16 border-t-transparent border-b-transparent border-l-blue-600"></div>
+                                                    </div>
+                                                </button>
+                                            )}
                                         </>
                                     ) : (
                                         <>
