@@ -42,6 +42,9 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --font-cormorant: var(--font-cormorant);
   --font-inter: var(--font-inter);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
 }
 
 :root {
