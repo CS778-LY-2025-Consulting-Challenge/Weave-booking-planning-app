@@ -122,12 +122,14 @@ export default function TravelSafetyCard({ destination, dates }: TravelSafetyCar
   if (!destination) return null;
 
   return (
-    <Card className="border border-slate-200 bg-white/90 shadow pt-3 pb-3">
-      <CardHeader className="pb-0.5 pt-0">
+    <Card className="border-0 bg-white shadow-2xl shadow-slate-200/50 rounded-3xl pt-3 pb-3 overflow-hidden">
+      <CardHeader className="pb-0.5 pt-0 px-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-blue-600" />
-            <CardTitle className="text-base">Travel Safety Alert</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/20">
+              <Shield className="h-4 w-4 text-white" />
+            </div>
+            <CardTitle className="text-base font-bold">Travel Safety Alert</CardTitle>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -135,7 +137,7 @@ export default function TravelSafetyCard({ destination, dates }: TravelSafetyCar
               size="sm"
               onClick={fetchSafetyData}
               disabled={isLoading}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8 p-0 rounded-xl hover:bg-slate-100"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
@@ -143,7 +145,7 @@ export default function TravelSafetyCard({ destination, dates }: TravelSafetyCar
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8 p-0 rounded-xl hover:bg-slate-100"
             >
               {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             </Button>
@@ -152,54 +154,54 @@ export default function TravelSafetyCard({ destination, dates }: TravelSafetyCar
       </CardHeader>
 
       {isExpanded && (
-        <CardContent className="space-y-1.5 pt-0.5 pb-1">
+        <CardContent className="space-y-2 pt-2 pb-1 px-8">
           {isLoading && (
-            <div className="flex items-center justify-center py-6">
+            <div className="flex items-center justify-center py-8">
               <div className="text-center space-y-2">
-                <RefreshCw className="h-5 w-5 animate-spin mx-auto text-blue-500" />
-                <p className="text-xs text-slate-500">Analyzing travel safety...</p>
+                <RefreshCw className="h-6 w-6 animate-spin mx-auto text-blue-500" />
+                <p className="text-sm text-slate-500">Analyzing travel safety...</p>
               </div>
             </div>
           )}
 
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-2">
-              <p className="text-xs text-red-600">{error}</p>
+            <div className="rounded-2xl bg-red-50 border border-red-200 p-4">
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           {!isLoading && !error && safetyData && (
             <>
               {/* Destination and Risk Level */}
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-slate-700">{destination}</div>
-                <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${getRiskConfig(safetyData.riskLevel).bg} ${getRiskConfig(safetyData.riskLevel).border}`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-bold text-slate-900">{destination}</div>
+                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl border-2 shadow-sm ${getRiskConfig(safetyData.riskLevel).bg} ${getRiskConfig(safetyData.riskLevel).border}`}>
                   <span className={getRiskConfig(safetyData.riskLevel).color}>
                     {React.cloneElement(getRiskConfig(safetyData.riskLevel).icon as React.ReactElement<{ className?: string }>, { className: 'h-5 w-5' })}
                   </span>
-                  <span className={`text-sm font-semibold ${getRiskConfig(safetyData.riskLevel).color}`}>
+                  <span className={`text-sm font-bold ${getRiskConfig(safetyData.riskLevel).color}`}>
                     {getRiskConfig(safetyData.riskLevel).label}
                   </span>
                 </div>
               </div>
 
               {/* Summary */}
-              <div className="rounded-lg bg-slate-50 border border-slate-200 p-1">
-                <p className="text-xs text-slate-700 leading-relaxed">
+              <div className="rounded-2xl bg-slate-50 border border-slate-200/50 p-4">
+                <p className="text-sm text-slate-700 leading-relaxed">
                   {safetyData.summary}
                 </p>
               </div>
 
               {/* Key Updates */}
-              <div className="mt-2">
-                <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-0.5">
+              <div className="mt-4">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
                   Recent Updates
                 </h4>
-                <div className="space-y-1">
+                <div className="space-y-2.5">
                   {safetyData.newsItems.slice(0, 3).map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-1.5">
-                      <div className="mt-1.5 h-1 w-1 rounded-full bg-blue-500 shrink-0" />
-                      <p className="text-xs text-slate-600 leading-relaxed">{item}</p>
+                    <div key={idx} className="flex items-start gap-2.5">
+                      <div className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                      <p className="text-sm text-slate-600 leading-relaxed">{item}</p>
                     </div>
                   ))}
                 </div>

@@ -53,16 +53,6 @@ const nextConfig: NextConfig = {
         hostname: '**.imgix.net',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'lonelyplanetstatic.imgix.net',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'lp-cms-production.imgix.net',
-        pathname: '/**',
-      },
     ],
   },
 };
