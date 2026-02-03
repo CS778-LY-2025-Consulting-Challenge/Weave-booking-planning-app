@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import timePreciousImage from '@/images/2.png';
@@ -26,6 +27,7 @@ import { useSearchParams } from 'next/navigation';
 import { VideoCall } from '@/components/VideoCall';
 import { GuideBookingDialog } from '@/components/GuideBookingDialog';
 import { VideoCallModal } from '@/components/VideoCallModal';
+import { FeaturedGuidesCarousel } from '@/components/FeaturedGuidesCarousel';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -55,6 +57,17 @@ interface Message {
 }
 
 export default function Guides() {
+  // Start a call (voice or video)
+  const startCall = (type: 'voice' | 'video') => {
+    setCallType(type);
+    setChatOpen(true);
+  };
+
+  // Handle payment for premium chat
+  const handlePayment = () => {
+    setIsPaid(true);
+    setShowPaymentPrompt(false);
+  };
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGuide, setSelectedGuide] = useState<Guide | null>(null);
@@ -66,10 +79,8 @@ export default function Guides() {
   const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
   const [callType, setCallType] = useState<'none' | 'voice' | 'video'>('none');
   const [currentLocationIndex, setCurrentLocationIndex] = useState(0);
-  const [isCarouselHovered, setIsCarouselHovered] = useState(false);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
-  const carouselRef = useRef<HTMLDivElement>(null);
-  
+
   // Booking state
   const [bookingGuide, setBookingGuide] = useState<Guide | null>(null);
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
@@ -82,6 +93,10 @@ export default function Guides() {
     email: string;
     notes: string;
   } | null>(null);
+
+  // Search results state
+  const [searchResults, setSearchResults] = useState<Guide[]>([]);
+  const [searching, setSearching] = useState(false);
 
   const popularLocations = [
     'Tokyo',
@@ -100,31 +115,7 @@ export default function Guides() {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-scroll carousel
-  useEffect(() => {
-    if (!carouselRef.current || isCarouselHovered) return;
 
-    const scrollContainer = carouselRef.current;
-    let scrollInterval: NodeJS.Timeout;
-
-    scrollInterval = setInterval(() => {
-      if (scrollContainer) {
-        const maxScroll =
-          scrollContainer.scrollWidth - scrollContainer.clientWidth;
-        const currentScroll = scrollContainer.scrollLeft;
-
-        if (currentScroll >= maxScroll) {
-          // Reset to start for infinite loop
-          scrollContainer.scrollLeft = 0;
-        } else {
-          // Smooth scroll by 1 pixel
-          scrollContainer.scrollLeft += 1;
-        }
-      }
-    }, 20);
-
-    return () => clearInterval(scrollInterval);
-  }, [isCarouselHovered]);
 
 
   // Firebase guides state
@@ -157,6 +148,7 @@ export default function Guides() {
           tagline: guide.tagline || '',
         }));
         setGuides(guidesArr);
+        setSearchResults(guidesArr); // Show all by default
       } catch (err) {
         setGuidesError('Failed to load guides.');
       } finally {
@@ -167,16 +159,25 @@ export default function Guides() {
   }, []);
 
 
-  const filteredGuides = guides.filter((guide) => {
-    const matchesSearch =
-      searchQuery === '' ||
-      guide.country?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      guide.name?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
 
-  const featuredGuides = filteredGuides.filter((g) => g.featured);
-  const regularGuides = filteredGuides.filter((g) => !g.featured);
+  // Search/filter guides by name or location
+  const handleGuideSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearching(true);
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      setSearchResults(guides);
+      setSearching(false);
+      return;
+    }
+    const results = guides.filter((guide) =>
+      guide.name?.toLowerCase().includes(query) ||
+      guide.country?.toLowerCase().includes(query) ||
+      (guide.tagline && guide.tagline.toLowerCase().includes(query))
+    );
+    setSearchResults(results);
+    setSearching(false);
+  };
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -210,58 +211,17 @@ export default function Guides() {
       };
       setMessages([...messages, message]);
       setNewMessage('');
-
-      setTimeout(() => {
-        const response: Message = {
-          id: messages.length + 2,
-          sender: 'guide',
-          text: "Thanks for your message! I'd be happy to help you with that.",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, response]);
-      }, 1000);
     }
   };
 
-  const handlePayment = () => {
-    setIsPaid(true);
-    setShowPaymentPrompt(false);
-  };
 
-  const openChat = (guide: Guide) => {
-    setSelectedGuide(guide);
-    setChatOpen(true);
-    setMessages([
-      {
-        id: 1,
-        sender: 'guide',
-        text: `Hi! I'm ${guide.name}. How can I help you explore ${guide.country}?`,
-        timestamp: new Date(),
-      },
-    ]);
-    setFreeTimeRemaining(300);
-    setIsPaid(false);
-    setCallType('none');
-  };
-
+  // Used for chat dialog close
   const closeChat = () => {
     setChatOpen(false);
     setSelectedGuide(null);
     setMessages([]);
     setShowPaymentPrompt(false);
-  };
-
-  const startCall = (type: 'voice' | 'video') => {
-    if (isPaid || freeTimeRemaining > 0) {
-      setCallType(type);
-    } else {
-      setShowPaymentPrompt(true);
-    }
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Search logic handled by filteredGuides
+    setCallType('none');
   };
 
   const handleBookAppointment = (guide: Guide) => {
@@ -293,13 +253,14 @@ export default function Guides() {
     );
   }
 
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
       {/* Hero Section - Centered Container with S3 Video Background */}
       <section className="flex min-h-screen items-center justify-center px-4 pt-29 pb-10 sm:px-6 lg:px-12">
         <div className="mx-auto w-full max-w-7xl">
           {/* Premium Hero Container - Clean rounded design */}
-          <div className="relative h-[700px] overflow-hidden rounded-3xl sm:h-[750px] lg:h-[800px]">
+          <div className="relative h-175 overflow-hidden rounded-3xl sm:h-187.5 lg:h-200">
             {/* S3 Video Background - Full Container */}
             <video
               className="absolute top-1/2 left-1/2 h-full w-full object-cover -translate-x-1/2 -translate-y-1/2"
@@ -310,7 +271,7 @@ export default function Guides() {
               playsInline
             />
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
+            <div className="absolute inset-0 bg-linear-to-b from-black/40 via-black/30 to-black/50" />
             {/* Content Overlay */}
             <div className="relative z-10 flex h-full flex-col">
               {/* Header Area with Text */}
@@ -327,7 +288,7 @@ export default function Guides() {
 
               {/* Search Bar Area - Centered */}
               <div className="flex flex-1 items-center justify-center px-6 sm:px-12">
-                <form onSubmit={handleSearch} className="w-full max-w-2xl">
+                <form onSubmit={handleGuideSearch} className="w-full max-w-2xl">
                   <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/95 shadow-xl backdrop-blur-xl">
                     <div className="flex items-center">
                       <Search className="absolute left-6 z-10 size-6 text-blue-600" />
@@ -383,6 +344,51 @@ export default function Guides() {
         </div>
       </section>
 
+      {/* Search Results Section - Show matching guides under hero */}
+      {searchQuery && (
+        <section className="bg-white py-12">
+          <div className="mx-auto max-w-7xl px-6 lg:px-12">
+            <h2 className="mb-8 text-3xl font-bold text-gray-900">Search Results</h2>
+            {searchResults.length === 0 ? (
+              <div className="rounded-xl bg-gray-50 p-8 text-center text-gray-500 shadow">No guides found for "{searchQuery}"</div>
+            ) : (
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {searchResults.map((guide) => (
+                  <div key={guide.id} className="rounded-2xl bg-white shadow-lg p-6 flex flex-col items-center">
+                    <img src={guide.image} alt={guide.name} className="mb-4 h-40 w-40 rounded-full object-cover border-4 border-blue-100" />
+                    <h3 className="text-xl font-bold mb-2">{guide.name}</h3>
+                    <p className="text-gray-600 mb-1">{guide.country}</p>
+                    <p className="text-gray-500 mb-2">{guide.tagline}</p>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {guide.languages && guide.languages.map(lang => (
+                        <span key={lang} className="rounded bg-blue-50 px-2 py-1 text-xs text-blue-700">{lang}</span>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {guide.specialties && guide.specialties.map(spec => (
+                        <span key={spec} className="rounded bg-amber-50 px-2 py-1 text-xs text-amber-700">{spec}</span>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-yellow-500">★</span>
+                      <span className="font-semibold">{guide.rating}</span>
+                      <span className="text-gray-400">({guide.reviews} reviews)</span>
+                    </div>
+                    <div className="text-lg font-semibold text-blue-700 mb-2">${guide.hourlyRate}/hr</div>
+                    <button
+                      className="mt-auto rounded-lg bg-blue-600 px-4 py-2 text-white font-semibold hover:bg-blue-700"
+                      onClick={() => handleBookAppointment(guide)}
+                    >
+                      Book Now
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Featured Guides - Horizontal Carousel */}
       <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-12">
@@ -399,145 +405,17 @@ export default function Guides() {
         </div>
 
         {/* Horizontal Scrolling Carousel */}
-        <div
-          className="relative"
-          onMouseEnter={() => setIsCarouselHovered(true)}
-          onMouseLeave={() => setIsCarouselHovered(false)}
-        >
-          <div
-            ref={carouselRef}
-            className="scrollbar-hide overflow-x-auto"
-            style={{ scrollBehavior: 'auto' }}
-          >
-            <div className="flex gap-6 px-6 pb-4 lg:px-12">
-              {/* Duplicate guides array 3 times for continuous scrolling */}
-              {[...guides, ...guides, ...guides].map((guide, index) => {
-                const cardId = `${guide.id}-${index}`;
-                const isPlayingVideo = playingVideoId === cardId;
-                
-                return (
-                  <div
-                    key={cardId}
-                    className="group w-[320px] flex-none cursor-pointer sm:w-[380px]"
-                  >
-                    <div className="relative aspect-[3/4] overflow-hidden rounded-3xl shadow-lg">
-                      {!isPlayingVideo ? (
-                        <>
-                          <ImageWithFallback
-                            src={guide.image}
-                            alt={guide.name}
-                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          />
-
-                          {/* Video Play Button - Show on all cards */}
-                          <button
-                            onClick={() => setPlayingVideoId(cardId)}
-                            className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 hover:bg-black/20"
-                          >
-                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-xl transition-transform duration-300 group-hover:scale-110">
-                              <div className="ml-1 h-0 w-0 border-t-[10px] border-b-[10px] border-l-[16px] border-t-transparent border-b-transparent border-l-blue-600"></div>
-                            </div>
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <video
-                            src={guide.video}
-                            className="absolute inset-0 h-full w-full object-cover"
-                            autoPlay
-                            controls
-                            loop
-                            muted
-                            playsInline
-                            preload="metadata"
-                            onError={(e) => {
-                              console.error('Video error:', e);
-                              setPlayingVideoId(null);
-                            }}
-                          />
-                          <button
-                            onClick={() => setPlayingVideoId(null)}
-                            className="absolute top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-black hover:bg-white"
-                          >
-                            <X className="size-4" />
-                          </button>
-                        </>
-                      )}
-
-                      {/* Text Overlay */}
-                      {!isPlayingVideo && (
-                        <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-6">
-                          <h3 className="mb-1 text-2xl text-white">
-                            {guide.name.split(' ')[0]}
-                          </h3>
-                          <p className="mb-3 text-sm text-white/90">
-                            Local expert, {guide.country}
-                          </p>
-
-                          {guide.featured && (
-                            <div className="space-y-1 mb-3">
-                              <p className="text-xs tracking-wide text-white uppercase">
-                                Featured Guide
-                              </p>
-                              <p className="text-xs text-white/80">
-                                {guide.tagline}
-                              </p>
-                            </div>
-                          )}
-                          
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleBookAppointment(guide);
-                            }}
-                            className="pointer-events-auto w-full rounded-lg bg-white py-2.5 px-4 text-sm font-medium text-black transition-all hover:bg-blue-600 hover:text-white shadow-lg"
-                          >
-                            Book appointment
-                          </button>
-                        </div>
-                      )}
-
-                      {!isPlayingVideo && guide.verified && (
-                        <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-xs text-black shadow-md backdrop-blur-sm">
-                          <BadgeCheck className="size-3" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Navigation Arrows */}
-          <button
-            className="absolute top-1/2 left-4 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-xl transition-colors hover:bg-gray-50"
-            onClick={() => {
-              if (carouselRef.current) {
-                carouselRef.current.scrollLeft -= 400;
-              }
-            }}
-          >
-            <ChevronDown className="size-6 -rotate-90" />
-          </button>
-          <button
-            className="absolute top-1/2 right-4 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-xl transition-colors hover:bg-gray-50"
-            onClick={() => {
-              if (carouselRef.current) {
-                carouselRef.current.scrollLeft += 400;
-              }
-            }}
-          >
-            <ChevronDown className="size-6 rotate-90" />
-          </button>
-        </div>
+        <FeaturedGuidesCarousel
+          guides={guides}
+          onBookAppointment={handleBookAppointment}
+        />
       </section>
 
       {/* Your Time is Precious */}
       <section className="px-6 py-16 lg:px-12">
         <div className="mx-auto max-w-7xl">
           <div
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 px-8 py-16 lg:px-16 lg:py-20"
+            className="relative overflow-hidden rounded-3xl bg-linear-to-br from-amber-50 to-orange-50 px-8 py-16 lg:px-16 lg:py-20"
             style={{
               backgroundImage: `url(${timePreciousImage.src})`,
               backgroundSize: 'cover',
@@ -546,8 +424,8 @@ export default function Guides() {
             }}
           >
             {/* Overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-transparent via-amber-50/80 to-amber-50/95" />
-            
+            <div className="absolute inset-0 bg-linear-to-t from-transparent via-amber-50/80 to-amber-50/95" />
+
             {/* Content */}
             <div className="relative z-10 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
               {/* Left Column */}
@@ -586,7 +464,7 @@ export default function Guides() {
         }}
       >
         {/* Dark gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/50 to-transparent" />
 
         {/* Content */}
         <div className="relative z-10 w-full">
@@ -618,7 +496,7 @@ export default function Guides() {
           <div className="grid grid-cols-1 items-center justify-center gap-10 xl:gap-12 lg:grid-cols-2">
             {/* Left visuals: stacked image with transparent background and labels */}
             <div className="flex justify-center lg:justify-center">
-              <div className="relative w-full max-w-[220px] sm:max-w-[240px] lg:max-w-[250px] xl:max-w-[260px]">
+              <div className="relative w-full max-w-55 sm:max-w-60 lg:max-w-62.5 xl:max-w-65">
                 <ImageWithFallback
                   src={circleImage.src}
                   alt="You and your destination"
@@ -684,7 +562,7 @@ export default function Guides() {
 
           <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
             <div className="text-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-2xl text-white shadow-lg">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-blue-600 to-blue-700 text-2xl text-white shadow-lg">
                 1
               </div>
               <h3 className="mb-4 text-2xl">Find your guide</h3>
@@ -695,7 +573,7 @@ export default function Guides() {
             </div>
 
             <div className="text-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 to-purple-700 text-2xl text-white shadow-lg">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-purple-600 to-purple-700 text-2xl text-white shadow-lg">
                 2
               </div>
               <h3 className="mb-4 text-2xl">Start chatting free</h3>
@@ -705,7 +583,7 @@ export default function Guides() {
             </div>
 
             <div className="text-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-600 to-pink-700 text-2xl text-white shadow-lg">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-pink-600 to-pink-700 text-2xl text-white shadow-lg">
                 3
               </div>
               <h3 className="mb-4 text-2xl">Experience the real destination</h3>
@@ -719,7 +597,7 @@ export default function Guides() {
       </section>
 
       {/* Why Choose Local Guides */}
-      <section className="bg-gradient-to-br from-gray-900 via-black to-gray-900 px-6 py-20 text-white lg:px-12">
+      <section className="bg-linear-to-br from-gray-900 via-black to-gray-900 px-6 py-20 text-white lg:px-12">
         <div className="mx-auto max-w-7xl">
           <div className="mb-16 max-w-3xl">
             <p className="mb-4 text-sm tracking-wider text-white/60 uppercase">
@@ -896,11 +774,10 @@ export default function Guides() {
                         className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-xs rounded-2xl px-4 py-3 lg:max-w-md ${
-                            message.sender === 'user'
-                              ? 'bg-black text-white'
-                              : 'border border-gray-200 bg-white'
-                          }`}
+                          className={`max-w-xs rounded-2xl px-4 py-3 lg:max-w-md ${message.sender === 'user'
+                            ? 'bg-black text-white'
+                            : 'border border-gray-200 bg-white'
+                            }`}
                         >
                           <p>{message.text}</p>
                           <p
@@ -932,7 +809,7 @@ export default function Guides() {
                             handleSendMessage();
                           }
                         }}
-                        className="min-h-[60px] flex-1 resize-none"
+                        className="min-h-15 flex-1 resize-none"
                         disabled={!isPaid && freeTimeRemaining === 0}
                       />
                       <Button

@@ -293,7 +293,7 @@ export default function PackageDetails() {
           ],
           media: [
             {
-               type: 'photo',
+              type: 'photo',
               url: '/images/day-3.webp',
               caption: 'Wai-O-Tapu Thermal Wonderland',
             },
@@ -303,7 +303,7 @@ export default function PackageDetails() {
               caption: 'Skyline Rotorua Gondola',
             },
             {
-               type: 'photo',
+              type: 'photo',
               url: '/images/day-3-2.webp',
               caption: 'Skyline Rotorua Friends on Luge',
             },
@@ -366,7 +366,7 @@ export default function PackageDetails() {
               caption: 'Jet Boat Adventure',
             },
             {
-               type: 'photo',
+              type: 'photo',
               url: '/images/day-4-2.webp',
               caption: 'Jet Boat Adventure',
             },
@@ -418,17 +418,17 @@ export default function PackageDetails() {
           ],
           media: [
             {
-                 type: 'photo',
+              type: 'photo',
               url: '/images/day-5.webp',
               caption: 'Scenic Drive to Milford Sound',
             },
             {
-                type: 'photo',
+              type: 'photo',
               url: '/images/day-5-1.webp',
               caption: 'Milford Sound Cruise',
             },
             {
-               type: 'photo',
+              type: 'photo',
               url: '/images/day-5-2.jpg',
               caption: 'Milford Sound Cruise',
             },
@@ -478,7 +478,7 @@ export default function PackageDetails() {
             },
           ],
           media: [
-             {
+            {
               type: 'video',
               url: '/images/day-6.mp4',
               thumbnail:
@@ -487,7 +487,7 @@ export default function PackageDetails() {
             },
             {
               type: 'photo',
-              url: '/images/day-6-2.jpg',              
+              url: '/images/day-6-2.jpg',
               caption: 'Skydiving adventure',
             },
             {
@@ -495,7 +495,7 @@ export default function PackageDetails() {
               url: '/images/day-6-3.jpg',
               caption: 'Spa Relax',
             },
-           
+
           ],
         },
         {
@@ -768,7 +768,7 @@ export default function PackageDetails() {
             '24-hour butler service',
             'Heated outdoor pools',
           ],
-         images: ['/images/The Ritz-Carlton Queenstown.avif'],
+          images: ['/images/The Ritz-Carlton Queenstown.avif'],
         },
       ],
       transportation: [
@@ -823,7 +823,7 @@ export default function PackageDetails() {
           duration: '3 hours',
           difficulty: 'Advanced',
           price: 'Included in package',
-              image: '/images/day-6.mp4',
+          image: '/images/day-6.mp4',
           category: 'Adventure',
         },
         {
@@ -2109,24 +2109,24 @@ export default function PackageDetails() {
         <div className="container mx-auto px-4 py-10">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="mb-4 text-[80px] font-bold text-gray-800">404</h1>
-            <div 
+            <div
               className="mx-auto mb-8 h-100 bg-center bg-no-repeat"
               style={{
                 backgroundImage: 'url(https://cdn.dribbble.com/users/285475/screenshots/2083086/dribbble_1.gif)',
                 backgroundSize: 'cover'
               }}
             />
-            
+
             <div className="-mt-12">
               <h3 className="mb-4 text-5xl font-semibold text-gray-800">
                 Look like you&apos;re lost
               </h3>
-              
+
               <p className="mb-6 text-lg text-gray-600">
                 The package you are looking for is not available!
               </p>
-              
-              <Button 
+
+              <Button
                 onClick={() => router.push('/packages')}
                 className="bg-[#39ac31] px-6 py-3 text-white hover:bg-[#2d8c26]"
               >
@@ -2173,7 +2173,7 @@ export default function PackageDetails() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-32">
       {/* Hero Section with Package Image */}
       <div className="relative h-[60vh] overflow-hidden">
         <img
@@ -2609,7 +2609,7 @@ export default function PackageDetails() {
 
           {/* Right Column - Booking Summary */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24 space-y-6">
+            <div className="sticky top-24 space-y-6 max-h-[calc(100vh-140px)] overflow-y-auto pb-10 scrollbar-hide">
               <Card>
                 <CardContent className="p-6">
                   <h3 className="mb-4">Package Summary</h3>

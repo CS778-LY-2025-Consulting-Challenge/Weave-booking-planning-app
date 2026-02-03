@@ -751,7 +751,7 @@ function GuideSearchResults() {
             <GuideBookingDialog
                 open={bookingDialogOpen}
                 onOpenChange={setBookingDialogOpen}
-                guide={bookingGuide}
+                guide={bookingGuide as any}
                 onBookingConfirmed={handleBookingConfirmed}
             />
 
@@ -761,7 +761,7 @@ function GuideSearchResults() {
                     setVideoCallOpen(false);
                     setCurrentBooking(null);
                 }}
-                roomID={currentBooking?.guide.id.toString()}
+                roomID={currentBooking && currentBooking.guide && currentBooking.guide.id ? currentBooking.guide.id.toString() : undefined}
             />
 
             {/* Full Screen Video Overlay when playing */}
