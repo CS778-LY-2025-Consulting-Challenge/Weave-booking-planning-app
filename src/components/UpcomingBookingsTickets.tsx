@@ -49,7 +49,7 @@ export default function UpcomingBookingsTickets({ userId }: UpcomingBookingsTick
     const [bookings, setBookings] = useState<BookingData[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const handleCancel = async (bookingId: string | undefined, type: 'flight' | 'hotel') => {
+    const handleCancel = async (bookingId: string | undefined, type: 'flight' | 'hotel' | 'package') => {
         if (!bookingId) return;
 
         try {
@@ -157,6 +157,17 @@ export default function UpcomingBookingsTickets({ userId }: UpcomingBookingsTick
     const upcomingHotels = bookings.filter(b => {
         if (b.type !== 'hotel') return false;
         const dateStr = b.details?.checkOutDate || b.details?.checkInDate;
+        if (!dateStr) return false;
+        const endDate = new Date(dateStr);
+        endDate.setHours(0, 0, 0, 0);
+        return endDate >= today;
+    });
+
+    // Filter ALL upcoming packages
+    const upcomingPackages = bookings.filter(b => {
+        if (b.type !== 'package') return false;
+        // Packages usually have startDate/endDate
+        const dateStr = b.details?.endDate || b.details?.startDate;
         if (!dateStr) return false;
         const endDate = new Date(dateStr);
         endDate.setHours(0, 0, 0, 0);
@@ -479,6 +490,10 @@ export default function UpcomingBookingsTickets({ userId }: UpcomingBookingsTick
                         </div>
                     ))
                 ) : (
+                    <div className="hidden"></div>
+                )}
+
+                {upcomingHotels.length === 0 && (
                     <div className="h-full rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-6 flex flex-col items-center justify-center text-center transition-all hover:bg-gray-50">
                         <div className="p-3 bg-white rounded-full shadow-sm mb-3">
                             <Hotel className="h-5 w-5 text-gray-400" />

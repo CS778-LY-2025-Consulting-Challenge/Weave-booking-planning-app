@@ -17,12 +17,83 @@ import {
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
+import { getAllGuides } from '@/lib/guides';
+import { FeaturedGuidesCarousel } from '@/components/FeaturedGuidesCarousel';
+import { GuideBookingDialog } from '@/components/GuideBookingDialog';
+import { VideoCallModal } from '@/components/VideoCallModal';
+
+// Local Guide Interface (matching the one in guides/page.tsx for consistency)
+interface Guide {
+  id: string;
+  name: string;
+  country: string;
+  rating: number;
+  reviews: number;
+  languages: string[];
+  specialties: string[];
+  hourlyRate: number;
+  image: string;
+  video: string;
+  verified: boolean;
+  responseTime: string;
+  featured?: boolean;
+  tagline?: string;
+}
+
 export default function Home() {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [featuredDestScroll, setFeaturedDestScroll] = useState(0);
   const [satisfiedTravelers, setSatisfiedTravelers] = useState(0);
   const counterRef = useRef<HTMLDivElement>(null);
+
+  // Guide State
+  const [guides, setGuides] = useState<Guide[]>([]);
+  const [bookingGuide, setBookingGuide] = useState<Guide | null>(null);
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+  const [videoCallOpen, setVideoCallOpen] = useState(false);
+  const [currentBooking, setCurrentBooking] = useState<any>(null);
+
+  useEffect(() => {
+    // Fetch guides for the trending section
+    const loadGuides = async () => {
+      try {
+        const data = await getAllGuides();
+        const guidesArr: Guide[] = Object.entries(data).map(([id, guide]: [string, any]) => ({
+          id: id,
+          name: guide.name || guide.fullName || 'Unknown',
+          country: guide.country || 'Unknown',
+          rating: guide.rating ?? 5,
+          reviews: guide.reviews ?? 0,
+          languages: guide.languages || [],
+          specialties: Array.isArray(guide.specialties) ? guide.specialties : (guide.specialties ? guide.specialties.split(',').map((s: string) => s.trim()) : []),
+          hourlyRate: guide.hourlyRate ?? 50,
+          image: guide.image || '/images/default-guide.jpg',
+          video: guide.video || '',
+          verified: guide.verified ?? true,
+          responseTime: guide.responseTime || 'within a day',
+          featured: guide.featured ?? false,
+          tagline: guide.tagline || '',
+        }));
+        // Filter only featured or take first 5
+        setGuides(guidesArr.filter(g => g.featured).slice(0, 10));
+      } catch (error) {
+        console.error("Failed to load guides", error);
+      }
+    };
+    loadGuides();
+  }, []);
+
+  const handleBookAppointment = (guide: any) => {
+    setBookingGuide(guide);
+    setBookingDialogOpen(true);
+  };
+
+  const handleBookingConfirmed = (booking: any) => {
+    setCurrentBooking(booking);
+    // setBookingDialogOpen(false); // Kept open to show success
+    // setVideoCallOpen(true); // Don't auto-open video call
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -576,6 +647,28 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Trending Local Guides Section */}
+      <section className="bg-gray-50 py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <p className="text-sm font-bold tracking-[0.2em] uppercase text-blue-600">
+              CONNECT WITH EXPERTS
+            </p>
+            <h2 className="font-bold text-4xl text-gray-900 md:text-5xl" style={{ fontFamily: 'var(--font-charm)' }}>
+              Trending Local Guides
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-xl text-gray-600">
+              Watch their stories, book a call, and plan your perfect trip with a local's perspective.
+            </p>
+          </div>
+
+          <FeaturedGuidesCarousel
+            guides={guides}
+            onBookAppointment={handleBookAppointment}
+          />
+        </div>
+      </section>
+
       {/* Tour Packages Carousel */}
       <section className="bg-white py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -803,6 +896,18 @@ export default function Home() {
           }
         `}</style>
       </section>
+      <GuideBookingDialog
+        open={bookingDialogOpen}
+        onOpenChange={setBookingDialogOpen}
+        guide={bookingGuide}
+        onBookingConfirmed={handleBookingConfirmed}
+      />
+
+      <VideoCallModal
+        open={videoCallOpen}
+        onClose={() => setVideoCallOpen(false)}
+        roomID={currentBooking?.guide?.id ? `booking-${currentBooking.guide.id}` : undefined}
+      />
     </div>
   );
 }

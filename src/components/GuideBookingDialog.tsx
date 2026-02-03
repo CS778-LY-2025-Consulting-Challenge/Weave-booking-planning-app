@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -68,6 +69,7 @@ export function GuideBookingDialog({
   guide,
   onBookingConfirmed,
 }: GuideBookingDialogProps) {
+  const { user } = useUser();
   const [step, setStep] = useState<'select-time' | 'form' | 'confirmed'>('select-time');
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('');
@@ -76,11 +78,48 @@ export function GuideBookingDialog({
     email: '',
     notes: '',
   });
+
+  // Auto-fill email if user is logged in
+  useEffect(() => {
+    if (user && user.primaryEmailAddress) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.primaryEmailAddress!.emailAddress,
+        fullName: prev.fullName || user.fullName || ''
+      }));
+    }
+  }, [user]);
   const [errors, setErrors] = useState({
     fullName: false,
     email: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+
+  // Fetch availability when date changes
+  useEffect(() => {
+    if (!selectedDate || !guide) return;
+
+    const fetchAvailability = async () => {
+      setLoadingAvailability(true);
+      try {
+        const dateStr = selectedDate.toISOString();
+        const res = await fetch(`/api/guides/availability?guideId=${guide.id}&date=${dateStr}`);
+        if (res.ok) {
+          const data = await res.json();
+          setBookedSlots(data.bookedSlots || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch availability", error);
+      } finally {
+        setLoadingAvailability(false);
+      }
+    };
+
+    fetchAvailability();
+  }, [selectedDate, guide]);
+
 
   const resetState = () => {
     setStep('select-time');
@@ -106,6 +145,7 @@ export function GuideBookingDialog({
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
     setSelectedTimeSlot(''); // Reset time slot when date changes
+    setBookedSlots([]); // Clear previous slots while loading
   };
 
   const handleTimeSlotSelect = (slot: string) => {
@@ -131,24 +171,61 @@ export function GuideBookingDialog({
     if (!validateForm() || !selectedDate || !guide) return;
 
     setIsSubmitting(true);
+    setErrors(prev => ({ ...prev, apiError: undefined })); // Reset api errors
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    setIsSubmitting(false);
-    setStep('confirmed');
-
-    // Notify parent with booking data
-    setTimeout(() => {
-      onBookingConfirmed({
-        date: selectedDate,
-        timeSlot: selectedTimeSlot,
-        fullName: formData.fullName,
-        email: formData.email,
-        notes: formData.notes,
-        guide,
+    try {
+      const response = await fetch('/api/guides/book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guide: {
+            id: guide.id,
+            name: guide.name,
+            email: '', // Backend handles this if missing
+          },
+          date: selectedDate,
+          timeSlot: selectedTimeSlot,
+          fullName: formData.fullName,
+          email: formData.email,
+          notes: formData.notes,
+        }),
       });
-    }, 2000);
+
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        console.error("API Error (Non-JSON):", text);
+        throw new Error(`Server returned non-JSON response: ${response.status} ${response.statusText}`);
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Booking failed');
+      }
+
+      // Success
+      setStep('confirmed');
+      setTimeout(() => {
+        onBookingConfirmed({
+          date: selectedDate,
+          timeSlot: selectedTimeSlot,
+          fullName: formData.fullName,
+          email: formData.email,
+          notes: formData.notes,
+          guide,
+          videoLink: data.videoLink
+        } as any);
+      }, 2000);
+
+    } catch (error: any) {
+      console.error('Booking failed', error);
+      // Ideally show error in UI
+      alert('Booking failed: ' + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!guide) return null;
@@ -221,18 +298,26 @@ export function GuideBookingDialog({
                 </div>
 
                 <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {TIME_SLOTS.map((slot) => (
-                    <button
-                      key={slot}
-                      onClick={() => handleTimeSlotSelect(slot)}
-                      className={`rounded-lg border-2 px-4 py-3 text-sm font-medium transition-all ${selectedTimeSlot === slot
-                          ? 'border-blue-600 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
-                        }`}
-                    >
-                      {slot}
-                    </button>
-                  ))}
+                  {TIME_SLOTS.map((slot) => {
+                    const isBooked = bookedSlots.includes(slot);
+                    return (
+                      <button
+                        key={slot}
+                        onClick={() => !isBooked && handleTimeSlotSelect(slot)}
+                        disabled={isBooked || loadingAvailability} // Explicitly disable if booked
+                        className={`rounded-lg border-2 px-4 py-3 text-sm font-medium transition-all 
+                        ${isBooked
+                            ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed decoration-slice'
+                            : selectedTimeSlot === slot
+                              ? 'border-blue-600 bg-blue-50 text-blue-700'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
+                          }`}
+                      >
+                        {slot}
+                        {isBooked && <span className="block text-[10px] text-red-400 font-normal">Booked</span>}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <Button
@@ -308,6 +393,7 @@ export function GuideBookingDialog({
                     setFormData({ ...formData, email: e.target.value })
                   }
                   className={errors.email ? 'border-red-500' : ''}
+                  disabled={!!user} // Disable if logged in
                 />
                 {errors.email && (
                   <p className="mt-1 text-xs text-red-500">
@@ -379,11 +465,32 @@ export function GuideBookingDialog({
               <div className="space-y-3 text-sm text-green-800">
                 <div className="flex items-start gap-3">
                   <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-200">
-                    <Video className="h-4 w-4" />
+                    <Clock className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="font-medium">Video session with {guide.name}</div>
-                    <div className="text-green-700">Local expert from {guide.country}</div>
+                    <div className="font-medium text-green-900">{selectedDate.toLocaleDateString()}</div>
+                    <div className="text-green-700">{selectedTimeSlot}</div>
+                  </div>
+                </div>
+
+                {/* Video Link Display */}
+                <div className="flex items-start gap-3 mt-4 pt-4 border-t border-green-200">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
+                    <Video className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <div className="font-medium text-blue-900 mb-1">Join via this link:</div>
+                    <a
+                      href={(guide as any).videoLink || '#'}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block truncate text-xs text-blue-600 underline hover:text-blue-800"
+                    >
+                      {(guide as any).videoLink || 'Link generating...'}
+                    </a>
+                    <p className="text-[10px] text-gray-500 mt-1">
+                      (Also sent to {formData.email})
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -398,12 +505,13 @@ export function GuideBookingDialog({
               </div>
             </div>
 
+            {/* Removed auto-start message since we disabled auto-start */}
             <div className="rounded-lg border bg-blue-50 p-4">
-              <p className="text-sm text-blue-900">
-                <strong>Starting your video session...</strong>
+              <p className="text-sm text-blue-900 font-medium">
+                Please save the link above.
               </p>
               <p className="mt-1 text-xs text-blue-700">
-                The video call will open in a moment
+                You can join the call at the scheduled time using the link.
               </p>
             </div>
 
