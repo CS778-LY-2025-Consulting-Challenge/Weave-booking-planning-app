@@ -94,6 +94,32 @@ export function GuideBookingDialog({
     email: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+
+  // Fetch availability when date changes
+  useEffect(() => {
+    if (!selectedDate || !guide) return;
+
+    const fetchAvailability = async () => {
+      setLoadingAvailability(true);
+      try {
+        const dateStr = selectedDate.toISOString();
+        const res = await fetch(`/api/guides/availability?guideId=${guide.id}&date=${dateStr}`);
+        if (res.ok) {
+          const data = await res.json();
+          setBookedSlots(data.bookedSlots || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch availability", error);
+      } finally {
+        setLoadingAvailability(false);
+      }
+    };
+
+    fetchAvailability();
+  }, [selectedDate, guide]);
+
 
   const resetState = () => {
     setStep('select-time');
@@ -119,6 +145,7 @@ export function GuideBookingDialog({
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
     setSelectedTimeSlot(''); // Reset time slot when date changes
+    setBookedSlots([]); // Clear previous slots while loading
   };
 
   const handleTimeSlotSelect = (slot: string) => {
@@ -271,18 +298,26 @@ export function GuideBookingDialog({
                 </div>
 
                 <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {TIME_SLOTS.map((slot) => (
-                    <button
-                      key={slot}
-                      onClick={() => handleTimeSlotSelect(slot)}
-                      className={`rounded-lg border-2 px-4 py-3 text-sm font-medium transition-all ${selectedTimeSlot === slot
-                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
-                        }`}
-                    >
-                      {slot}
-                    </button>
-                  ))}
+                  {TIME_SLOTS.map((slot) => {
+                    const isBooked = bookedSlots.includes(slot);
+                    return (
+                      <button
+                        key={slot}
+                        onClick={() => !isBooked && handleTimeSlotSelect(slot)}
+                        disabled={isBooked || loadingAvailability} // Explicitly disable if booked
+                        className={`rounded-lg border-2 px-4 py-3 text-sm font-medium transition-all 
+                        ${isBooked
+                            ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed decoration-slice'
+                            : selectedTimeSlot === slot
+                              ? 'border-blue-600 bg-blue-50 text-blue-700'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
+                          }`}
+                      >
+                        {slot}
+                        {isBooked && <span className="block text-[10px] text-red-400 font-normal">Booked</span>}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <Button
