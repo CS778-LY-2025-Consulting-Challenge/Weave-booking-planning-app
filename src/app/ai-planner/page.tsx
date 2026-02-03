@@ -393,9 +393,19 @@ const GENERATION_STEPS_DATA: ProgressStep[] = [
   { id: 5, label: 'Generating daily itinerary', status: 'pending', estimatedDuration: 6000 },
 ];
 
-export default function AIPlanner() {
+// ... imports
+
+interface AIPlannerProps {
+  tripId?: string;
+}
+
+export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // Prioritize prop tripId, fallback to searchParams
+  const tripIdParam = propTripId || searchParams.get('tripId');
+
   const { user, isLoaded } = useUser();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -1029,7 +1039,7 @@ export default function AIPlanner() {
 
   // Load saved trip from URL parameter (tripId)
   useEffect(() => {
-    const tripId = searchParams?.get('tripId');
+    const tripId = tripIdParam;
     if (!tripId || !isLoaded || !user) return;
 
     const loadSavedTrip = async () => {
@@ -1110,14 +1120,13 @@ export default function AIPlanner() {
         toast.error('Failed to load trip');
       }
     };
-
     loadSavedTrip();
-  }, [searchParams, isLoaded, user]);
+  }, [tripIdParam, isLoaded, user]);
 
   // Handle initial message from URL parameter
   useEffect(() => {
     const initialMessage = searchParams?.get('initialMessage');
-    const tripId = searchParams?.get('tripId');
+    const tripId = tripIdParam;
 
     // Don't auto-send message if loading a saved trip
     if (tripId) return;
@@ -1159,7 +1168,8 @@ export default function AIPlanner() {
 
       return () => clearTimeout(timer);
     }
-  }, [searchParams, messages.length]);
+  }, [searchParams, messages.length, tripIdParam]);
+
 
   const handleSend = async () => {
     if (!input.trim()) return;
