@@ -96,12 +96,14 @@ export default function ThingsToKnowCard({ destination, userOrigin }: ThingsToKn
   if (!destination) return null;
 
   return (
-    <Card className="border border-slate-200 bg-white/90 shadow pt-3 pb-3">
-      <CardHeader className="pb-0.5 pt-0">
+    <Card className="border-0 bg-white shadow-2xl shadow-slate-200/50 rounded-3xl pt-3 pb-3 overflow-hidden">
+      <CardHeader className="pb-0.5 pt-0 px-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-amber-600" />
-            <CardTitle className="text-base">Things to Know</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg shadow-amber-500/20">
+              <Lightbulb className="h-4 w-4 text-white" />
+            </div>
+            <CardTitle className="text-base font-bold">Things to Know</CardTitle>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -109,7 +111,7 @@ export default function ThingsToKnowCard({ destination, userOrigin }: ThingsToKn
               size="sm"
               onClick={handleRefresh}
               disabled={isLoading}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8 p-0 rounded-xl hover:bg-slate-100"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
@@ -117,7 +119,7 @@ export default function ThingsToKnowCard({ destination, userOrigin }: ThingsToKn
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8 p-0 rounded-xl hover:bg-slate-100"
             >
               {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             </Button>
@@ -126,55 +128,58 @@ export default function ThingsToKnowCard({ destination, userOrigin }: ThingsToKn
       </CardHeader>
 
       {isExpanded && (
-        <CardContent className="space-y-2 pt-0.5 pb-1">
+        <CardContent className="space-y-3 pt-2 pb-1 px-8">
           {isLoading && (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex items-center justify-center py-10">
               <div className="text-center space-y-2">
-                <RefreshCw className="h-5 w-5 animate-spin mx-auto text-amber-500" />
-                <p className="text-xs text-slate-500">Gathering essential travel information...</p>
+                <RefreshCw className="h-6 w-6 animate-spin mx-auto text-amber-500" />
+                <p className="text-sm text-slate-500">Gathering essential travel information...</p>
               </div>
             </div>
           )}
 
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-              <p className="text-xs text-red-600">{error}</p>
+            <div className="rounded-2xl bg-red-50 border border-red-200 p-4">
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           {!isLoading && !error && tipsData && (
             <>
               {/* Destination Title */}
-              <div className="mb-4 pb-3 border-b border-slate-200">
-                <h3 className="text-base font-bold text-slate-900 uppercase tracking-wide">
-                  {destination.toUpperCase()}: Cultural Insights & Practical Realities
+              <div className="mb-5 pb-4 border-b border-slate-200">
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+                  {destination}: Essential Travel Insights
                 </h3>
               </div>
 
               {/* Categories - Clean List Format */}
               <div className="space-y-5">
                 {tipsData.categories.map((category, idx) => (
-                  <div key={idx} className="space-y-2">
+                  <div key={idx} className="space-y-3">
                     {/* Category Header with Emoji */}
-                    <div className="flex items-start gap-2">
-                      <span className="text-xl leading-none mt-0.5">{category.emoji}</span>
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl leading-none mt-0.5">{category.emoji}</span>
                       <div className="flex-1">
-                        <h4 className={`text-sm ${getImportanceStyle(category.importance)}`}>
-                          {category.category} ({category.importance})
+                        <h4 className={`text-sm font-bold ${getImportanceStyle(category.importance)}`}>
+                          {category.category}
                           {category.subtitle && (
-                            <span className="text-slate-600 font-normal ml-1">
+                            <span className="text-slate-600 font-normal ml-1.5">
                               {category.subtitle}
                             </span>
                           )}
                         </h4>
+                        <span className="inline-block mt-1 text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">
+                          {category.importance}
+                        </span>
                       </div>
                     </div>
 
                     {/* Bullet Points */}
-                    <ul className="space-y-2 pl-8">
+                    <ul className="space-y-2.5 pl-10">
                       {category.tips.map((tip, tipIdx) => (
-                        <li key={tipIdx} className="flex items-start gap-2 text-xs text-slate-700 leading-relaxed">
-                          <span className="text-slate-400 mt-1">•</span>
+                        <li key={tipIdx} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
+                          <span className="flex-shrink-0 mt-2 h-1.5 w-1.5 rounded-full bg-orange-500"></span>
                           <span dangerouslySetInnerHTML={{ __html: tip }} />
                         </li>
                       ))}
@@ -184,8 +189,8 @@ export default function ThingsToKnowCard({ destination, userOrigin }: ThingsToKn
               </div>
 
               {/* Footer Note */}
-              <div className="mt-6 pt-3 border-t border-slate-200">
-                <p className="text-[10px] text-slate-500 text-center">
+              <div className="mt-6 pt-4 border-t border-slate-200">
+                <p className="text-xs text-slate-500 text-center">
                   AI-generated insights • Last updated {new Date(tipsData.lastUpdated).toLocaleDateString()}
                 </p>
               </div>
