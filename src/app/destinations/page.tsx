@@ -107,13 +107,19 @@ export default function TrendingDestinations() {
       <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
-            <p className="text-sm tracking-[0.3em] text-gray-500 uppercase">
+            <p className="text-sm font-bold tracking-[0.2em] uppercase text-[#a20000]">
               Curated for 2026
             </p>
-            <h2 className="mt-3 text-4xl font-semibold text-gray-900 md:text-5xl">
+            <h2
+              className="font-bold text-4xl text-[#a20000] md:text-5xl"
+              style={{ fontFamily: 'var(--font-charm)' }}
+            >
               Our Trending Destinations
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-gray-600">
+            <p
+              className="mt-4 font-bold text-2xl text-[#a20000]"
+              style={{ fontFamily: '"Times New Roman", Times, serif' }}
+            >
               Handpicked journeys with immersive culture, standout scenery, and signature experiences.
             </p>
           </div>
