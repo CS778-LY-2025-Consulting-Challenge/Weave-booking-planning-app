@@ -506,7 +506,7 @@ export function GuideBookingDialog({
             </div>
 
             {/* Removed auto-start message since we disabled auto-start */}
-            <div className="rounded-lg border bg-blue-50 p-4">
+            <div className="rounded-lg border bg-blue-50 p-4 mb-4">
               <p className="text-sm text-blue-900 font-medium">
                 Please save the link above.
               </p>
@@ -515,14 +515,27 @@ export function GuideBookingDialog({
               </p>
             </div>
 
-            <Button
-              onClick={handleClose}
-              variant="outline"
-              className="mt-6 w-full"
-              size="lg"
-            >
-              Close
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => {
+                  const roomID = guide?.id || `guide-${Date.now()}`;
+                  window.open(`/video-call.html?roomID=${roomID}`, '_blank', 'noopener,noreferrer');
+                }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                size="lg"
+              >
+                <Video className="mr-2 h-4 w-4" />
+                Join Video Call Now
+              </Button>
+              <Button
+                onClick={handleClose}
+                variant="outline"
+                className="flex-1"
+                size="lg"
+              >
+                Close
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
