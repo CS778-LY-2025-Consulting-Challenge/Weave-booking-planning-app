@@ -21,6 +21,12 @@ interface Journey {
 
   packageId?: string; // Added field for package navigation
   bookingType?: string;
+  packageName?: string;
+  packageDestination?: string;
+  packageDuration?: string;
+  packagePrice?: number;
+  packageIncludes?: string[];
+  packageType?: string;
 }
 
 interface SavedTrip {
@@ -33,8 +39,11 @@ const destinationImages: { [key: string]: string } = {
   'Tokyo, Japan': '/images/tokyo-dashboard.jpg',
   'Bali, Indonesia': '/images/bali.jpg',
   'European Grand Tour': '/images/europe-dasboard.jpg',
-  'New York': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=500&h=300&fit=crop',
-  'Sydney': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=300&fit=crop',
+  'Athens, Greece': '/images/greek.jpg',
+  'Dubai, UAE': '/images/dubai.jpg',
+  'Queenstown, New Zealand': '/images/new zealand.jpg',
+  'New York': '/images/new york.jpg',
+  'Sydney': '/images/sydeny.jpg',
 };
 
 const activitiesByDestination: { [key: string]: string[] } = {
@@ -65,7 +74,8 @@ export default function YourJourneys({
   handleAddTrip,
   handleEditTrip,
   handleUpdateTrip,
-  handleDeleteTrip
+  handleDeleteTrip,
+  handleDeleteJourney
 }: {
   journeys: Journey[];
   savedTripsCount: number;
@@ -81,6 +91,7 @@ export default function YourJourneys({
   handleEditTrip: (id: string, trip: SavedTrip) => void;
   handleUpdateTrip: () => void;
   handleDeleteTrip: (id: string) => void;
+  handleDeleteJourney: (id: number | string) => void;
 }) {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [showAll, setShowAll] = useState(false);
@@ -157,8 +168,8 @@ export default function YourJourneys({
     }
   };
 
-  const getImageUrl = (destination: string) => {
-    return destinationImages[destination] || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=500&h=300&fit=crop';
+  const getImageUrl = (journey: Journey) => {
+    return journey.image || destinationImages[journey.destination] || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=500&h=300&fit=crop';
   };
 
   const getActivities = (destination: string) => {
@@ -189,8 +200,18 @@ export default function YourJourneys({
     <div className="mb-8 space-y-6">
       {/* Section Header */}
       <div className="space-y-2">
-        <h2 className="text-3xl font-bold text-gray-900">Your Journeys</h2>
-        <p className="text-gray-600">Track your past and upcoming adventures</p>
+        <h2
+          className="text-3xl font-bold text-gray-900"
+          style={{ fontFamily: '"Times New Roman", Times, serif' }}
+        >
+          Your Journeys
+        </h2>
+        <p
+          className="text-gray-600"
+          style={{ fontFamily: '"Times New Roman", Times, serif' }}
+        >
+          Track your past and upcoming adventures
+        </p>
       </div>
 
       {/* Filter Tabs */}
@@ -422,7 +443,9 @@ export default function YourJourneys({
                 const budget = getBudgetInfo(journey.id);
                 const activities = getActivities(journey.destination);
                 const country = getCountryFromDestination(journey.destination);
-                const imageUrl = getImageUrl(journey.destination);
+                const imageUrl = getImageUrl(journey);
+                const displayTitle = journey.packageName || journey.destination;
+                const displayDestination = journey.packageDestination || journey.destination;
                 const isOverBudget = budget.spent > budget.budget;
 
                 // Check if this is a Current Package to use the "Rich Ticket" layout
@@ -534,6 +557,11 @@ export default function YourJourneys({
                             {journey.bookingType.toUpperCase()}
                           </Badge>
                         )}
+                        {journey.packageType && (
+                          <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-[10px] px-2 py-0.5 border shadow-sm">
+                            {journey.packageType}
+                          </Badge>
+                        )}
                         <Badge
                           className={`pl-2 pr-2 py-0.5 text-xs font-semibold rounded-full border shadow-sm ${getStatusBadgeColor(journey.status)}`}
                           variant="outline"
@@ -549,11 +577,11 @@ export default function YourJourneys({
                       {/* Destination */}
                       <div className="mb-4">
                         <h3 className="text-lg font-bold text-gray-900 line-clamp-2">
-                          {journey.destination}
+                          {displayTitle}
                         </h3>
                         <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                           <MapPin className="h-3 w-3" />
-                          {country}
+                          {displayDestination}
                         </p>
                       </div>
                       {/* Dates & Status */}
@@ -577,6 +605,40 @@ export default function YourJourneys({
                         </div>
                       </div>
 
+                      {journey.status === 'past' && journey.packageIncludes && journey.packageIncludes.length > 0 && (
+                        <div className="mt-4 space-y-3">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Calendar className="size-4" />
+                            <span className="text-sm">
+                              {journey.packageDuration || `${Math.ceil((new Date(journey.endDate).getTime() - new Date(journey.startDate).getTime()) / (1000 * 60 * 60 * 24))} Days`}
+                            </span>
+                          </div>
+
+                          <div className="space-y-2">
+                            <p className="text-sm text-gray-700">Package Includes:</p>
+                            {journey.packageIncludes.slice(0, 4).map((item, index) => (
+                              <div key={`${journey.id}-include-${index}`} className="flex items-start gap-2">
+                                <Check className="mt-0.5 size-4 shrink-0 text-green-600" />
+                                <span className="text-sm text-gray-600">{item}</span>
+                              </div>
+                            ))}
+                            {journey.packageIncludes.length > 4 && (
+                              <p className="text-sm text-gray-500 italic">
+                                + {journey.packageIncludes.length - 4} more
+                              </p>
+                            )}
+                          </div>
+
+                          {typeof journey.packagePrice === 'number' && (
+                            <div className="border-t pt-3">
+                              <p className="text-sm text-gray-500">Starting from</p>
+                              <p className="text-2xl text-blue-600">${journey.packagePrice}</p>
+                              <p className="text-xs text-gray-500">per person</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Action Buttons */}
                       <div className="mt-5 flex gap-3">
                         <button
@@ -593,6 +655,15 @@ export default function YourJourneys({
                         >
                           View Details
                         </button>
+                        {journey.status === 'past' && (
+                          <button
+                            onClick={() => handleDeleteJourney(journey.id)}
+                            className="rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
+                            title="Delete journey"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
