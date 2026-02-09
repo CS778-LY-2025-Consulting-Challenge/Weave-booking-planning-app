@@ -4,7 +4,7 @@ import { getDatabase } from 'firebase-admin/database';
 
 const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
     ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-    : require('../../service-account.json');
+    : require('@/lib/serviceAccountKey.json');
 
 if (!getApps().length) {
     console.log('[FirebaseAdmin] Initializing with project:', serviceAccount.project_id);

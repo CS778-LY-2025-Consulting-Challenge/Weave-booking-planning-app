@@ -21,6 +21,7 @@ interface Journey {
 
   packageId?: string; // Added field for package navigation
   bookingType?: string;
+  image?: string;
   packageName?: string;
   packageDestination?: string;
   packageDuration?: string;
