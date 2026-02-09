@@ -25,7 +25,7 @@ export async function POST(request: Request) {
                 return; // Abort if already exists
             }
             // Create booking data if it doesn't exist
-            const videoLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/guides?roomID=booking-${lockKey}`;
+            const videoLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/video-call.html?roomID=booking-${lockKey}`;
             return {
                 guideId: guide.id,
                 guideName: guide.name,

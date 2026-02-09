@@ -563,7 +563,8 @@ function GuideSearchResults() {
         setCurrentBooking(booking);
         setBookingDialogOpen(false);
         setTimeout(() => {
-            setVideoCallOpen(true);
+            const roomID = booking.guide?.id || `guide-${Date.now()}`;
+            window.open(`/video-call.html?roomID=${roomID}`, '_blank', 'noopener,noreferrer');
         }, 500);
     };
 
