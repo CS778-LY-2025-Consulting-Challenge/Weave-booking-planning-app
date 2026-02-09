@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Heart } from "lucide-react";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 
-interface DestinationCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface DestinationCardProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   imageUrl: string;
   location: string;
   flag: string;
@@ -15,7 +15,7 @@ interface DestinationCardProps extends React.HTMLAttributes<HTMLDivElement> {
   nights?: number;
 }
 
-const DestinationCard = React.forwardRef<HTMLDivElement, DestinationCardProps>(
+const DestinationCard = React.forwardRef<HTMLAnchorElement, DestinationCardProps>(
   ({
     className,
     imageUrl,
@@ -33,7 +33,7 @@ const DestinationCard = React.forwardRef<HTMLDivElement, DestinationCardProps>(
 
     return (
       <a
-        ref={ref as any}
+        ref={ref}
         href={href}
         className={cn("group block w-full h-full", className)}
         {...props}

@@ -48,6 +48,7 @@ interface Journey {
   cities?: string[];
   bookingType?: string;
   image?: string;
+  packageId?: string;
   packageName?: string;
   packageDestination?: string;
   packageDuration?: string;
