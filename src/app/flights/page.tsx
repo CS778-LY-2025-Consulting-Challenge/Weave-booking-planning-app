@@ -1353,8 +1353,18 @@ export default function FlightBooking() {
         {/* Featured Destinations Section */}
         <div className="mt-12">
           <div className="mb-8 text-center">
-            <h3 className="text-3xl font-bold text-gray-900">Featured Destinations</h3>
-            <p className="mt-2 text-gray-600">Explore our premium flight packages to incredible destinations</p>
+            <h3
+              className="text-3xl font-bold text-gray-900"
+              style={{ fontFamily: '"Times New Roman", Times, serif' }}
+            >
+              Featured Destinations
+            </h3>
+            <p
+              className="mt-2 text-gray-600"
+              style={{ fontFamily: '"Times New Roman", Times, serif' }}
+            >
+              Explore our premium flight packages to incredible destinations
+            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
