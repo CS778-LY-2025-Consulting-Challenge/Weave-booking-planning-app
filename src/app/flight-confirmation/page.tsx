@@ -56,57 +56,114 @@ export default function FlightConfirmationPage() {
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
-        // Fetch booking from localStorage
-        const storedBookings = localStorage.getItem('flightBookings');
-        if (storedBookings) {
-          const bookings = JSON.parse(storedBookings);
-          const foundBooking = bookings.find((b: any) => b.stripeSessionId === sessionId);
+        if (!sessionId) {
+          setError('No session ID provided');
+          setIsLoading(false);
+          return;
+        }
 
-          if (foundBooking) {
-            // Update status to success
-            foundBooking.status = status === 'success' ? 'success' : 'failed';
+        // Fetch session details from API
+        const res = await fetch(`/api/payment/get-session?session_id=${sessionId}`);
+        const data = await res.json();
 
-            // Update in localStorage
-            const updatedBookings = bookings.map((b: any) =>
-              b.stripeSessionId === sessionId ? foundBooking : b
-            );
-            localStorage.setItem('flightBookings', JSON.stringify(updatedBookings));
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to retrieve session');
+        }
 
-            setBooking(foundBooking);
+        const session = data.session;
+        const meta = data.metadata || {};
+        const isPaid = data.paymentStatus === 'paid' || status === 'success';
 
-            if (status === 'success') {
-              // Save to Firebase if user is logged in
-              if (user?.id) {
-                try {
-                  await saveBooking(user.id, {
-                    type: 'flight',
-                    status: 'confirmed',
-                    userId: user.id,
-                    stripeSessionId: sessionId || foundBooking.bookingReference,
-                    details: {
-                      ...foundBooking.flight,
-                      passengers: foundBooking.passengers,
-                      bookingReference: foundBooking.bookingReference
-                    }
-                  });
-                  console.log('Booking synced to Firebase');
-                } catch (firebaseError) {
-                  console.error('Failed to sync booking to Firebase:', firebaseError);
-                }
+        if (meta.type !== 'flight') {
+          // Fallback to local storage if it's not a flight session (or mixed up)
+          // But generally we expect flight type here.
+          console.warn('Session is not for a flight', meta.type);
+        }
+
+        const flightDetails: FlightBookingConfirmation = {
+          bookingReference: meta.bookingRef || session.id.slice(-6).toUpperCase(),
+          flight: {
+            id: meta.flightId || 'unknown',
+            airline: meta.airline || 'Unknown Airline',
+            from: meta.from || 'Unknown',
+            to: meta.to || 'Unknown',
+            departure: meta.departureDate || 'TBD',
+            arrival: meta.arrivalTime || 'TBD',
+            duration: meta.duration || 'TBD',
+            stops: 'Non-stop', // Default
+            cabin: 'Economy', // Default
+            price: Number(meta.price || session.amount_total / 100 || 0),
+          },
+          passengers: Array.from({ length: Number(meta.passengers || 1) }).map((_, i) => ({
+            fullName: i === 0 && user?.fullName ? user.fullName : `Passenger ${i + 1}`,
+            email: i === 0 && user?.primaryEmailAddress?.emailAddress ? user.primaryEmailAddress.emailAddress : '',
+          })),
+          totalPrice: Number(meta.price || session.amount_total / 100 || 0),
+          status: isPaid ? 'success' : 'pending',
+          bookingDate: new Date().toISOString(),
+          stripeSessionId: session.id,
+        };
+
+        setBooking(flightDetails);
+
+        // Save to Firebase if user is logged in and payment is successful
+        console.log('🔍 Firebase Save Check:', {
+          isPaid,
+          userId: user?.id,
+          hasUser: !!user,
+          sessionId: session.id
+        });
+
+        if (isPaid && user?.id) {
+          try {
+            console.log('💾 Attempting to save flight booking to Firebase...');
+            const bookingData = {
+              type: 'flight' as const,
+              status: 'confirmed' as const,
+              userId: user.id,
+              stripeSessionId: session.id,
+              details: {
+                ...flightDetails.flight,
+                passengers: flightDetails.passengers,
+                bookingReference: flightDetails.bookingReference,
+                fromCode: meta.fromCode,
+                toCode: meta.toCode,
+                flightNumber: meta.flightNumber,
+                bookingDate: flightDetails.bookingDate,
               }
+            };
+            console.log('📦 Booking data to save:', bookingData);
 
-              toast.success('Flight booked successfully! Check your email for details.');
-            }
-          } else {
-            setError('Booking not found');
+            await saveBooking(user.id, bookingData);
+
+            console.log('✅ SUCCESS: Flight booking synced to Firebase!');
+            toast.success('Booking saved to your profile');
+          } catch (firebaseError) {
+            console.error('❌ FAILED to sync booking to Firebase:', firebaseError);
+            toast.error('Booking confirmed but failed to save to profile');
           }
         } else {
-          setError('No booking information found');
+          console.warn('⚠️ Skipping Firebase save:', isPaid ? 'User not logged in' : 'Payment not completed');
         }
+
       } catch (err) {
         console.error('Error loading booking details:', err);
         setError(err instanceof Error ? err.message : 'Failed to load booking details');
-        toast.error('Failed to load booking confirmation');
+
+        // Fallback: Try LocalStorage if API fails
+        const storedBookings = localStorage.getItem('flightBookings');
+        if (storedBookings) {
+          try {
+            const bookings = JSON.parse(storedBookings);
+            const foundBooking = bookings.find((b: any) => b.stripeSessionId === sessionId);
+            if (foundBooking) {
+              setBooking(foundBooking);
+              setError(null); // Clear error if fallback works
+            }
+          } catch (e) {
+            console.error('Local storage fallback failed', e);
+          }
+        }
       } finally {
         setIsLoading(false);
       }
@@ -115,10 +172,11 @@ export default function FlightConfirmationPage() {
     if (sessionId) {
       fetchBookingDetails();
     } else {
-      setError('No session ID provided');
+      // Try local storage if no session ID but maybe just browsing? 
+      // Actually, without session ID we can't really confirm much, but let's leave the error state.
       setIsLoading(false);
     }
-  }, [sessionId, status, user?.id]);
+  }, [sessionId, status, user?.id, user?.fullName, user?.primaryEmailAddress?.emailAddress]);
 
   if (isLoading) {
     return (

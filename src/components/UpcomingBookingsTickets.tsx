@@ -26,6 +26,24 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from 'sonner';
 
+function inferBookingType(booking: any): 'flight' | 'hotel' | 'package' {
+    if (booking?.type === 'flight' || booking?.details?.flightNumber || booking?.flight || booking?.details?.departureDate || booking?.details?.departure) {
+        return 'flight';
+    }
+    if (booking?.type === 'package' || booking?.details?.pkgName || booking?.details?.packageName) {
+        return 'package';
+    }
+    return 'hotel';
+}
+
+function getFlightDepartureDate(booking: any): string {
+    return booking?.details?.departureDate || booking?.details?.departure || booking?.flight?.departure || booking?.departureDate || booking?.departure || '';
+}
+
+function getHotelEndDate(booking: any): string {
+    return booking?.details?.checkOutDate || booking?.details?.checkInDate || booking?.checkOutDate || booking?.checkInDate || '';
+}
+
 function formatDate(dateStr: string) {
     if (!dateStr) return 'TBD';
     const date = new Date(dateStr);
@@ -36,6 +54,17 @@ function formatDate(dateStr: string) {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false
+    }).format(date);
+}
+
+function formatTicketDate(dateStr: string) {
+    if (!dateStr) return 'TBD';
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return 'TBD';
+    return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric'
     }).format(date);
 }
 
@@ -89,42 +118,52 @@ export default function UpcomingBookingsTickets({ userId }: UpcomingBookingsTick
 
             // Normalize local bookings to match BookingData structure if needed
             // (Assuming local structure is compatible or we map it)
-            const localBookings = [...localFlightBookings, ...localHotelBookings].map((b: any) => ({
-                id: b.bookingReference || b.bookingId || b.stripeSessionId,
-                type: b.flight ? 'flight' : 'hotel',
-                status: b.status || 'pending',
-                userId: userId,
-                stripeSessionId: b.stripeSessionId,
-                createdAt: new Date(b.bookingDate || Date.now()).getTime(),
-                details: b.flight ? {
-                    airline: b.flight.airline,
-                    flightNumber: 'FL' + Math.floor(Math.random() * 1000), // Local fallback
-                    from: b.flight.from,
-                    fromCode: b.flight.fromCode,
-                    to: b.flight.to,
-                    toCode: b.flight.toCode,
-                    departureDate: b.flight.departure,
-                    duration: b.flight.duration,
-                    arrivalTime: b.flight.arrival
-                } : {
-                    bookingImage: b.hotelName ? null : null, // Local might not have same image structure, handled by component fallback
-                    hotelName: b.hotelName,
-                    hotelLocation: b.hotelLocation,
-                    checkInDate: b.checkInDate,
-                    checkOutDate: b.checkOutDate,
-                    bookingName: b.roomName ? `Reservation-${b.roomName}` : 'Hotel Reservation'
-                },
-                // Keep original object for other fields if needed
-                ...b
-            }));
+            const localBookings = [...localFlightBookings, ...localHotelBookings].map((b: any) => {
+                const type = inferBookingType(b);
+                const randomFlightNumber = 'FL' + Math.floor(Math.random() * 1000);
 
-            // Merge and Deduplicate based on stripeSessionId
+                return {
+                    ...b,
+                    id: b.bookingReference || b.bookingId || b.stripeSessionId || b.id,
+                    type,
+                    status: b.status || 'pending',
+                    userId: userId || b.userId,
+                    stripeSessionId: b.stripeSessionId || '',
+                    createdAt: new Date(b.bookingDate || b.createdAt || Date.now()).getTime(),
+                    details: type === 'flight' ? {
+                        ...b.details,
+                        airline: b.details?.airline || b.flight?.airline,
+                        flightNumber: b.details?.flightNumber || b.flight?.flightNumber || randomFlightNumber,
+                        from: b.details?.from || b.flight?.from,
+                        fromCode: b.details?.fromCode || b.flight?.fromCode,
+                        to: b.details?.to || b.flight?.to,
+                        toCode: b.details?.toCode || b.flight?.toCode,
+                        departureDate: getFlightDepartureDate(b),
+                        duration: b.details?.duration || b.flight?.duration,
+                        arrivalTime: b.details?.arrivalTime || b.flight?.arrival
+                    } : {
+                        ...b.details,
+                        bookingImage: b.details?.bookingImage || null,
+                        hotelName: b.details?.hotelName || b.hotelName,
+                        hotelLocation: b.details?.hotelLocation || b.hotelLocation,
+                        checkInDate: b.details?.checkInDate || b.checkInDate,
+                        checkOutDate: b.details?.checkOutDate || b.checkOutDate,
+                        bookingName: b.details?.bookingName || (b.roomName ? `Reservation-${b.roomName}` : 'Hotel Reservation')
+                    },
+                } as BookingData;
+            });
+
+            // Merge and deduplicate to prevent repeated cards between Firebase and local storage
             const allBookings = [...firebaseBookings];
-            const sessionIds = new Set(firebaseBookings.map(b => b.stripeSessionId));
+            const seenKeys = new Set(firebaseBookings.map(b => b.stripeSessionId || b.id).filter(Boolean));
 
             localBookings.forEach((lb: any) => {
-                if (lb.stripeSessionId && !sessionIds.has(lb.stripeSessionId)) {
+                const dedupeKey = lb.stripeSessionId || lb.id;
+                if (!dedupeKey || !seenKeys.has(dedupeKey)) {
                     allBookings.push(lb as BookingData);
+                    if (dedupeKey) {
+                        seenKeys.add(dedupeKey);
+                    }
                 }
             });
 
@@ -147,29 +186,26 @@ export default function UpcomingBookingsTickets({ userId }: UpcomingBookingsTick
 
     // Filter ALL upcoming flights
     const upcomingFlights = bookings.filter(b => {
-        if (b.type !== 'flight' || !b.details?.departureDate) return false;
-        const depDate = new Date(b.details.departureDate);
+        const bookingType = inferBookingType(b);
+        const departureDate = getFlightDepartureDate(b);
+        if (bookingType !== 'flight' || !departureDate) return false;
+
+        const depDate = new Date(departureDate);
+        if (Number.isNaN(depDate.getTime())) return false;
         depDate.setHours(0, 0, 0, 0);
         return depDate >= today;
     });
 
     // Filter ALL upcoming hotels
     const upcomingHotels = bookings.filter(b => {
-        if (b.type !== 'hotel') return false;
-        const dateStr = b.details?.checkOutDate || b.details?.checkInDate;
-        if (!dateStr) return false;
-        const endDate = new Date(dateStr);
-        endDate.setHours(0, 0, 0, 0);
-        return endDate >= today;
-    });
+        const bookingType = inferBookingType(b);
+        if (bookingType !== 'hotel') return false;
 
-    // Filter ALL upcoming packages
-    const upcomingPackages = bookings.filter(b => {
-        if (b.type !== 'package') return false;
-        // Packages usually have startDate/endDate
-        const dateStr = b.details?.endDate || b.details?.startDate;
+        const dateStr = getHotelEndDate(b);
         if (!dateStr) return false;
+
         const endDate = new Date(dateStr);
+        if (Number.isNaN(endDate.getTime())) return false;
         endDate.setHours(0, 0, 0, 0);
         return endDate >= today;
     });
@@ -196,83 +232,76 @@ export default function UpcomingBookingsTickets({ userId }: UpcomingBookingsTick
                         const depTime = flight.details?.departureDate?.includes('T')
                             ? flight.details.departureDate.split('T')[1].substring(0, 5)
                             : flight.details?.departureDate?.split(' ')[1]?.substring(0, 5) || 'TBD';
-                        const arrCode = flight.details?.flightNumber?.substring(0, 2) === 'WV' ? 'WV' : 'FL';
-
                         return (
-                            <div key={flight.id} className="group relative flex flex-col rounded-3xl bg-white shadow-sm transition-all hover:shadow-md border border-gray-100 overflow-hidden">
-                                {/* Header */}
-                                <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-                                            <Plane className="h-5 w-5 text-white" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-white">{flight.details?.airline || 'Weave Airlines'}</p>
-                                            <p className="text-[10px] font-medium text-blue-100 uppercase tracking-wide">Economy</p>
-                                        </div>
+                            <div key={flight.id} className="relative overflow-hidden rounded-[30px] border border-indigo-300/60 bg-gradient-to-br from-indigo-600 via-blue-600 to-violet-700 shadow-[0_18px_45px_rgba(49,46,129,0.35)]">
+                                <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-cyan-300/20 blur-2xl" />
+                                <div className="pointer-events-none absolute bottom-[-30px] right-[-20px] h-32 w-32 rounded-full bg-fuchsia-300/20 blur-2xl" />
+
+                                <div className="relative flex items-center justify-between border-b border-white/25 bg-white/10 px-5 py-3 text-white backdrop-blur-sm">
+                                    <p className="text-xs font-extrabold tracking-[0.3em] uppercase">Boarding Pass</p>
+                                    <div className="flex items-center gap-2.5">
+                                        <Plane className="h-4 w-4" />
+                                        <p className="text-xs font-semibold uppercase tracking-wide">{flight.details?.airline || 'Weave Airlines'}</p>
                                     </div>
-                                    <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/30 border-0 backdrop-blur-sm">
-                                        {flight.details?.flightNumber || 'FL882'}
-                                    </Badge>
                                 </div>
 
-                                {/* Route */}
-                                <div className="flex items-center justify-between px-6 py-4">
-                                    <div className="text-left min-w-[30%]">
-                                        <p className="text-4xl font-black text-gray-900 leading-none mb-1">{fromCode}</p>
-                                        <p className="text-xs font-medium text-gray-500 truncate max-w-[100px]">{fromCity}</p>
-                                        <p className="text-sm font-bold text-gray-900 mt-2">{depTime}</p>
-                                    </div>
-
-                                    <div className="flex-1 flex flex-col items-center px-2">
-                                        <div className="relative w-full flex items-center justify-center">
-                                            <div className="absolute inset-0 flex items-center">
-                                                <div className="w-full border-t-2 border-dashed border-gray-300"></div>
+                                <div className="relative grid grid-cols-1 md:grid-cols-[1.2fr_1.05fr_190px]">
+                                    <div className="p-5 text-white">
+                                        <div className="flex items-end justify-between gap-3">
+                                            <div>
+                                                <p className="text-[10px] uppercase tracking-[0.12em] text-blue-100/90">From</p>
+                                                <p className="text-4xl font-black leading-none text-white">{fromCode}</p>
+                                                <p className="max-w-[120px] truncate text-[11px] font-semibold uppercase tracking-wide text-blue-100/90">{fromCity}</p>
+                                                <p className="mt-2 text-[11px] text-blue-50/95">{formatTicketDate(flight.details?.departureDate)}</p>
                                             </div>
-                                            <div className="relative bg-white px-2">
-                                                <Plane className="h-5 w-5 text-gray-400 rotate-90" />
+                                            <div className="flex flex-col items-center">
+                                                <Plane className="h-5 w-5 rotate-90 text-blue-100" />
+                                                <p className="mt-1 text-[11px] font-semibold leading-none text-blue-100/90">{flight.details?.duration || '2h 45m'}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] uppercase tracking-[0.12em] text-blue-100/90">To</p>
+                                                <p className="text-4xl font-black leading-none text-white">{toCode}</p>
+                                                <p className="max-w-[120px] truncate text-[11px] font-semibold uppercase tracking-wide text-blue-100/90">{toCity}</p>
+                                                <p className="mt-2 text-[11px] text-blue-50/95">{flight.details?.arrivalTime || 'TBD'}</p>
                                             </div>
                                         </div>
-                                        <p className="text-[10px] font-medium text-gray-400 mt-1">{flight.details?.duration || '2h 45m'}</p>
                                     </div>
 
-                                    <div className="text-right min-w-[30%]">
-                                        <p className="text-4xl font-black text-gray-900 leading-none mb-1">{toCode}</p>
-                                        <p className="text-xs font-medium text-gray-500 truncate max-w-[100px] ml-auto">{toCity}</p>
-                                        <p className="text-sm font-bold text-gray-900 mt-2">{flight.details?.arrivalTime || 'TBD'}</p>
-                                    </div>
-                                </div>
-
-                                {/* Divider with Cutouts */}
-                                <div className="relative h-6 w-full my-2">
-                                    <div className="absolute inset-0 flex items-center px-6">
-                                        <div className="w-full border-t-2 border-dashed border-gray-200"></div>
-                                    </div>
-                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 h-6 w-6 rounded-full bg-[#f8fafc] border-r border-gray-200"></div>
-                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 h-6 w-6 rounded-full bg-[#f8fafc] border-l border-gray-200"></div>
-                                </div>
-
-                                {/* Footer */}
-                                <div className="bg-white px-6 pb-6 pt-2 flex items-center justify-between">
-                                    <div className="flex gap-2">
-                                        <Badge variant="outline" className="border-gray-200 bg-gray-50 text-gray-600 font-normal">
-                                            <Calendar className="mr-1.5 h-3 w-3" />
-                                            {formatDate(flight.details?.departureDate).split(',')[0] + ', ' + formatDate(flight.details?.departureDate).split(',')[1]}
-                                        </Badge>
-                                        <Badge variant="outline" className="border-gray-200 bg-gray-50 text-gray-600 font-normal">
-                                            <Clock className="mr-1.5 h-3 w-3" />
-                                            {flight.details?.duration || 'Duration TBD'}
-                                        </Badge>
-                                    </div>
-
-                                    <div className="flex gap-2">
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button size="sm" className="h-8 rounded-full bg-slate-900 text-xs font-medium text-white hover:bg-slate-800">
-                                                    View Ticket
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-md p-0 overflow-hidden sm:rounded-[24px] border-0 shadow-2xl bg-zinc-50">
+                                    <div className="border-t border-dashed border-white/25 bg-white/10 p-5 text-white md:border-t-0 md:border-l md:border-white/25">
+                                        <div className="grid grid-cols-2 gap-x-3 gap-y-2.5 text-xs">
+                                            <div>
+                                                <p className="text-[9px] uppercase tracking-[0.12em] text-blue-100/80">Passenger</p>
+                                                <p className="truncate text-[13px] font-semibold leading-tight text-white">{flight.details?.passengerName || user?.fullName || 'Guest'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] uppercase tracking-[0.12em] text-blue-100/80">Class</p>
+                                                <p className="text-[13px] font-semibold leading-tight text-white">Economy</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] uppercase tracking-[0.12em] text-blue-100/80">Date</p>
+                                                <p className="text-[13px] font-semibold leading-tight text-white">{formatTicketDate(flight.details?.departureDate)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] uppercase tracking-[0.12em] text-blue-100/80">Boarding</p>
+                                                <p className="text-[13px] font-semibold leading-tight text-white">{depTime}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] uppercase tracking-[0.12em] text-blue-100/80">Flight</p>
+                                                <p className="truncate text-[13px] font-semibold leading-tight text-white">{flight.details?.flightNumber || 'FL882'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] uppercase tracking-[0.12em] text-blue-100/80">Seat</p>
+                                                <p className="text-[13px] font-semibold leading-tight text-white">14F</p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 flex gap-2">
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Button size="sm" className="h-8 rounded-full border border-white/35 bg-white/15 px-4 text-xs font-semibold text-white hover:bg-white/25">
+                                                        View Ticket
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-md p-0 overflow-hidden sm:rounded-[24px] border-0 shadow-2xl bg-zinc-50">
                                                 {/* Digital Ticket Modal Content */}
                                                 <div className="flex flex-col h-full bg-white">
                                                     {/* Header Brand */}
@@ -397,7 +426,60 @@ export default function UpcomingBookingsTickets({ userId }: UpcomingBookingsTick
                                                     </AlertDialog>
                                                 </div>
                                             </DialogContent>
-                                        </Dialog>
+                                            </Dialog>
+
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 rounded-full border-rose-200/70 bg-rose-50 px-4 text-xs font-semibold text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                                                        Cancel
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Cancel Flight?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Are you sure you want to cancel this flight? This action cannot be undone.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Keep Flight</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleCancel(flight.id, 'flight')} className="bg-red-600 hover:bg-red-700">Yes, Cancel</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
+                                    </div>
+
+                                    <div className="relative border-t border-dashed border-white/25 bg-indigo-900/30 p-5 md:border-t-0 md:border-l md:border-white/25">
+                                        <div className="pointer-events-none absolute -right-1 top-3 flex h-[calc(100%-24px)] flex-col justify-around">
+                                            <span className="h-3 w-3 rounded-full bg-slate-100/95" />
+                                            <span className="h-3 w-3 rounded-full bg-slate-100/95" />
+                                            <span className="h-3 w-3 rounded-full bg-slate-100/95" />
+                                            <span className="h-3 w-3 rounded-full bg-slate-100/95" />
+                                            <span className="h-3 w-3 rounded-full bg-slate-100/95" />
+                                            <span className="h-3 w-3 rounded-full bg-slate-100/95" />
+                                        </div>
+                                        <div className="h-full rounded-xl border border-white/25 bg-white/10 p-3 text-white backdrop-blur-sm">
+                                            <p className="text-[10px] uppercase tracking-wider text-blue-100/80 font-semibold">Ticket Ref</p>
+                                            <p className="mt-1 text-base font-mono font-bold tracking-widest text-white">
+                                                {(flight.id || 'REF123').substring(0, 8).toUpperCase()}
+                                            </p>
+                                            <div className="my-3 h-14 w-full rounded-md bg-[repeating-linear-gradient(90deg,#ffffff_0_2px,transparent_2px_4px)] opacity-85" />
+                                            <div className="flex items-center justify-between">
+                                                <Badge variant="outline" className="text-[10px] border-white/35 bg-white/10 text-white">
+                                                    <Clock className="mr-1 h-3 w-3" />
+                                                    {flight.details?.duration || 'TBD'}
+                                                </Badge>
+                                                <button className="rounded-md p-1 text-white/85 hover:bg-white/15">
+                                                    <Copy className="h-3.5 w-3.5" />
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

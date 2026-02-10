@@ -18,13 +18,14 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
 
+
+
 export default function Home() {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [featuredDestScroll, setFeaturedDestScroll] = useState(0);
   const [satisfiedTravelers, setSatisfiedTravelers] = useState(0);
   const counterRef = useRef<HTMLDivElement>(null);
-
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -578,6 +579,7 @@ export default function Home() {
         </div>
       </section>
 
+
       {/* Tour Packages Carousel */}
       <section className="bg-white py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -805,6 +807,7 @@ export default function Home() {
           }
         `}</style>
       </section>
-    </div>
+
+    </div >
   );
 }

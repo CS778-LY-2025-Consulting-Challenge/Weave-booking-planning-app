@@ -27,12 +27,12 @@ export default function CreateBudgetForm() {
             const { createBudgetAction } = await import('@/app/actions/budgetActions');
             const result = await createBudgetAction(name, user.id);
 
-            if (result.success && result.budgetId) {
-                console.log('[CreateBudget] Success, ID:', result.budgetId);
+            if (result.success && (result as any).budgetId) {
+                console.log('[CreateBudget] Success, ID:', (result as any).budgetId);
                 toast.success('Budget created successfully!');
-                router.push(`/budget/${result.budgetId}`);
+                router.push(`/budget/${(result as any).budgetId}`);
             } else {
-                throw new Error(result.error || 'Unknown server error');
+                throw new Error((result as any).error || 'Unknown server error');
             }
         } catch (error: any) {
             console.error('[CreateBudget] Error:', error);

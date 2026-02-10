@@ -117,16 +117,21 @@ export default function PackageBookingFlow({ pkg }: Props) {
           try {
             travelerSchema.parse(t);
           } catch (e: any) {
-            throw new Error(`Guest ${i + 1}: ${e.errors[0].message}`);
+            // Support both Zod v3 (.errors) and v4 (.issues) just in case
+            const issues = e.issues || e.errors || [];
+            const msg = issues[0]?.message || e.message || 'Validation error';
+            throw new Error(`Guest ${i + 1}: ${msg}`);
           }
         });
       }
       return true;
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        setErrors((error as any).errors.map((e: any) => e.message));
+        // Zod v4 uses .issues instead of .errors
+        const issues = (error as any).issues || (error as any).errors || [];
+        setErrors(issues.map((e: any) => e.message));
       } else {
-        setErrors([error.message]);
+        setErrors([error.message || 'An unexpected error occurred']);
       }
       return false;
     }
