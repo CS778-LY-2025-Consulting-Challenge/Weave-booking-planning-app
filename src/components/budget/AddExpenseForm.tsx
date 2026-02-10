@@ -59,7 +59,7 @@ export default function AddExpenseForm({ budgetId, participants, currentUserId, 
 
                 if (onSuccess) onSuccess();
             } else {
-                throw new Error(result.error);
+                throw new Error((result as any).error);
             }
         } catch (error: any) {
             console.error(error);

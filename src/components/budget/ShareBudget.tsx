@@ -34,11 +34,11 @@ export default function ShareBudget({ budgetId, budgetName }: ShareBudgetProps) 
                 7 // Default 7 days
             );
 
-            if (result.success && result.invite) {
-                setInviteCode(result.invite.inviteCode);
+            if (result.success && (result as any).invite) {
+                setInviteCode((result as any).invite.inviteCode);
                 toast.success('Invite link created!');
             } else {
-                throw new Error(result.error || 'Unknown server error');
+                throw new Error((result as any).error || 'Unknown server error');
             }
         } catch (error: any) {
             console.error("Failed to create invite:", error);

@@ -82,7 +82,7 @@ export default function DebugPage() {
             const { debugServerConnectionAction } = await import('@/app/actions/budgetActions');
             const result = await debugServerConnectionAction();
             if (result.success) {
-                setStatus(`Server Connected! Collections: ${result.collections?.join(', ') || 'None'}`);
+                setStatus(`Server Connected! Project ID: ${result.projectId || 'Unknown'}`);
                 toast.success('Server Connection OK');
             } else {
                 setStatus(`Server Failed: ${result.error}`);
