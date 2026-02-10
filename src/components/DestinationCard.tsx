@@ -33,7 +33,7 @@ const DestinationCard = React.forwardRef<HTMLAnchorElement, DestinationCardProps
 
     return (
       <a
-        ref={ref as any}
+        ref={ref}
         href={href}
         className={cn("group block w-full h-full", className)}
         {...props}

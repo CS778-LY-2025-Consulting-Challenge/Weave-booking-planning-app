@@ -232,9 +232,10 @@ export default function Guides() {
   const handleBookingConfirmed = (booking: any) => {
     setCurrentBooking(booking);
     setBookingDialogOpen(false);
-    // Open video call modal after a brief delay to ensure dialog closes smoothly
+    // Open video call in a new window/tab
     setTimeout(() => {
-      setVideoCallOpen(true);
+      const roomID = booking.guide?.id || `guide-${Date.now()}`;
+      window.open(`/video-call.html?roomID=${roomID}`, '_blank', 'noopener,noreferrer');
     }, 500);
   };
 

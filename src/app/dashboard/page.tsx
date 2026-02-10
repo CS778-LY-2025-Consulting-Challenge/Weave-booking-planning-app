@@ -48,6 +48,13 @@ interface Journey {
   cities?: string[];
   bookingType?: string;
   image?: string;
+  packageId?: string;
+  packageName?: string;
+  packageDestination?: string;
+  packageDuration?: string;
+  packagePrice?: number;
+  packageIncludes?: string[];
+  packageType?: string;
 }
 
 interface SavedPackage {
@@ -150,6 +157,10 @@ export default function Dashboard() {
     setSavedTrips(data || {});
   };
 
+  const handleDeleteJourney = (journeyId: number | string) => {
+    setJourneys((prev) => prev.filter((journey) => journey.id !== journeyId));
+  };
+
 
 
   const [journeys, setJourneys] = useState<Journey[]>([
@@ -182,6 +193,21 @@ export default function Dashboard() {
       hotelBooked: true,
       type: 'past',
       notes: 'Amazing trip! The temples were breathtaking.',
+      image: '/images/bali-package.jpg',
+      bookingType: 'package',
+      packageId: '6',
+      packageName: 'Bali Wellness Retreat',
+      packageDestination: 'Ubud & Seminyak, Bali',
+      packageDuration: '8 Days / 7 Nights',
+      packagePrice: 1699,
+      packageIncludes: [
+        'Round-trip flights',
+        '7 nights accommodation',
+        'Daily yoga classes',
+        'Spa treatments',
+        'Healthy meals',
+      ],
+      packageType: 'Wellness',
     },
     {
       id: 4,
@@ -201,6 +227,111 @@ export default function Dashboard() {
         'Venice',
         'Rome',
       ],
+    },
+    {
+      id: 5,
+      destination: 'Athens, Greece',
+      startDate: '2025-08-15',
+      endDate: '2025-08-24',
+      flightBooked: true,
+      hotelBooked: true,
+      type: 'past',
+      notes: 'Greek Island Adventure - stunning sunsets in Santorini!',
+      image: '/images/greek - package.jpg',
+      bookingType: 'package',
+      packageId: '4',
+      packageName: 'Greek Island Adventure',
+      packageDestination: 'Athens, Santorini, Mykonos',
+      packageDuration: '10 Days / 9 Nights',
+      packagePrice: 2199,
+      packageIncludes: [
+        'International flights',
+        'Ferry transfers',
+        '9 nights in hotels',
+        'Sunset cruise',
+        'Archaeological tours',
+      ],
+      packageType: 'Beach & Culture',
+      cities: ['Athens', 'Santorini', 'Mykonos'],
+    },
+    {
+      id: 6,
+      destination: 'Dubai, UAE',
+      startDate: '2025-11-10',
+      endDate: '2025-11-14',
+      flightBooked: true,
+      hotelBooked: true,
+      type: 'past',
+      notes: 'Luxury escape - Burj Khalifa was incredible!',
+      image: '/images/dubai - package.jpg',
+      bookingType: 'package',
+      packageId: '5',
+      packageName: 'Dubai Luxury Escape',
+      packageDestination: 'Dubai, UAE',
+      packageDuration: '5 Days / 4 Nights',
+      packagePrice: 1899,
+      packageIncludes: [
+        'Round-trip flights',
+        '4 nights in 5-star hotel',
+        'Desert safari',
+        'Burj Khalifa tickets',
+        'Dubai Mall tour',
+      ],
+      packageType: 'Luxury',
+    },
+    {
+      id: 7,
+      destination: 'Paris, France',
+      startDate: '2025-04-20',
+      endDate: '2025-05-03',
+      flightBooked: true,
+      hotelBooked: true,
+      type: 'past',
+      notes: 'European Highlights Tour - visited Paris, Rome, and Barcelona!',
+      image: '/images/europe - package.jpg',
+      bookingType: 'package',
+      packageId: '2',
+      packageName: 'European Highlights Tour',
+      packageDestination: 'Paris, Rome, Barcelona',
+      packageDuration: '14 Days / 13 Nights',
+      packagePrice: 3299,
+      packageIncludes: [
+        'International flights',
+        '13 nights in 4-star hotels',
+        'Daily breakfast',
+        'Guided city tours',
+        'Museum passes',
+      ],
+      packageType: 'Culture',
+      cities: ['Paris', 'Rome', 'Barcelona'],
+    },
+    {
+      id: 8,
+      destination: 'Queenstown, New Zealand',
+      startDate: '2025-02-01',
+      endDate: '2025-02-10',
+      flightBooked: true,
+      hotelBooked: true,
+      type: 'past',
+      notes: 'New Zealand Adventure - Milford Sound was breathtaking!',
+      image: '/images/new zealand - package.jpg',
+      bookingType: 'package',
+      packageId: '1',
+      packageName: 'New Zealand Adventure',
+      packageDestination: 'Auckland, Rotorua, Queenstown, Milford Sound',
+      packageDuration: '10 Days / 9 Nights',
+      packagePrice: 2899,
+      packageIncludes: [
+        'Round-trip flights',
+        '9 nights accommodation in scenic locations',
+        'Milford Sound cruise',
+        'Hobbiton movie set tour',
+        'Adventure activities (bungee jumping, sky diving)',
+        'Thermal pools of Rotorua',
+        'Scenic drives and nature hikes',
+      ],
+      packageType: 'Adventure',
+      cities: ['Auckland', 'Rotorua', 'Queenstown'],
     },
   ]);
 
@@ -290,7 +421,7 @@ export default function Dashboard() {
 
         // Avoid duplicates if possible (simple id check against hardcoded)
         setJourneys(prev => {
-          const hardcodedIds = new Set([1, 2, 3, 4]);
+           const hardcodedIds = new Set([1, 2, 3, 4, 5, 6, 7, 8]);
           // Filter out any previous dynamic additions if we re-fetch (optional, but good practice)
           const baseJourneys = prev.filter(j => hardcodedIds.has(j.id as any));
           return [...baseJourneys, ...newJourneys];
@@ -318,15 +449,68 @@ export default function Dashboard() {
   });
   const copiedJourneys = journeys.filter((j) => j.type === 'copied');
 
-  // Sample map destinations from journeys
-  const mapDestinations = [
-    { name: 'Paris', lat: 48.8566, lng: 2.3522 },
-    { name: 'Tokyo', lat: 35.6762, lng: 139.6503 },
-    { name: 'Bali', lat: -8.3405, lng: 115.0920 },
-    { name: 'New York', lat: 40.7128, lng: -74.0060 },
-    { name: 'Sydney', lat: -33.8688, lng: 151.2093 },
-    { name: 'Dubai', lat: 25.2048, lng: 55.2708 },
-  ];
+  // Coordinates mapping for common destinations
+  const destinationCoordinates: { [key: string]: { lat: number; lng: number } } = {
+    'Paris': { lat: 48.8566, lng: 2.3522 },
+    'Tokyo': { lat: 35.6762, lng: 139.6503 },
+    'Bali': { lat: -8.3405, lng: 115.0920 },
+    'New York': { lat: 40.7128, lng: -74.0060 },
+    'Sydney': { lat: -33.8688, lng: 151.2093 },
+    'Dubai': { lat: 25.2048, lng: 55.2708 },
+    'London': { lat: 51.5074, lng: -0.1278 },
+    'Rome': { lat: 41.9028, lng: 12.4964 },
+    'Barcelona': { lat: 41.3851, lng: 2.1734 },
+    'Amsterdam': { lat: 52.3676, lng: 4.9041 },
+    'Berlin': { lat: 52.5200, lng: 13.4050 },
+    'Prague': { lat: 50.0755, lng: 14.4378 },
+    'Vienna': { lat: 48.2082, lng: 16.3738 },
+    'Venice': { lat: 45.4408, lng: 12.3155 },
+    'Singapore': { lat: 1.3521, lng: 103.8198 },
+    'Thailand': { lat: 13.7563, lng: 100.5018 },
+    'Indonesia': { lat: -8.3405, lng: 115.0920 },
+    'Japan': { lat: 35.6762, lng: 139.6503 },
+    'France': { lat: 48.8566, lng: 2.3522 },
+    'Athens': { lat: 37.9838, lng: 23.7275 },
+    'Greece': { lat: 37.9838, lng: 23.7275 },
+    'Queenstown': { lat: -45.0312, lng: 168.6626 },
+    'New Zealand': { lat: -41.2865, lng: 174.7762 },
+    'UAE': { lat: 25.2048, lng: 55.2708 },
+  };
+
+  // Extract map destinations from past journeys only
+  const mapDestinations = pastJourneys.map(journey => {
+    // Parse destination (format can be "City, Country" or just "City")
+    const destinationParts = journey.destination.split(',');
+    const cityName = destinationParts[0].trim();
+    
+    // Try to find coordinates
+    let coords = destinationCoordinates[cityName];
+    
+    // If not found, try the full destination string
+    if (!coords && destinationParts.length > 1) {
+      const countryName = destinationParts[1].trim();
+      coords = destinationCoordinates[countryName];
+    }
+    
+    // If still not found, try to match partial strings
+    if (!coords) {
+      const matchingKey = Object.keys(destinationCoordinates).find(key => 
+        journey.destination.toLowerCase().includes(key.toLowerCase())
+      );
+      if (matchingKey) {
+        coords = destinationCoordinates[matchingKey];
+      }
+    }
+    
+    // Default fallback coordinates (center of world map) if not found
+    const finalCoords = coords || { lat: 0, lng: 0 };
+    
+    return {
+      name: cityName,
+      lat: finalCoords.lat,
+      lng: finalCoords.lng,
+    };
+  }).filter(dest => dest.lat !== 0 || dest.lng !== 0); // Filter out fallback coordinates
 
 
   return (
@@ -337,7 +521,10 @@ export default function Dashboard() {
           <h1 className="mb-2 text-4xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }}>
             Welcome back, {user?.firstName || 'Nayak'}!
           </h1>
-          <p className="text-gray-600 text-2xl" style={{ fontFamily: 'var(--font-special-elite)' }}>
+          <p
+            className="text-gray-600 text-2xl"
+            style={{ fontFamily: '"Times New Roman", Times, serif' }}
+          >
             Manage your journeys and plan your next adventure.
           </p>
         </div>
@@ -355,7 +542,12 @@ export default function Dashboard() {
         {/* Upcoming Bookings Tickets */}
         {user?.id && (
           <div className="mb-12">
-            <h3 className="text-2xl font-bold mb-6 text-gray-800">Your Tickets & Reservations</h3>
+            <h3
+              className="text-2xl font-bold mb-6 text-gray-800"
+              style={{ fontFamily: '"Times New Roman", Times, serif' }}
+            >
+              Your Tickets & Reservations
+            </h3>
             <UpcomingBookingsTickets userId={user.id} />
           </div>
         )}
@@ -376,6 +568,7 @@ export default function Dashboard() {
           handleEditTrip={handleEditTrip}
           handleUpdateTrip={handleUpdateTrip}
           handleDeleteTrip={handleDeleteTrip}
+          handleDeleteJourney={handleDeleteJourney}
         />
 
         {/* Profile and Calendar Section */}

@@ -4,9 +4,11 @@ import { adminRtdb } from '@/lib/firebase-admin';
 import { ServerValue } from 'firebase-admin/database';
 
 // Helper to get formatted error
-const getError = (e: any) => ({ success: false, error: e.message });
+const getError = (e: any): ActionResult => ({ success: false, error: e.message });
 
-export async function createBudgetAction(name: string, userId: string) {
+type ActionResult<T = object> = { success: boolean; error?: string } & T;
+
+export async function createBudgetAction(name: string, userId: string): Promise<ActionResult<{ budgetId?: string }>> {
     if (!name || !userId) return { success: false, error: 'Missing required fields' };
 
     try {
@@ -43,7 +45,7 @@ export async function createInviteAction(
     userId: string,
     userName: string,
     expiresInDays: number = 7
-) {
+): Promise<ActionResult<{ invite?: any }>> {
     if (!budgetId || !userId) return { success: false, error: 'Missing fields' };
 
     try {
@@ -103,7 +105,7 @@ export async function createInviteAction(
     }
 }
 
-export async function getInviteByCodeAction(inviteCode: string) {
+export async function getInviteByCodeAction(inviteCode: string): Promise<ActionResult<{ invite?: any }>> {
     if (!inviteCode) return { success: false, error: 'Missing code' };
 
     try {
@@ -124,16 +126,16 @@ export async function getInviteByCodeAction(inviteCode: string) {
     }
 }
 
-export async function joinBudgetAction(inviteCode: string, userId: string) {
+export async function joinBudgetAction(inviteCode: string, userId: string): Promise<ActionResult<{ budgetId?: string; message?: string }>> {
     if (!inviteCode || !userId) return { success: false, error: 'Missing fields' };
 
     try {
         // 1. Get Invite
         const result = await getInviteByCodeAction(inviteCode);
-        if (!result.success || !(result as any).invite) {
-            return { success: false, error: (result as any).error || 'Invalid Invite' };
+        if (!result.success || !result.invite) {
+            return { success: false, error: result.error || 'Invalid Invite' };
         }
-        const invite = (result as any).invite;
+        const invite = result.invite;
 
         // 2. Validate
         const now = Date.now();
@@ -176,7 +178,7 @@ export async function joinBudgetAction(inviteCode: string, userId: string) {
     }
 }
 
-export async function getBudgetDetailsAction(budgetId: string) {
+export async function getBudgetDetailsAction(budgetId: string): Promise<ActionResult<{ budget?: any; expenses?: any[] }>> {
     if (!budgetId) return { success: false, error: 'Missing ID' };
 
     try {
@@ -211,7 +213,7 @@ export async function getBudgetDetailsAction(budgetId: string) {
     }
 }
 
-export async function addExpenseAction(budgetId: string, expense: any) {
+export async function addExpenseAction(budgetId: string, expense: any): Promise<ActionResult> {
     if (!budgetId || !expense) return { success: false, error: 'Missing fields' };
 
     try {
@@ -236,7 +238,7 @@ export async function addExpenseAction(budgetId: string, expense: any) {
     }
 }
 
-export async function debugServerConnectionAction() {
+export async function debugServerConnectionAction(): Promise<ActionResult<{ projectId?: string }>> {
     try {
         // Test Read
         await adminRtdb.ref().child('test_connection').once('value');
@@ -252,7 +254,7 @@ export async function debugServerConnectionAction() {
     }
 }
 
-export async function deleteExpenseAction(budgetId: string, expenseId: string) {
+export async function deleteExpenseAction(budgetId: string, expenseId: string): Promise<ActionResult> {
     if (!budgetId || !expenseId) return { success: false, error: 'Missing fields' };
 
     try {
@@ -270,7 +272,7 @@ export async function deleteExpenseAction(budgetId: string, expenseId: string) {
     }
 }
 
-export async function deleteBudgetAction(budgetId: string, userId: string) {
+export async function deleteBudgetAction(budgetId: string, userId: string): Promise<ActionResult> {
     if (!budgetId || !userId) return { success: false, error: 'Missing fields' };
 
     try {
