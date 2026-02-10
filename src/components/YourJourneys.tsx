@@ -76,7 +76,8 @@ export default function YourJourneys({
   handleEditTrip,
   handleUpdateTrip,
   handleDeleteTrip,
-  handleDeleteJourney
+  handleDeleteJourney,
+  handleCancelBooking
 }: {
   journeys: Journey[];
   savedTripsCount: number;
@@ -93,6 +94,7 @@ export default function YourJourneys({
   handleUpdateTrip: () => void;
   handleDeleteTrip: (id: string) => void;
   handleDeleteJourney: (id: number | string) => void;
+  handleCancelBooking?: (journey: Journey) => void;
 }) {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [showAll, setShowAll] = useState(false);
@@ -486,10 +488,7 @@ export default function YourJourneys({
                             <div className="text-center min-w-[30%]">
                               <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-0.5">Start</p>
                               <p className="text-sm font-bold text-gray-900">
-                                {new Date(journey.startDate).toLocaleDateString(undefined, {
-                                  month: 'short',
-                                  day: 'numeric',
-                                })}
+                                {formatDate(journey.startDate)}
                               </p>
                               <p className="text-[10px] text-gray-400 font-medium">
                                 {new Date(journey.startDate).getFullYear()}
@@ -499,10 +498,7 @@ export default function YourJourneys({
                             <div className="text-center min-w-[30%]">
                               <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-0.5">End</p>
                               <p className="text-sm font-bold text-gray-900">
-                                {new Date(journey.endDate).toLocaleDateString(undefined, {
-                                  month: 'short',
-                                  day: 'numeric',
-                                })}
+                                {formatDate(journey.endDate)}
                               </p>
                               <p className="text-[10px] text-gray-400 font-medium">
                                 {new Date(journey.endDate).getFullYear()}
@@ -592,15 +588,9 @@ export default function YourJourneys({
                           <div className="flex flex-col">
                             <span className="text-xs font-medium text-gray-500">Dates</span>
                             <span className="text-sm font-semibold text-gray-900">
-                              {new Date(journey.startDate).toLocaleDateString(undefined, {
-                                month: 'short',
-                                day: 'numeric',
-                              })}
+                              {formatDate(journey.startDate)}
                               {' - '}
-                              {new Date(journey.endDate).toLocaleDateString(undefined, {
-                                month: 'short',
-                                day: 'numeric',
-                              })}
+                              {formatDate(journey.endDate)}
                             </span>
                           </div>
                         </div>
@@ -661,6 +651,15 @@ export default function YourJourneys({
                             onClick={() => handleDeleteJourney(journey.id)}
                             className="rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
                             title="Delete journey"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                        {(journey.status === 'upcoming' || journey.status === 'current') && handleCancelBooking && journey.bookingType && (
+                          <button
+                            onClick={() => handleCancelBooking(journey)}
+                            className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                            title="Cancel booking"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>

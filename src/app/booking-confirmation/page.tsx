@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,6 +58,9 @@ export default function BookingConfirmationPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Track processed session to prevent duplicate saves
+  const processedSessionRef = useRef<string | null>(null);
+
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
@@ -109,18 +112,6 @@ export default function BookingConfirmationPage() {
               }
 
               setBooking(confirmedBooking);
-
-              // Sync to Firebase if user is logged in
-              if (isSuccess && user?.id) {
-                await saveBooking(user.id, {
-                  type: meta.type || 'hotel',
-                  status: 'confirmed',
-                  userId: user.id,
-                  stripeSessionId: sessionId,
-                  details: confirmedBooking
-                });
-              }
-
               return;
             }
           } catch (err) {
@@ -142,11 +133,6 @@ export default function BookingConfirmationPage() {
           }
         }
 
-        // 3. Last resort fallback for Demo purposes if session fetch failed
-        if (sessionId && status) {
-          // ... existing fallback or just show error
-        }
-
         if (!bookingId && !sessionId) {
           setError('No booking information found');
         }
@@ -159,7 +145,37 @@ export default function BookingConfirmationPage() {
     };
 
     fetchBookingDetails();
-  }, [bookingId, sessionId, status, user?.id]);
+  }, [bookingId, sessionId, status]);
+
+  // Separate effect to handle saving once user is loaded and booking is ready
+  useEffect(() => {
+    if (user?.id && booking && booking.status === 'confirmed' && booking.stripeSessionId) {
+      // Prevent duplicate saves for the same session
+      if (processedSessionRef.current === booking.stripeSessionId) {
+        return;
+      }
+
+      const syncToFirebase = async () => {
+        try {
+          await saveBooking(user.id, {
+            type: booking.type || 'hotel',
+            status: 'confirmed',
+            userId: user.id,
+            stripeSessionId: booking.stripeSessionId!,
+            details: booking
+          });
+          console.log('Booking synced to Firebase for user:', user.id);
+          processedSessionRef.current = booking.stripeSessionId!; // Mark as processed
+          toast.success('Booking saved to your profile!');
+        } catch (err) {
+          console.error('Failed to sync booking to Firebase:', err);
+          toast.error('Failed to save booking to profile');
+        }
+      };
+
+      syncToFirebase();
+    }
+  }, [user?.id, booking]);
 
   if (isLoading) {
     return (

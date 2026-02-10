@@ -10,6 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -30,6 +37,7 @@ import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { getSavedTrips, saveTrip, updateTrip, deleteTrip } from '@/lib/savedTrips';
+import { getBookings, deleteBooking } from '@/lib/bookings';
 import { getUserProfile, type UserProfile } from '@/lib/userProfile';
 import DashboardMap from '@/components/DashboardMap';
 import YourJourneys from '@/components/YourJourneys';
@@ -78,6 +86,55 @@ export default function Dashboard() {
   const [newTrip, setNewTrip] = useState({ destination: '', date: '' });
   const [editTripId, setEditTripId] = useState<string | null>(null);
   const [editTrip, setEditTrip] = useState({ destination: '', date: '' });
+
+  // Calendar Interactivity State
+  const [selectedCalendarJourney, setSelectedCalendarJourney] = useState<Journey | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) return;
+    setDate(date);
+
+    const clickedJourney = upcomingJourneys.find(journey => {
+      const start = new Date(journey.startDate);
+      const end = new Date(journey.endDate);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      const checkDate = new Date(date);
+      checkDate.setHours(0, 0, 0, 0);
+      return checkDate >= start && checkDate <= end;
+    });
+
+    if (clickedJourney) {
+      setSelectedCalendarJourney(clickedJourney);
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleCancelBooking = async () => {
+    if (!user?.id || !selectedCalendarJourney) return;
+
+    // Only allow cancelling if it's a real booking (starts with BK- or has a specific ID format we know comes from DB)
+    // In our case, we map `id` to `b.id` from firebase.
+    const bookingId = selectedCalendarJourney.id.toString();
+
+    if (confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+      try {
+        await deleteBooking(user.id, bookingId);
+
+        // Update local state to remove the cancelled journey
+        setJourneys(prev => prev.filter(j => j.id !== selectedCalendarJourney.id));
+
+        // Close dialog
+        setIsDialogOpen(false);
+        setSelectedCalendarJourney(null);
+        toast.success('Booking cancelled successfully');
+      } catch (error) {
+        console.error('Failed to cancel booking:', error);
+        toast.error('Failed to cancel booking');
+      }
+    }
+  };
 
   // User Profile State
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -342,7 +399,9 @@ export default function Dashboard() {
     import('@/lib/bookings').then(async ({ getBookings }) => {
       try {
         const bookings = await getBookings(user.id);
-        const newJourneys: Journey[] = bookings.map(b => {
+        // Filter out flights since they have their own "Tickets & Reservations" section
+        const nonFlightBookings = bookings.filter(b => b.type !== 'flight');
+        const newJourneys: Journey[] = nonFlightBookings.map(b => {
           const isFlight = b.type === 'flight';
           const isHotel = b.type === 'hotel';
           const isPackage = b.type === 'package';
@@ -421,7 +480,7 @@ export default function Dashboard() {
 
         // Avoid duplicates if possible (simple id check against hardcoded)
         setJourneys(prev => {
-           const hardcodedIds = new Set([1, 2, 3, 4, 5, 6, 7, 8]);
+          const hardcodedIds = new Set([1, 2, 3, 4, 5, 6, 7, 8]);
           // Filter out any previous dynamic additions if we re-fetch (optional, but good practice)
           const baseJourneys = prev.filter(j => hardcodedIds.has(j.id as any));
           return [...baseJourneys, ...newJourneys];
@@ -482,29 +541,29 @@ export default function Dashboard() {
     // Parse destination (format can be "City, Country" or just "City")
     const destinationParts = journey.destination.split(',');
     const cityName = destinationParts[0].trim();
-    
+
     // Try to find coordinates
     let coords = destinationCoordinates[cityName];
-    
+
     // If not found, try the full destination string
     if (!coords && destinationParts.length > 1) {
       const countryName = destinationParts[1].trim();
       coords = destinationCoordinates[countryName];
     }
-    
+
     // If still not found, try to match partial strings
     if (!coords) {
-      const matchingKey = Object.keys(destinationCoordinates).find(key => 
+      const matchingKey = Object.keys(destinationCoordinates).find(key =>
         journey.destination.toLowerCase().includes(key.toLowerCase())
       );
       if (matchingKey) {
         coords = destinationCoordinates[matchingKey];
       }
     }
-    
+
     // Default fallback coordinates (center of world map) if not found
     const finalCoords = coords || { lat: 0, lng: 0 };
-    
+
     return {
       name: cityName,
       lat: finalCoords.lat,
@@ -569,6 +628,26 @@ export default function Dashboard() {
           handleUpdateTrip={handleUpdateTrip}
           handleDeleteTrip={handleDeleteTrip}
           handleDeleteJourney={handleDeleteJourney}
+          handleCancelBooking={async (journey) => {
+            if (!user?.id) return;
+
+            if (confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+              try {
+                // Optimistically remove from UI immediately
+                setJourneys(prev => prev.filter(j => j.id !== journey.id));
+
+                // Delete from Firebase in background
+                await deleteBooking(user.id, journey.id.toString());
+
+                toast.success('Booking cancelled successfully');
+              } catch (error) {
+                console.error('Failed to cancel booking:', error);
+                toast.error('Failed to cancel booking');
+                // Refresh journeys on error to restore state
+                window.location.reload();
+              }
+            }
+          }}
         />
 
         {/* Profile and Calendar Section */}
@@ -936,6 +1015,76 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{selectedCalendarJourney?.destination}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                <img
+                  src={selectedCalendarJourney?.image || '/images/placeholder.jpg'}
+                  alt={selectedCalendarJourney?.destination}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-500">Dates</Label>
+                  <p className="font-medium">
+                    {selectedCalendarJourney && new Date(selectedCalendarJourney.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {' - '}
+                    {selectedCalendarJourney && new Date(selectedCalendarJourney.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Status</Label>
+                  <Badge variant={selectedCalendarJourney?.type === 'past' ? 'secondary' : 'default'} className="mt-1">
+                    {selectedCalendarJourney?.type === 'past' ? 'Completed' : 'Upcoming'}
+                  </Badge>
+                </div>
+              </div>
+              {selectedCalendarJourney?.notes && (
+                <div>
+                  <Label className="text-gray-500">Notes</Label>
+                  <p className="text-sm text-gray-700">{selectedCalendarJourney.notes}</p>
+                </div>
+              )}
+            </div>
+            <DialogFooter className="flex-col sm:justify-between sm:flex-row gap-2">
+              <div className="flex w-full sm:w-auto">
+                {(selectedCalendarJourney?.type === 'upcoming' || selectedCalendarJourney?.type === 'current') && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="w-full sm:w-auto"
+                    onClick={handleCancelBooking}
+                  >
+                    Cancel Booking
+                  </Button>
+                )}
+              </div>
+              <Button
+                type="button"
+                variant="default"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  if (selectedCalendarJourney?.packageId) {
+                    router.push(`/packages/${selectedCalendarJourney.packageId}`);
+                  } else if (selectedCalendarJourney?.bookingType === 'flight' || selectedCalendarJourney?.bookingType === 'hotel') {
+                    if (selectedCalendarJourney.id && typeof selectedCalendarJourney.id === 'string' && selectedCalendarJourney.id.startsWith('BK-')) {
+                      router.push(`/dashboard?tab=tickets`);
+                    }
+                  }
+                  setIsDialogOpen(false);
+                }}
+              >
+                View Full Details
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
 
       </div>
