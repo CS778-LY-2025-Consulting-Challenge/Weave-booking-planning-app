@@ -230,6 +230,15 @@ export default function Dashboard() {
       hotelBooked: true,
       type: 'upcoming',
       image: '/images/tokyo-dashboard.jpg',
+      packageDuration: '11 Days / 10 Nights',
+      packagePrice: 2499,
+      packageIncludes: [
+        'Round-trip flights',
+        '10 nights accommodation',
+        'Guided city tours',
+        'Mt. Fuji day trip',
+        'JR Rail Pass',
+      ],
     },
     {
       id: 2,
@@ -240,6 +249,15 @@ export default function Dashboard() {
       hotelBooked: true,
       type: 'upcoming',
       image: '/images/paris-dashboard.jpg',
+      packageDuration: '8 Days / 7 Nights',
+      packagePrice: 1899,
+      packageIncludes: [
+        'Round-trip flights',
+        '7 nights accommodation',
+        'Eiffel Tower access',
+        'Louvre Museum tour',
+        'Seine River cruise',
+      ],
     },
     {
       id: 3,
@@ -283,6 +301,15 @@ export default function Dashboard() {
         'Vienna',
         'Venice',
         'Rome',
+      ],
+      packageDuration: '21 Days / 20 Nights',
+      packagePrice: 4299,
+      packageIncludes: [
+        'Inter-city train passes',
+        '20 nights accommodation',
+        'Guided city tours',
+        'Museum access passes',
+        'Local food experiences',
       ],
     },
     {
