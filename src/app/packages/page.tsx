@@ -248,18 +248,15 @@ export default function Packages() {
     <div className="min-h-screen bg-gray-50">
       {/* Full-Screen Video Hero Section */}
       <div className="relative h-screen overflow-hidden">
-        {/* YouTube Video Background */}
-        <div className="pointer-events-none absolute inset-0 h-full w-full">
-          <iframe
-            className="absolute top-1/2 left-1/2 h-[200vh] w-[200vw] -translate-x-1/2 -translate-y-1/2 scale-150"
-            src="https://www.youtube.com/embed/F02_MVdAqCk?autoplay=1&mute=1&controls=0&showinfo=0&loop=1&playlist=F02_MVdAqCk&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&playsinline=1&vq=hd2160"
-            title="YouTube video player"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-          />
-        </div>
+        {/* S3 Video Background */}
+        <video
+          className="absolute top-1/2 left-1/2 h-full w-full object-cover -translate-x-1/2 -translate-y-1/2"
+          src="https://d30mgvfwc9sz4j.cloudfront.net/hero-videos/packages-hero.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
         <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
 
         {/* Hero Content */}
