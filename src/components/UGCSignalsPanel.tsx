@@ -10,6 +10,8 @@ import {
   TrendingUp,
   Info,
   Loader2,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +30,8 @@ type UGCSignal = {
   commentCount: number;
   priority: 'high' | 'medium' | 'low';
   impactArea: string | null;
+  actionabilityScore?: number; // New field
+  qualityTier?: string; // New field: 'critical' | 'high' | 'standard' | 'low'
   createdAt: string;
 };
 
@@ -84,6 +88,82 @@ export default function UGCSignalsPanel({
   const [signals, setSignals] = useState<UGCSignal[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
+  // Simple client-side deduplication
+  const deduplicateClientSide = (signals: UGCSignal[]) => {
+    console.log('[Dedupe] Input signals:', signals.length);
+    
+    if (!signals || signals.length === 0) {
+      return [];
+    }
+    
+    const seen = new Map<string, UGCSignal>();
+    
+    for (const signal of signals) {
+      if (!signal || !signal.title) {
+        console.warn('[Dedupe] Invalid signal:', signal);
+        continue;
+      }
+      
+      const normalizedTitle = signal.title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      console.log('[Dedupe] Processing:', normalizedTitle);
+      
+      // Check for similar titles
+      let isDuplicate = false;
+      for (const [existingKey, existingSignal] of seen.entries()) {
+        const similarity = calculateTitleSimilarity(normalizedTitle, existingKey);
+        console.log(`[Dedupe] Similarity between "${normalizedTitle}" and "${existingKey}": ${similarity.toFixed(2)}`);
+        
+        if (similarity > 0.6) {
+          isDuplicate = true;
+          console.log('[Dedupe] Found duplicate!');
+          // Keep the one with higher score or more comments
+          if ((signal.actionabilityScore ?? 0.5) > (existingSignal.actionabilityScore ?? 0.5) ||
+              signal.commentCount > existingSignal.commentCount) {
+            seen.delete(existingKey);
+            seen.set(normalizedTitle, signal);
+            console.log('[Dedupe] Replaced with better version');
+          }
+          break;
+        }
+      }
+      
+      if (!isDuplicate) {
+        seen.set(normalizedTitle, signal);
+        console.log('[Dedupe] Added as new signal');
+      }
+    }
+    
+    const result = Array.from(seen.values());
+    console.log('[Dedupe] Output signals:', result.length);
+    return result;
+  };
+
+  const calculateTitleSimilarity = (str1: string, str2: string): number => {
+    // Remove stop words for better matching
+    const stopWords = new Set(['the', 'a', 'an', 'to', 'and', 'or', 'for', 'of', 'in', 'on', 'at']);
+    
+    const getKeyWords = (s: string) => 
+      s.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+    
+    const words1 = getKeyWords(str1);
+    const words2 = getKeyWords(str2);
+    
+    if (words1.length === 0 || words2.length === 0) return 0;
+    
+    const set1 = new Set(words1);
+    const set2 = new Set(words2);
+    const intersection = new Set([...set1].filter(w => set2.has(w)));
+    const union = new Set([...words1, ...words2]);
+    
+    return intersection.size / union.size;
+  };
 
   useEffect(() => {
     fetchSignals();
@@ -92,18 +172,45 @@ export default function UGCSignalsPanel({
   const fetchSignals = async () => {
     try {
       setLoading(true);
+      console.log('[UGCSignalsPanel] Fetching signals for tripId:', tripId);
+      
       const response = await fetch(
         `/api/ugc-signals/generate?tripId=${tripId}`
       );
 
+      console.log('[UGCSignalsPanel] Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to fetch signals');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[UGCSignalsPanel] Error response:', errorData);
+        throw new Error(errorData.details || 'Failed to fetch signals');
       }
 
       const data = await response.json();
-      setSignals(data.signals || []);
+      console.log('[UGCSignalsPanel] Received data:', data);
+      console.log('[UGCSignalsPanel] Signals array:', data.signals);
+      console.log('[UGCSignalsPanel] Signal count:', data.signals?.length);
+      
+      const signalsArray = data.signals || [];
+      
+      if (signalsArray.length === 0) {
+        console.log('[UGCSignalsPanel] No signals to deduplicate');
+        setSignals([]);
+        return;
+      }
+      
+      // Client-side deduplication based on title similarity
+      try {
+        const deduplicatedSignals = deduplicateClientSide(signalsArray);
+        console.log('[UGCSignalsPanel] After deduplication:', deduplicatedSignals.length);
+        setSignals(deduplicatedSignals);
+      } catch (dedupeError) {
+        console.error('[UGCSignalsPanel] Deduplication error:', dedupeError);
+        // Fallback: use original signals without deduplication
+        setSignals(signalsArray);
+      }
     } catch (error) {
-      console.error('Error fetching signals:', error);
+      console.error('[UGCSignalsPanel] Error fetching signals:', error);
       // Don't show error toast on initial load - signals might not exist yet
     } finally {
       setLoading(false);
@@ -202,6 +309,15 @@ export default function UGCSignalsPanel({
   const highPrioritySignals = signals.filter((s) => s.priority === 'high');
   const otherSignals = signals.filter((s) => s.priority !== 'high');
 
+  // Determine which signals to show based on showAll state
+  const totalSignals = signals.length;
+  const shouldShowLoadMore = totalSignals > 2 && !showAll;
+  
+  // When collapsed, show max 2 signals
+  const displayedSignals = shouldShowLoadMore 
+    ? signals.slice(0, 2)
+    : signals;
+
   return (
     <Card>
       <CardHeader>
@@ -236,22 +352,37 @@ export default function UGCSignalsPanel({
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* High Priority Signals */}
-        {highPrioritySignals.length > 0 && (
-          <div className="space-y-2">
-            {highPrioritySignals.map((signal, index) => (
-              <SignalCard key={signal.id} signal={signal} index={index} />
-            ))}
-          </div>
+        {/* Display signals */}
+        <div className="space-y-2">
+          {displayedSignals.map((signal, index) => (
+            <SignalCard key={signal.id} signal={signal} index={index} />
+          ))}
+        </div>
+
+        {/* Load More Button */}
+        {shouldShowLoadMore && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAll(true)}
+            className="w-full gap-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+          >
+            <ChevronDown className="h-4 w-4" />
+            Load More ({totalSignals - 2} more insights)
+          </Button>
         )}
 
-        {/* Other Signals */}
-        {otherSignals.length > 0 && (
-          <div className="space-y-2">
-            {otherSignals.map((signal, index) => (
-              <SignalCard key={signal.id} signal={signal} index={index + highPrioritySignals.length} />
-            ))}
-          </div>
+        {/* Show Less Button */}
+        {showAll && totalSignals > 2 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAll(false)}
+            className="w-full gap-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+          >
+            <ChevronUp className="h-4 w-4" />
+            Show Less
+          </Button>
         )}
       </CardContent>
     </Card>

@@ -209,6 +209,10 @@ model UGCSignal {
   commentCount    Int           @default(1)   // Number of comments this signal is based on
   commentIds      String        // JSON array of comment IDs
   
+  // Quality Assessment
+  actionabilityScore Float      @default(0.5) // 0-1, how actionable/useful this signal is
+  qualityTier        String     @default("standard") // "critical", "high", "standard", "low"
+  
   // Impact Assessment
   priority        String        @default("medium") // "high", "medium", "low"
   impactArea      String?       // Which part of trip is affected (e.g., "Day 2 afternoon")

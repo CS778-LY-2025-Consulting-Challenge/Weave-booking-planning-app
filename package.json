@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build"
+    "build": "next build",
+    "db:seed": "tsx scripts/seed-community-trips.ts"
   },
   "dependencies": {
     "@aws-sdk/client-cloudfront": "^3.893.0",
