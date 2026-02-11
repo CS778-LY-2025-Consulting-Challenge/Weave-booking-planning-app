@@ -18,7 +18,7 @@ export default function TrendingDestinations() {
     },
     {
       id: 'kochi',
-      location: 'Kochi, Japan',
+      location: 'Kochi, Japan.',
       flag: '🇯🇵',
       stats: 'Cherry blossoms, coastal towns, slow travel',
       themeColor: '330 70% 45%',
