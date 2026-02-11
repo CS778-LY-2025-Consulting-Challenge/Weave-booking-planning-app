@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
-import { saveFlightBooking } from '@/lib/bookingUtils';
+import { saveBooking } from '@/lib/bookings';
+import { useUser } from '@clerk/nextjs';
 
 interface FlightBookingConfirmation {
   bookingReference: string;
@@ -44,6 +45,7 @@ interface FlightBookingConfirmation {
 export default function FlightConfirmationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useUser();
   const sessionId = searchParams.get('session_id');
   const status = searchParams.get('status');
 
@@ -54,57 +56,114 @@ export default function FlightConfirmationPage() {
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
-        // Fetch booking from localStorage
-        const storedBookings = localStorage.getItem('flightBookings');
-        if (storedBookings) {
-          const bookings = JSON.parse(storedBookings);
-          const foundBooking = bookings.find((b: any) => b.stripeSessionId === sessionId);
-          
-          if (foundBooking) {
-            // Update status to success
-            foundBooking.status = status === 'success' ? 'success' : 'failed';
-            
-            // Update in localStorage
-            const updatedBookings = bookings.map((b: any) => 
-              b.stripeSessionId === sessionId ? foundBooking : b
-            );
-            localStorage.setItem('flightBookings', JSON.stringify(updatedBookings));
-            
-            setBooking(foundBooking);
-            
-            if (status === 'success') {
-              toast.success('Flight booked successfully! Check your email for details.');
-              
-              // 🎫 Save to Dashboard Tickets
-              console.log('Saving flight to dashboard tickets:', foundBooking);
-              
-              // Extract clean airport codes from the "City (CODE)" format
-              const fromCode = foundBooking.flight.from.split('(')[1]?.replace(')', '') || foundBooking.flight.from;
-              const toCode = foundBooking.flight.to.split('(')[1]?.replace(')', '') || foundBooking.flight.to;
-              
-              saveFlightBooking({
-                id: foundBooking.bookingReference,
-                from: fromCode,
-                to: toCode,
-                departureDate: foundBooking.bookingDate.split('T')[0],
-                airline: foundBooking.flight.airline,
-                flightNumber: foundBooking.flight.id || `${foundBooking.flight.airline.substring(0, 2)}${Math.floor(Math.random() * 9000) + 1000}`,
-                cabinClass: foundBooking.flight.cabin,
-                price: foundBooking.totalPrice,
-              });
-              
-              console.log('Flight booking saved to dashboard successfully!');
-            }
-          } else {
-            setError('Booking not found');
+        if (!sessionId) {
+          setError('No session ID provided');
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch session details from API
+        const res = await fetch(`/api/payment/get-session?session_id=${sessionId}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to retrieve session');
+        }
+
+        const session = data.session;
+        const meta = data.metadata || {};
+        const isPaid = data.paymentStatus === 'paid' || status === 'success';
+
+        if (meta.type !== 'flight') {
+          // Fallback to local storage if it's not a flight session (or mixed up)
+          // But generally we expect flight type here.
+          console.warn('Session is not for a flight', meta.type);
+        }
+
+        const flightDetails: FlightBookingConfirmation = {
+          bookingReference: meta.bookingRef || session.id.slice(-6).toUpperCase(),
+          flight: {
+            id: meta.flightId || 'unknown',
+            airline: meta.airline || 'Unknown Airline',
+            from: meta.from || 'Unknown',
+            to: meta.to || 'Unknown',
+            departure: meta.departureDate || 'TBD',
+            arrival: meta.arrivalTime || 'TBD',
+            duration: meta.duration || 'TBD',
+            stops: 'Non-stop', // Default
+            cabin: 'Economy', // Default
+            price: Number(meta.price || session.amount_total / 100 || 0),
+          },
+          passengers: Array.from({ length: Number(meta.passengers || 1) }).map((_, i) => ({
+            fullName: i === 0 && user?.fullName ? user.fullName : `Passenger ${i + 1}`,
+            email: i === 0 && user?.primaryEmailAddress?.emailAddress ? user.primaryEmailAddress.emailAddress : '',
+          })),
+          totalPrice: Number(meta.price || session.amount_total / 100 || 0),
+          status: isPaid ? 'success' : 'pending',
+          bookingDate: new Date().toISOString(),
+          stripeSessionId: session.id,
+        };
+
+        setBooking(flightDetails);
+
+        // Save to Firebase if user is logged in and payment is successful
+        console.log('🔍 Firebase Save Check:', {
+          isPaid,
+          userId: user?.id,
+          hasUser: !!user,
+          sessionId: session.id
+        });
+
+        if (isPaid && user?.id) {
+          try {
+            console.log('💾 Attempting to save flight booking to Firebase...');
+            const bookingData = {
+              type: 'flight' as const,
+              status: 'confirmed' as const,
+              userId: user.id,
+              stripeSessionId: session.id,
+              details: {
+                ...flightDetails.flight,
+                passengers: flightDetails.passengers,
+                bookingReference: flightDetails.bookingReference,
+                fromCode: meta.fromCode,
+                toCode: meta.toCode,
+                flightNumber: meta.flightNumber,
+                bookingDate: flightDetails.bookingDate,
+              }
+            };
+            console.log('📦 Booking data to save:', bookingData);
+
+            await saveBooking(user.id, bookingData);
+
+            console.log('✅ SUCCESS: Flight booking synced to Firebase!');
+            toast.success('Booking saved to your profile');
+          } catch (firebaseError) {
+            console.error('❌ FAILED to sync booking to Firebase:', firebaseError);
+            toast.error('Booking confirmed but failed to save to profile');
           }
         } else {
-          setError('No booking information found');
+          console.warn('⚠️ Skipping Firebase save:', isPaid ? 'User not logged in' : 'Payment not completed');
         }
+
       } catch (err) {
         console.error('Error loading booking details:', err);
         setError(err instanceof Error ? err.message : 'Failed to load booking details');
-        toast.error('Failed to load booking confirmation');
+
+        // Fallback: Try LocalStorage if API fails
+        const storedBookings = localStorage.getItem('flightBookings');
+        if (storedBookings) {
+          try {
+            const bookings = JSON.parse(storedBookings);
+            const foundBooking = bookings.find((b: any) => b.stripeSessionId === sessionId);
+            if (foundBooking) {
+              setBooking(foundBooking);
+              setError(null); // Clear error if fallback works
+            }
+          } catch (e) {
+            console.error('Local storage fallback failed', e);
+          }
+        }
       } finally {
         setIsLoading(false);
       }
@@ -113,10 +172,11 @@ export default function FlightConfirmationPage() {
     if (sessionId) {
       fetchBookingDetails();
     } else {
-      setError('No session ID provided');
+      // Try local storage if no session ID but maybe just browsing? 
+      // Actually, without session ID we can't really confirm much, but let's leave the error state.
       setIsLoading(false);
     }
-  }, [sessionId, status]);
+  }, [sessionId, status, user?.id, user?.fullName, user?.primaryEmailAddress?.emailAddress]);
 
   if (isLoading) {
     return (

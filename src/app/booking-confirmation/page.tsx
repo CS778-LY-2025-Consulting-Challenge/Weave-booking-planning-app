@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,29 +15,41 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
+import { useUser } from '@clerk/nextjs';
+import { saveBooking } from '@/lib/bookings';
 
 interface BookingConfirmation {
   bookingId: string;
+  type: 'hotel' | 'package';
+  // Hotel fields
   hotelId?: string;
-  hotelName: string;
+  hotelName?: string;
   hotelLocation?: string;
   roomId?: string;
-  roomName: string;
-  checkInDate: string;
-  checkOutDate: string;
+  roomName?: string;
+  checkInDate?: string;
+  checkOutDate?: string;
+  // Package fields
+  pkgId?: string;
+  pkgName?: string;
+  destination?: string;
+  startDate?: string;
+  endDate?: string;
+  tier?: string;
+  // Common
   guests: number;
   totalPrice: number;
-  pricePerNight?: number;
   status: 'success' | 'pending' | 'failed' | 'confirmed';
   confirmationEmail?: string;
-  nights: number;
-  isMockBooking?: boolean;
+  nights?: number;
   bookingDate?: string;
+  stripeSessionId?: string;
 }
 
 export default function BookingConfirmationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useUser();
   const bookingId = searchParams.get('bookingId');
   const sessionId = searchParams.get('session_id');
   const status = searchParams.get('status');
@@ -46,54 +58,87 @@ export default function BookingConfirmationPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Track processed session to prevent duplicate saves
+  const processedSessionRef = useRef<string | null>(null);
+
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
-        // First, check for mock booking in localStorage
+        // 1. If we have a session ID, fetch from API
+        if (sessionId) {
+          try {
+            const res = await fetch(`/api/payment/get-session?session_id=${sessionId}`);
+            const data = await res.json();
+
+            if (res.ok && data.metadata) {
+              const meta = data.metadata;
+              const isSuccess = data.paymentStatus === 'paid' || status === 'success';
+
+              const confirmedBooking: BookingConfirmation = {
+                bookingId: `BK-${sessionId.substring(0, 8).toUpperCase()}`,
+                type: meta.type || 'hotel',
+                guests: Number(meta.guests || meta.travelers || 1),
+                totalPrice: Number(meta.price || 0),
+                status: isSuccess ? 'confirmed' : 'pending',
+                stripeSessionId: sessionId,
+                bookingDate: new Date().toISOString(),
+              };
+
+              if (meta.type === 'package') {
+                confirmedBooking.pkgId = meta.pkgId;
+                confirmedBooking.pkgName = meta.pkgName;
+                confirmedBooking.destination = meta.destination;
+                confirmedBooking.startDate = meta.startDate;
+                confirmedBooking.endDate = meta.endDate;
+                confirmedBooking.tier = meta.tier;
+              } else {
+                confirmedBooking.hotelId = meta.hotelId;
+                confirmedBooking.hotelName = meta.hotelName;
+                confirmedBooking.hotelLocation = meta.hotelLocation;
+                confirmedBooking.roomId = meta.roomId;
+                confirmedBooking.roomName = meta.roomName;
+                confirmedBooking.checkInDate = meta.checkInDate;
+                confirmedBooking.checkOutDate = meta.checkOutDate;
+                // Calculate nights
+                if (meta.checkInDate && meta.checkOutDate) {
+                  const start = new Date(meta.checkInDate);
+                  const end = new Date(meta.checkOutDate);
+                  confirmedBooking.nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                }
+              }
+
+              if (meta.userEmail) {
+                confirmedBooking.confirmationEmail = meta.userEmail;
+              }
+
+              setBooking(confirmedBooking);
+              return;
+            }
+          } catch (err) {
+            console.error("Error fetching session:", err);
+          }
+        }
+
+        // 2. Fallback: LocalStorage (Mock Hotel Flow)
         if (bookingId) {
           const storedBookings = localStorage.getItem('hotelBookings');
           if (storedBookings) {
             const bookings = JSON.parse(storedBookings);
             const foundBooking = bookings.find((b: any) => b.bookingId === bookingId);
-            
             if (foundBooking) {
-              setBooking(foundBooking);
+              setBooking({ ...foundBooking, type: 'hotel' });
               setIsLoading(false);
               return;
             }
           }
         }
 
-        // If we have a session ID, fetch from backend
-        if (sessionId) {
-          // In production, fetch booking details from your backend
-          const mockBooking: BookingConfirmation = {
-            bookingId: `BK-${Date.now()}`,
-            hotelName: 'Luxury City Hotel',
-            roomName: 'Deluxe Room',
-            checkInDate: '2026-02-01',
-            checkOutDate: '2026-02-05',
-            guests: 2,
-            totalPrice: 1400,
-            status: status === 'success' ? 'success' : status === 'cancelled' ? 'failed' : 'pending',
-            confirmationEmail: 'guest@example.com',
-            nights: 4,
-            isMockBooking: false,
-          };
-
-          setBooking(mockBooking);
-
-          if (status === 'success') {
-            toast.success('Booking confirmed! Check your email for details.');
-          } else if (status === 'cancelled') {
-            toast.error('Booking was cancelled');
-          }
-        } else {
+        if (!bookingId && !sessionId) {
           setError('No booking information found');
         }
+
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load booking details');
-        toast.error('Failed to load booking confirmation');
       } finally {
         setIsLoading(false);
       }
@@ -101,6 +146,36 @@ export default function BookingConfirmationPage() {
 
     fetchBookingDetails();
   }, [bookingId, sessionId, status]);
+
+  // Separate effect to handle saving once user is loaded and booking is ready
+  useEffect(() => {
+    if (user?.id && booking && booking.status === 'confirmed' && booking.stripeSessionId) {
+      // Prevent duplicate saves for the same session
+      if (processedSessionRef.current === booking.stripeSessionId) {
+        return;
+      }
+
+      const syncToFirebase = async () => {
+        try {
+          await saveBooking(user.id, {
+            type: booking.type || 'hotel',
+            status: 'confirmed',
+            userId: user.id,
+            stripeSessionId: booking.stripeSessionId!,
+            details: booking
+          });
+          console.log('Booking synced to Firebase for user:', user.id);
+          processedSessionRef.current = booking.stripeSessionId!; // Mark as processed
+          toast.success('Booking saved to your profile!');
+        } catch (err) {
+          console.error('Failed to sync booking to Firebase:', err);
+          toast.error('Failed to save booking to profile');
+        }
+      };
+
+      syncToFirebase();
+    }
+  }, [user?.id, booking]);
 
   if (isLoading) {
     return (
@@ -123,8 +198,8 @@ export default function BookingConfirmationPage() {
                 <XCircle className="mx-auto mb-4 size-16 text-red-600" />
                 <h1 className="mb-2 text-2xl font-bold text-red-900">Booking Not Found</h1>
                 <p className="mb-6 text-red-700">{error || 'Unable to find your booking'}</p>
-                <Button onClick={() => router.push('/hotels')}>
-                  Back to Hotels
+                <Button onClick={() => router.push('/')}>
+                  Back to Home
                 </Button>
               </div>
             </CardContent>
@@ -193,59 +268,60 @@ export default function BookingConfirmationPage() {
               <div className="rounded-lg bg-gray-50 p-4">
                 <p className="text-sm text-gray-600">Confirmation Number</p>
                 <p className="text-2xl font-bold text-gray-900 break-all">{booking.bookingId}</p>
-                <p className="mt-2 text-xs text-gray-500">
-                  Save this number for your records
-                </p>
               </div>
 
-              {/* Hotel & Room Info */}
+              {/* Package/Hotel Info */}
               <div className="space-y-4">
-                <h3 className="font-semibold">Hotel Information</h3>
+                <h3 className="font-semibold">{booking.type === 'package' ? 'Package Information' : 'Hotel Information'}</h3>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <MapPin className="mt-1 size-5 flex-shrink-0 text-blue-600" />
                     <div>
-                      <p className="text-sm text-gray-600">Hotel</p>
-                      <p className="font-semibold">{booking.hotelName}</p>
-                      {booking.hotelLocation && (
-                        <p className="text-sm text-gray-500">{booking.hotelLocation}</p>
+                      <p className="text-sm text-gray-600">{booking.type === 'package' ? 'Destination' : 'Hotel'}</p>
+                      <p className="font-semibold">{booking.type === 'package' ? booking.pkgName : booking.hotelName}</p>
+                      {(booking.hotelLocation || booking.destination) && (
+                        <p className="text-sm text-gray-500">{booking.destination || booking.hotelLocation}</p>
                       )}
                     </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Room Type</p>
-                    <p className="font-semibold">{booking.roomName}</p>
-                  </div>
+                  {booking.type === 'hotel' && (
+                    <div>
+                      <p className="text-sm text-gray-600">Room Type</p>
+                      <p className="font-semibold">{booking.roomName}</p>
+                    </div>
+                  )}
+                  {booking.type === 'package' && booking.tier && (
+                    <div>
+                      <p className="text-sm text-gray-600">Experience Tier</p>
+                      <p className="font-semibold">{booking.tier}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Check-in & Check-out */}
+              {/* Dates */}
               <div className="space-y-4 border-t pt-6">
-                <h3 className="font-semibold">Stay Details</h3>
+                <h3 className="font-semibold">Trip Dates</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Check-in</p>
+                    <p className="text-sm text-gray-600">Start Date</p>
                     <div className="flex items-center gap-2">
                       <Calendar className="size-4 text-blue-600" />
-                      <p className="font-semibold">{booking.checkInDate}</p>
+                      <p className="font-semibold">{booking.type === 'package' ? booking.startDate : booking.checkInDate}</p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Check-out</p>
+                    <p className="text-sm text-gray-600">End Date</p>
                     <div className="flex items-center gap-2">
                       <Calendar className="size-4 text-blue-600" />
-                      <p className="font-semibold">{booking.checkOutDate}</p>
+                      <p className="font-semibold">{booking.type === 'package' ? booking.endDate : booking.checkOutDate}</p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Nights</p>
-                    <p className="font-semibold">{booking.nights} nights</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Guests</p>
+                    <p className="text-sm text-gray-600">Travelers</p>
                     <div className="flex items-center gap-2">
                       <Users className="size-4 text-blue-600" />
-                      <p className="font-semibold">{booking.guests} guest(s)</p>
+                      <p className="font-semibold">{booking.guests}</p>
                     </div>
                   </div>
                 </div>
@@ -255,100 +331,28 @@ export default function BookingConfirmationPage() {
               <div className="space-y-3 border-t pt-6">
                 <h3 className="font-semibold">Price Summary</h3>
                 <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Nightly rate</span>
-                    <span>${(booking.pricePerNight || booking.totalPrice / booking.nights).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Number of nights</span>
-                    <span>{booking.nights}</span>
-                  </div>
                   <div className="flex justify-between text-lg font-bold border-t pt-2">
                     <span>Total Amount</span>
-                    <span className="text-blue-600">${booking.totalPrice.toFixed(2)}</span>
+                    <span className="text-blue-600">${booking.totalPrice.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
-
-              {/* Booking Date */}
-              {booking.bookingDate && (
-                <div className="rounded-lg bg-blue-50 p-4">
-                  <p className="text-sm text-blue-600">
-                    Booked on: <span className="font-semibold">
-                      {new Date(booking.bookingDate).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </span>
-                  </p>
-                </div>
-              )}
-
-              {/* What's Next */}
-              {isSuccess && (
-                <div className="space-y-3 border-t pt-6">
-                  <h3 className="font-semibold">What's Next?</h3>
-                  <ol className="space-y-2 text-sm text-gray-600">
-                    <li>1. Check your email for the complete booking confirmation</li>
-                    <li>2. Review the cancellation policy and terms</li>
-                    <li>3. Prepare for check-in on {booking.checkInDate}</li>
-                    <li>4. Contact the hotel if you have any questions</li>
-                  </ol>
-                </div>
-              )}
 
               {/* Action Buttons */}
               <div className="space-y-3 border-t pt-6">
                 <Button
-                  onClick={() => router.push('/hotels')}
+                  onClick={() => router.push(booking.type === 'package' ? '/packages' : '/hotels')}
                   className="w-full"
                 >
-                  Book Another Hotel
+                  Book Another {booking.type === 'package' ? 'Package' : 'Hotel'}
                 </Button>
                 <Button
-                  onClick={() => router.push('/profile')}
+                  onClick={() => router.push('/dashboard')}
                   variant="outline"
                   className="w-full"
                 >
-                  View My Bookings
+                  Go to Dashboard
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* FAQ Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Frequently Asked Questions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h4 className="mb-2 font-semibold">Can I modify my booking?</h4>
-                <p className="text-sm text-gray-600">
-                  Yes, you can modify your booking up to 24 hours before check-in. Contact the hotel directly using the confirmation number.
-                </p>
-              </div>
-              <div>
-                <h4 className="mb-2 font-semibold">What is the cancellation policy?</h4>
-                <p className="text-sm text-gray-600">
-                  Free cancellation up to 24 hours before check-in. Refer to your confirmation for specific details.
-                </p>
-              </div>
-              <div>
-                <h4 className="mb-2 font-semibold">When will I receive my confirmation email?</h4>
-                <p className="text-sm text-gray-600">
-                  You should receive a confirmation email within the next few minutes. Please check your spam folder if you don't see it in your inbox.
-                </p>
               </div>
             </CardContent>
           </Card>

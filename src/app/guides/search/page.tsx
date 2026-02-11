@@ -563,7 +563,8 @@ function GuideSearchResults() {
         setCurrentBooking(booking);
         setBookingDialogOpen(false);
         setTimeout(() => {
-            setVideoCallOpen(true);
+            const roomID = booking.guide?.id || `guide-${Date.now()}`;
+            window.open(`/video-call.html?roomID=${roomID}`, '_blank', 'noopener,noreferrer');
         }, 500);
     };
 
@@ -751,7 +752,7 @@ function GuideSearchResults() {
             <GuideBookingDialog
                 open={bookingDialogOpen}
                 onOpenChange={setBookingDialogOpen}
-                guide={bookingGuide}
+                guide={bookingGuide as any}
                 onBookingConfirmed={handleBookingConfirmed}
             />
 
@@ -761,7 +762,7 @@ function GuideSearchResults() {
                     setVideoCallOpen(false);
                     setCurrentBooking(null);
                 }}
-                roomID={currentBooking?.guide.id.toString()}
+                roomID={currentBooking && currentBooking.guide && currentBooking.guide.id ? currentBooking.guide.id.toString() : undefined}
             />
 
             {/* Full Screen Video Overlay when playing */}

@@ -30,6 +30,7 @@ import {
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useUser } from '@clerk/nextjs';
 
 interface Flight {
   id: string;
@@ -43,6 +44,8 @@ interface Flight {
   cabin: string;
   price: number;
   logo: string;
+  fromCode?: string;
+  toCode?: string;
   departureTime: 'morning' | 'afternoon' | 'evening';
 }
 
@@ -95,13 +98,16 @@ interface FlightBookingFlowProps {
   flight: Flight;
   totalPassengers: number;
   onClose: () => void;
+  selectedDate: Date;
 }
 
 export function FlightBookingFlow({
   flight,
   totalPassengers,
   onClose,
+  selectedDate,
 }: FlightBookingFlowProps) {
+  const { user } = useUser();
   const [step, setStep] = useState(1);
   const [booking, setBooking] = useState<BookingState>({
     ...INITIAL_BOOKING_STATE,
@@ -181,10 +187,62 @@ export function FlightBookingFlow({
       // Generate booking reference before creating checkout session
       const bookingRef = `WV${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
+      // Validate selectedDate first - ensure it's a valid Date object
+      let validDate: Date;
+      if (!selectedDate || isNaN(new Date(selectedDate).getTime())) {
+        console.warn('[FlightBooking] Invalid selectedDate received, using current date as fallback');
+        validDate = new Date();
+      } else {
+        validDate = new Date(selectedDate);
+      }
+
+      // Construct proper date object combining selectedDate and flight time
+      // flight.departure is like "10:30 AM"
+      const timeString = booking.flight?.departure || '12:00 PM';
+      const [time, period] = timeString.split(' ');
+      const [hours, minutes] = time.split(':');
+
+      const flightDate = new Date(validDate);
+
+      // Determine hour and minute
+      let hour = 12;
+      let minute = 0;
+
+      if (hours && !isNaN(parseInt(hours))) {
+        hour = parseInt(hours);
+      }
+
+      if (minutes && !isNaN(parseInt(minutes))) {
+        minute = parseInt(minutes);
+      }
+
+      if (period === 'PM' && hour !== 12) hour += 12;
+      if (period === 'AM' && hour === 12) hour = 0;
+
+      // Check if flightDate is valid before setting hours
+      if (isNaN(flightDate.getTime())) {
+        console.warn('[FlightBooking] Invalid selectedDate, defaulting to now');
+        // Reset to current date if invalid
+        flightDate.setTime(Date.now());
+      }
+
+      flightDate.setHours(hour, minute, 0, 0);
+
+      // Final check
+      let formattedDepartureDate: string;
+      if (isNaN(flightDate.getTime())) {
+        formattedDepartureDate = new Date().toISOString();
+      } else {
+        formattedDepartureDate = flightDate.toISOString();
+      }
+
       // Save booking data to localStorage BEFORE redirecting to Stripe
       const bookingData = {
         bookingReference: bookingRef,
-        flight: booking.flight,
+        flight: {
+          ...booking.flight,
+          departure: formattedDepartureDate // Use proper ISO date
+        },
         passengers: booking.passengers,
         extras: booking.extras,
         totalPrice: prices.total,
@@ -201,12 +259,15 @@ export function FlightBookingFlow({
           flightId: booking.flight?.id,
           airline: booking.flight?.airline,
           from: booking.flight?.from,
+          fromCode: booking.flight?.fromCode,
           to: booking.flight?.to,
-          departure: booking.flight?.departure,
+          toCode: booking.flight?.toCode,
+          departure: formattedDepartureDate, // Pass proper ISO date to API
           arrival: booking.flight?.arrival,
+          duration: booking.flight?.duration,
           passengers: totalPassengers,
           totalPrice: prices.total,
-          userId: 'user-123', // Replace with actual user ID from auth
+          userId: user?.id || 'guest', // Use actual user ID
           bookingReference: bookingRef, // Include booking reference for tracking
         }),
       });
@@ -253,13 +314,12 @@ export function FlightBookingFlow({
           {[1, 2, 3, 4, 5].map((stepNum) => (
             <div
               key={stepNum}
-              className={`flex-1 h-2 rounded-full transition-all ${
-                stepNum <= step
-                  ? 'bg-blue-600'
-                  : stepNum === step + 1
-                    ? 'bg-blue-300'
-                    : 'bg-gray-200'
-              }`}
+              className={`flex-1 h-2 rounded-full transition-all ${stepNum <= step
+                ? 'bg-blue-600'
+                : stepNum === step + 1
+                  ? 'bg-blue-300'
+                  : 'bg-gray-200'
+                }`}
             />
           ))}
         </div>
@@ -518,7 +578,7 @@ export function FlightBookingFlow({
 
             <div className="space-y-4">
               {/* Seat Upgrade */}
-              <Card className="border-gray-200 cursor-pointer hover:border-blue-400" 
+              <Card className="border-gray-200 cursor-pointer hover:border-blue-400"
                 onClick={() =>
                   setBooking({
                     ...booking,
@@ -541,7 +601,7 @@ export function FlightBookingFlow({
                       <input
                         type="checkbox"
                         checked={booking.extras.seatUpgrade}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         className="h-4 w-4"
                       />
                       <p className="text-sm font-semibold mt-2">
@@ -607,7 +667,7 @@ export function FlightBookingFlow({
                       <input
                         type="checkbox"
                         checked={booking.extras.baggageUpgrade}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         className="h-4 w-4"
                       />
                       <p className="text-sm font-semibold mt-2">
@@ -642,7 +702,7 @@ export function FlightBookingFlow({
                       <input
                         type="checkbox"
                         checked={booking.extras.insurance}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         className="h-4 w-4"
                       />
                       <p className="text-sm font-semibold mt-2">

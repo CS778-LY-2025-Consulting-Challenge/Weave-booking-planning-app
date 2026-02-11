@@ -61,12 +61,12 @@ export default function Navbar() {
     const handleScroll = () => {
       const scrollY = window.scrollY;
       const viewportHeight = window.innerHeight;
-      
+
       if (isHomePage) {
         // Reveal navbar shortly after the hero is in motion
         const revealPoint = viewportHeight * NAVBAR_REVEAL_RATIO;
         const shouldShow = scrollY > revealPoint;
-        
+
         if (shouldShow) {
           // Show on scroll up, hide on scroll down
           if (scrollY < lastScrollY.current || scrollY <= 10) {
@@ -89,17 +89,17 @@ export default function Navbar() {
           setIsVisible(false);
         }
       }
-      
+
       if (isFlightsPage) {
         // Change text color after scrolling past the scroll down button on flights page
         setHasScrolled(scrollY > viewportHeight);
       }
-      
+
       if (isHotelsPage || isDestinationsPage || isJourneysPage || isPackagesPage) {
         // Change text color after scrolling to second page
         setHasScrolled(scrollY > viewportHeight);
       }
-      
+
       lastScrollY.current = scrollY;
     };
 
@@ -154,9 +154,6 @@ export default function Navbar() {
     { href: '/destinations', label: 'Trending Destinations' },
     { href: '/journeys', label: 'Community Journeys' },
     { href: '/guides', label: 'Local Guides' },
-    { href: '/ai-planner', label: 'AI Planner' },
-    { href: '/about', label: 'About' },
-    { href: '/contact', label: 'Contact' },
   ];
 
   return (
@@ -164,7 +161,7 @@ export default function Navbar() {
       className={`fixed top-0 z-50 w-full transition-all duration-500 ${isVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-full opacity-0'}`}
     >
       <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
-        <div className="rounded-full border border-white/20 bg-black/30 px-4 py-2 shadow-2xl backdrop-blur-xl text-white" style={{background: 'linear-gradient(90deg, rgba(34,34,34,0.85) 0%, rgba(34,34,34,0.7) 50%, rgba(34,34,34,0.85) 100%)'}}>
+        <div className="rounded-full border border-white/20 bg-black/30 px-4 py-2 shadow-2xl backdrop-blur-xl text-white" style={{ background: 'linear-gradient(90deg, rgba(34,34,34,0.85) 0%, rgba(34,34,34,0.7) 50%, rgba(34,34,34,0.85) 100%)' }}>
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link
@@ -176,7 +173,7 @@ export default function Navbar() {
 
             {/* Desktop Navigation */}
             <div className="hidden items-center gap-6 xl:flex">
-              {navLinks.slice(0, 7).map((link) => (
+              {navLinks.slice(0, 8).map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -211,6 +208,13 @@ export default function Navbar() {
                             <LayoutDashboard className="size-4" />
                             Dashboard
                           </button>
+                          <button
+                            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10"
+                            onClick={() => { setDropdownOpen(false); router.push('/budget'); }}
+                          >
+                            <LayoutDashboard className="size-4" />
+                            My Budgets
+                          </button>
                         </div>
                       </div>
                     )}
@@ -240,7 +244,7 @@ export default function Navbar() {
                 <Button
                   onClick={() => router.push('/auth')}
                   size="sm"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-purple-700 text-white"
+                  className="bg-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-gray-100 text-gray-900"
                 >
                   Sign In
                 </Button>
@@ -268,6 +272,7 @@ export default function Navbar() {
                         {link.label}
                       </Link>
                     ))}
+
 
                     {/* Mobile Auth Section */}
                     <SignedIn>
@@ -305,7 +310,7 @@ export default function Navbar() {
                       <div className="my-2 h-px bg-white/20" />
                       <Button
                         onClick={() => router.push('/auth')}
-                        className="mx-2 bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-purple-700 text-white"
+                        className="mx-2 bg-white shadow-lg transition-all duration-300 hover:bg-gray-100 text-gray-900"
                       >
                         Sign In
                       </Button>

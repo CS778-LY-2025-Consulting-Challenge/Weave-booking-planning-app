@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
       to,
       departure,
       arrival,
+      duration,
       passengers,
       totalPrice,
       userId,
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!airline || !from || !to || !totalPrice || !passengers) {
+    if (!airline || !from || !to || totalPrice === undefined || !passengers) {
       return NextResponse.json(
         { error: 'Missing required booking information' },
         { status: 400 }
@@ -66,6 +67,16 @@ export async function POST(request: NextRequest) {
         passengers: passengers.toString(),
         userId: userId || 'guest',
         bookingRef: bookingReference || '',
+        // Add fields for display
+        price: totalPrice.toString(),
+        from,
+        fromCode: body.fromCode || from.substring(0, 3).toUpperCase(),
+        to,
+        toCode: body.toCode || to.substring(0, 3).toUpperCase(),
+        departureDate: departure, // Save full departure string (date + time)
+        arrivalTime: arrival,
+        duration: duration,
+        flightNumber: 'FL' + Math.floor(Math.random() * 1000), // mocked if not available
       },
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/flight-confirmation?session_id={CHECKOUT_SESSION_ID}&status=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/flights?status=cancelled`,

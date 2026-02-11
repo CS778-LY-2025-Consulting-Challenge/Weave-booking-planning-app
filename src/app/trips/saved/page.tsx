@@ -23,7 +23,7 @@ export default function SavedTripsPage() {
 
   useEffect(() => {
     if (!isLoaded) return;
-    
+
     if (!user) {
       router.push('/auth/signin');
       return;
@@ -36,13 +36,13 @@ export default function SavedTripsPage() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await fetch('/api/saved-trips');
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch saved trips');
       }
-      
+
       const data = await response.json();
       setTrips(data);
     } catch (err: any) {
@@ -54,12 +54,12 @@ export default function SavedTripsPage() {
   };
 
   const handleTripClick = (tripId: string) => {
-    router.push(`/ai-planner?tripId=${tripId}`);
+    router.push(`/trips/${tripId}`);
   };
 
   const handleDeleteTrip = async (tripId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (!confirm('Are you sure you want to delete this trip?')) {
       return;
     }

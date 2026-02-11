@@ -44,7 +44,6 @@ import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FlightBookingFlow } from '@/components/FlightBookingFlow';
 import { toast } from 'sonner';
-import { saveFlightBooking } from '@/lib/bookingUtils';
 
 interface Flight {
   id: string;
@@ -58,6 +57,8 @@ interface Flight {
   cabin: string;
   price: number;
   logo: string;
+  fromCode?: string;
+  toCode?: string;
   departureTime: 'morning' | 'afternoon' | 'evening';
 }
 
@@ -181,18 +182,18 @@ export default function FlightBooking() {
     if (fromParam) setFromInput(fromParam);
     if (toParam) setToInput(toParam);
     if (dateParam) {
-        const date = new Date(dateParam);
-        // Valid date check
-        if (!isNaN(date.getTime())) {
-            setDepartureDate(date);
-            setTripType('one-way');
-        }
+      const date = new Date(dateParam);
+      // Valid date check
+      if (!isNaN(date.getTime())) {
+        setDepartureDate(date);
+        setTripType('one-way');
+      }
     }
     if (travellers) {
-        const count = parseInt(travellers);
-        if (!isNaN(count) && count > 0) {
-            setPassengerCounts(prev => ({ ...prev, adults: count }));
-        }
+      const count = parseInt(travellers);
+      if (!isNaN(count) && count > 0) {
+        setPassengerCounts(prev => ({ ...prev, adults: count }));
+      }
     }
   }, [searchParams]);
 
@@ -386,12 +387,14 @@ export default function FlightBooking() {
           const firstFlight = f.flights?.[0] || f;
 
           return {
-            id: index + 100, // Avoid conflict with mock IDs
-            airline: firstFlight.airline || f.airline || 'Unknown Airline',
-            from: firstFlight.departure_airport?.name || f.departure_airport?.name,
-            to: firstFlight.arrival_airport?.name || f.arrival_airport?.name,
-            departure: firstFlight.departure_airport?.time || f.departure_airport?.time,
-            arrival: firstFlight.arrival_airport?.time || f.arrival_airport?.time,
+            id: f.id || index.toString(),
+            airline: f.airline || firstFlight.airline || '',
+            from: firstFlight.departure_airport?.name || f.departure_airport?.name || '',
+            fromCode: firstFlight.departure_airport?.id || '',
+            to: firstFlight.arrival_airport?.name || f.arrival_airport?.name || '',
+            toCode: firstFlight.arrival_airport?.id || '',
+            departure: firstFlight.departure_airport?.time || f.departure_airport?.time || '',
+            arrival: firstFlight.arrival_airport?.time || f.arrival_airport?.time || '',
             duration: f.total_duration
               ? `${Math.floor(f.total_duration / 60)}h ${f.total_duration % 60}m`
               : `${Math.floor((f.duration || 0) / 60)}h ${(f.duration || 0) % 60}m`,
@@ -399,7 +402,7 @@ export default function FlightBooking() {
               ? (f.layovers.length === 0 ? 'Non-stop' : `${f.layovers.length} Stop${f.layovers.length > 1 ? 's' : ''}`)
               : 'Non-stop',
             cabin: f.travel_class || firstFlight.travel_class || 'Economy',
-            price: f.price || 0,
+            price: typeof f.price === 'number' ? f.price : (parseFloat(f.price) || 0),
             logo: pickLogoUrl(firstFlight.airline_logo, f.airline_logo),
             departureTime: timeOfDay,
           };
@@ -444,9 +447,9 @@ export default function FlightBooking() {
     const autoSearch = searchParams.get('autoSearch');
     // Only search if not already searching and haven't auto-searched yet
     if (autoSearch === 'true' && !autoSearchRef.current && fromInput && toInput && departureDate && !isSearching) {
-        // Basic throttle/debounce could be useful but we rely on the flag
-        autoSearchRef.current = true;
-        fetchFlights();
+      // Basic throttle/debounce could be useful but we rely on the flag
+      autoSearchRef.current = true;
+      fetchFlights();
     }
   }, [searchParams, fromInput, toInput, departureDate, isSearching]);
 
@@ -1350,8 +1353,18 @@ export default function FlightBooking() {
         {/* Featured Destinations Section */}
         <div className="mt-12">
           <div className="mb-8 text-center">
-            <h3 className="text-3xl font-bold text-gray-900">Featured Destinations</h3>
-            <p className="mt-2 text-gray-600">Explore our premium flight packages to incredible destinations</p>
+            <h3
+              className="text-3xl font-bold text-gray-900"
+              style={{ fontFamily: '"Times New Roman", Times, serif' }}
+            >
+              Featured Destinations
+            </h3>
+            <p
+              className="mt-2 text-gray-600"
+              style={{ fontFamily: '"Times New Roman", Times, serif' }}
+            >
+              Explore our premium flight packages to incredible destinations
+            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -1409,7 +1422,7 @@ export default function FlightBooking() {
                 key={index}
                 whileHover={{ y: -8 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                onClick={() => setFromInput(destination.city)}
+                onClick={() => router.push('/packages')}
                 className="group cursor-pointer"
               >
                 <div className="relative overflow-hidden rounded-lg bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">
@@ -1454,7 +1467,6 @@ export default function FlightBooking() {
                       <div className="text-sm text-gray-600">from</div>
                       <div className="text-xl font-bold text-gray-900">
                         {destination.price}
-                        <span className="text-xs text-gray-500">*</span>
                       </div>
                     </div>
                   </div>
@@ -1573,7 +1585,9 @@ export default function FlightBooking() {
                         const bookingData = {
                           id: selectedFlight.id.toString(),
                           from: selectedFlight.from.split('(')[1]?.replace(')', '') || selectedFlight.from,
+                          fromCode: selectedFlight.fromCode || selectedFlight.from.split('(')[1]?.replace(')', '') || selectedFlight.from.substring(0, 3).toUpperCase(),
                           to: selectedFlight.to.split('(')[1]?.replace(')', '') || selectedFlight.to,
+                          toCode: selectedFlight.toCode || selectedFlight.to.split('(')[1]?.replace(')', '') || selectedFlight.to.substring(0, 3).toUpperCase(),
                           departureDate: departureDate.toISOString().split('T')[0],
                           airline: selectedFlight.airline,
                           flightNumber: `${selectedFlight.airline.substring(0, 2)}${Math.floor(Math.random() * 9000) + 1000}`,
@@ -1581,15 +1595,12 @@ export default function FlightBooking() {
                           price: selectedFlight.price * totalPassengers,
                         };
 
-                        console.log('Saving booking data:', bookingData);
-                        saveFlightBooking(bookingData);
-
                         // Close dialogs
                         setShowConfirmation(false);
-                        
+
                         // Show success message
                         toast.success('Flight booked successfully! Check your dashboard.');
-                        
+
                         // Wait a bit longer to ensure data is persisted and listener is triggered
                         setTimeout(() => {
                           console.log('Redirecting to dashboard');
@@ -1617,6 +1628,7 @@ export default function FlightBooking() {
           flight={selectedFlight}
           totalPassengers={totalPassengers}
           onClose={() => setShowBookingFlow(false)}
+          selectedDate={departureDate || new Date()}
         />
       )}
     </div>

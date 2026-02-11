@@ -9,18 +9,44 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, User, Crown, MapPin, CreditCard, Check } from 'lucide-react';
+import { MapPin, Check, Loader2, AlertCircle } from 'lucide-react';
 import { LuxuryPackage } from '@/lib/packages';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
 interface Props {
   pkg: LuxuryPackage;
 }
 
+// Zod Schemas
+const travelerSchema = z.object({
+  name: z.string().min(2, "Name is required"),
+  email: z.string().email("Invalid email"),
+  phone: z.string().min(5, "Phone is required"),
+  country: z.string().min(2, "Country is required"),
+  requests: z.string().optional(),
+  dietary: z.string().optional(),
+});
+
+const configSchema = z.object({
+  startDate: z.string().min(1, "Start date is required"),
+  guests: z.number().min(1).max(12),
+  rooms: z.number().min(1).max(6),
+});
+
 export default function PackageBookingFlow({ pkg }: Props) {
   const router = useRouter();
-  // Steps: 0-config, 1-guests, 2-addons, 3-payment
+  const { user } = useUser();
   const [step, setStep] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  // Parse duration to number of days
+  const durationDays = useMemo(() => {
+    const match = pkg.duration.match(/(\d+)\s+Day/i);
+    return match ? parseInt(match[1]) : 7; // Default to 7 if parsing fails
+  }, [pkg.duration]);
 
   const [dates, setDates] = useState<{ start?: string; end?: string }>({});
   const [guests, setGuests] = useState(2);
@@ -38,6 +64,18 @@ export default function PackageBookingFlow({ pkg }: Props) {
     spa: false,
   });
 
+  const [errors, setErrors] = useState<string[]>([]);
+
+  // Update travelers array when guest count changes
+  useEffect(() => {
+    setTravelers(curr => {
+      const newArr = Array.from({ length: guests }, (_, i) =>
+        curr[i] || { name: '', email: '', phone: '', country: '', requests: '', dietary: '' }
+      );
+      return newArr;
+    });
+  }, [guests]);
+
   const basePerPerson = pkg.price;
   const tierMultiplier = tier === 'Suite' ? 1.2 : tier === 'Villa' ? 1.45 : 1.8;
   const addonsTotal = useMemo(() => {
@@ -48,38 +86,97 @@ export default function PackageBookingFlow({ pkg }: Props) {
     if (addons.spa) t += 250 * guests;
     return t;
   }, [addons, guests]);
+
   const subtotal = Math.round(basePerPerson * tierMultiplier * guests);
   const taxes = Math.round(subtotal * 0.12);
   const total = subtotal + taxes + addonsTotal;
 
-  useEffect(() => {
-    setTravelers(Array.from({ length: guests }, () => ({ name: '', email: '', phone: '', country: '', requests: '', dietary: '' })));
-  }, [guests]);
+  const handleDateChange = (date: string) => {
+    if (!date) {
+      setDates({});
+      return;
+    }
+    const start = new Date(date);
+    const end = new Date(start);
+    end.setDate(start.getDate() + durationDays - 1); // -1 because start day counts as day 1
 
-  const stepTitles = ['Trip configuration', 'Guest details', 'Enhancements & add-ons', 'Payment & confirmation'];
-
-  const onConfirm = () => {
-    const booking = {
-      type: 'package' as const,
-      confirmationNumber: 'WV' + Math.random().toString(36).substring(2, 10).toUpperCase(),
-      bookingDate: new Date().toISOString().split('T')[0],
-      destination: pkg.destination,
-      startDate: dates.start || new Date().toISOString().split('T')[0],
-      endDate: dates.end || new Date(Date.now() + 6 * 24 * 3600 * 1000).toISOString().split('T')[0],
-      travelers: guests,
-      price: total,
-      name: travelers[0]?.name || 'Guest Traveler',
-      email: travelers[0]?.email || 'guest@example.com',
-      phone: travelers[0]?.phone || '',
-      packageDetails: {
-        name: pkg.name,
-        duration: pkg.duration,
-        includes: pkg.includes,
-      },
-    };
-    localStorage.setItem('latestBooking', JSON.stringify(booking));
-    router.push('/booking-confirmation');
+    setDates({
+      start: date,
+      end: end.toISOString().split('T')[0]
+    });
   };
+
+  const validateStep = () => {
+    setErrors([]);
+    try {
+      if (step === 0) {
+        configSchema.parse({ startDate: dates.start, guests, rooms });
+      } else if (step === 1) {
+        // Validate all travelers
+        travelers.forEach((t, i) => {
+          try {
+            travelerSchema.parse(t);
+          } catch (e: any) {
+            // Support both Zod v3 (.errors) and v4 (.issues) just in case
+            const issues = e.issues || e.errors || [];
+            const msg = issues[0]?.message || e.message || 'Validation error';
+            throw new Error(`Guest ${i + 1}: ${msg}`);
+          }
+        });
+      }
+      return true;
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        // Zod v4 uses .issues instead of .errors
+        const issues = (error as any).issues || (error as any).errors || [];
+        setErrors(issues.map((e: any) => e.message));
+      } else {
+        setErrors([error.message || 'An unexpected error occurred']);
+      }
+      return false;
+    }
+  };
+
+  const nextStep = () => {
+    if (validateStep()) {
+      setStep(s => s + 1);
+    }
+  };
+
+  const handlePayment = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/payment/create-package-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pkgId: pkg.id,
+          pkgName: pkg.name,
+          destination: pkg.destination,
+          startDate: dates.start,
+          endDate: dates.end,
+          travelers: guests,
+          price: total,
+          userId: user?.id,
+          userEmail: user?.primaryEmailAddress?.emailAddress || travelers[0].email,
+          tier,
+          addons
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || 'Payment initiation failed');
+
+      // Redirect to Stripe
+      window.location.href = data.url;
+    } catch (error: any) {
+      toast.error(error.message);
+      setLoading(false);
+    }
+  };
+
+  const stepTitles = ['Trip configuration', 'Guest details', 'Enhancements & add-ons', 'Confirm & Pay'];
 
   return (
     <div className="min-h-screen bg-white">
@@ -96,6 +193,7 @@ export default function PackageBookingFlow({ pkg }: Props) {
             <div className="text-2xl font-bold text-gray-900">${pkg.price.toLocaleString()} <span className="text-sm font-medium">pp</span></div>
           </div>
         </div>
+
         {/* Step indicator */}
         <div className="mx-auto max-w-6xl px-4 pb-4">
           <div className="grid grid-cols-4 gap-2">
@@ -110,18 +208,45 @@ export default function PackageBookingFlow({ pkg }: Props) {
       </div>
 
       <div className="mx-auto max-w-6xl px-4 py-8">
+
+        {/* Error Display */}
+        {errors.length > 0 && (
+          <div className="mb-6 rounded-md bg-red-50 p-4">
+            <div className="flex">
+              <AlertCircle className="h-5 w-5 text-red-400" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Please fix the following errors:</h3>
+                <ul className="mt-2 list-disc pl-5 text-sm text-red-700">
+                  {errors.map((err, idx) => (
+                    <li key={idx}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Step 1: Configuration */}
         {step === 0 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <Card className="md:col-span-2">
               <CardContent className="space-y-4 p-6">
                 <div>
-                  <Label className="text-gray-700">Travel dates</Label>
-                  <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <Input type="date" value={dates.start || ''} onChange={(e) => setDates((d) => ({ ...d, start: e.target.value }))} />
-                    <Input type="date" value={dates.end || ''} onChange={(e) => setDates((d) => ({ ...d, end: e.target.value }))} />
-                  </div>
+                  <Label className="text-gray-700">Start Date</Label>
+                  <Input
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    value={dates.start || ''}
+                    onChange={(e) => handleDateChange(e.target.value)}
+                    className="mt-2"
+                  />
+                  {dates.end && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      Program ends on: <span className="font-medium text-gray-900">{dates.end}</span> ({durationDays} days)
+                    </p>
+                  )}
                 </div>
+
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <Label>Guests</Label>
@@ -146,7 +271,7 @@ export default function PackageBookingFlow({ pkg }: Props) {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <Button variant="outline" onClick={() => router.push(`/packages/${pkg.id}`)}>Back</Button>
-                  <Button onClick={() => setStep(1)} className="bg-black text-white hover:bg-gray-800">Continue</Button>
+                  <Button onClick={nextStep} className="bg-black text-white hover:bg-gray-800">Continue</Button>
                 </div>
               </CardContent>
             </Card>
@@ -176,27 +301,27 @@ export default function PackageBookingFlow({ pkg }: Props) {
                 <CardContent className="grid grid-cols-1 gap-4 p-6 md:grid-cols-3">
                   <div>
                     <Label>Full name</Label>
-                    <Input value={travelers[i]?.name || ''} onChange={(e) => setTravelers((t) => { const c=[...t]; c[i].name=e.target.value; return c; })} placeholder="John Doe" />
+                    <Input value={travelers[i]?.name || ''} onChange={(e) => setTravelers((t) => { const c = [...t]; c[i].name = e.target.value; return c; })} placeholder="John Doe" />
                   </div>
                   <div>
                     <Label>Email</Label>
-                    <Input value={travelers[i]?.email || ''} onChange={(e) => setTravelers((t) => { const c=[...t]; c[i].email=e.target.value; return c; })} placeholder="john@example.com" />
+                    <Input value={travelers[i]?.email || ''} onChange={(e) => setTravelers((t) => { const c = [...t]; c[i].email = e.target.value; return c; })} placeholder="john@example.com" />
                   </div>
                   <div>
                     <Label>Phone</Label>
-                    <Input value={travelers[i]?.phone || ''} onChange={(e) => setTravelers((t) => { const c=[...t]; c[i].phone=e.target.value; return c; })} placeholder="+1 555 000 0000" />
+                    <Input value={travelers[i]?.phone || ''} onChange={(e) => setTravelers((t) => { const c = [...t]; c[i].phone = e.target.value; return c; })} placeholder="+1 555 000 0000" />
                   </div>
                   <div>
                     <Label>Country</Label>
-                    <Input value={travelers[i]?.country || ''} onChange={(e) => setTravelers((t) => { const c=[...t]; c[i].country=e.target.value; return c; })} placeholder="United States" />
+                    <Input value={travelers[i]?.country || ''} onChange={(e) => setTravelers((t) => { const c = [...t]; c[i].country = e.target.value; return c; })} placeholder="United States" />
                   </div>
                   <div>
                     <Label>Special requests</Label>
-                    <Input value={travelers[i]?.requests || ''} onChange={(e) => setTravelers((t) => { const c=[...t]; c[i].requests=e.target.value; return c; })} placeholder="Dietary, accessibility, preferences" />
+                    <Input value={travelers[i]?.requests || ''} onChange={(e) => setTravelers((t) => { const c = [...t]; c[i].requests = e.target.value; return c; })} placeholder="Dietary, accessibility, preferences" />
                   </div>
                   <div>
                     <Label>Dietary needs</Label>
-                    <Input value={travelers[i]?.dietary || ''} onChange={(e) => setTravelers((t) => { const c=[...t]; c[i].dietary=e.target.value; return c; })} placeholder="Vegan, Gluten-free" />
+                    <Input value={travelers[i]?.dietary || ''} onChange={(e) => setTravelers((t) => { const c = [...t]; c[i].dietary = e.target.value; return c; })} placeholder="Vegan, Gluten-free" />
                   </div>
                 </CardContent>
               </Card>
@@ -204,7 +329,7 @@ export default function PackageBookingFlow({ pkg }: Props) {
 
             <div className="flex items-center justify-between">
               <Button variant="outline" onClick={() => setStep(0)}>Back</Button>
-              <Button onClick={() => setStep(2)} className="bg-black text-white hover:bg-gray-800">Continue</Button>
+              <Button onClick={nextStep} className="bg-black text-white hover:bg-gray-800">Continue</Button>
             </div>
           </motion.div>
         )}
@@ -299,34 +424,53 @@ export default function PackageBookingFlow({ pkg }: Props) {
           </motion.div>
         )}
 
-        {/* Step 4: Payment & confirmation */}
+        {/* Step 4: Confirm & Pay */}
         {step === 3 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <Card className="md:col-span-2">
               <CardContent className="space-y-4 p-6">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <div>
-                    <Label>Cardholder name</Label>
-                    <Input placeholder="John Doe" />
-                  </div>
-                  <div>
-                    <Label>Card number</Label>
-                    <Input placeholder="1234 5678 9012 3456" />
-                  </div>
-                  <div>
-                    <Label>Expiry / CVV</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input placeholder="MM/YY" />
-                      <Input placeholder="123" />
+                <div className="rounded-md bg-gray-50 p-4">
+                  <h3 className="text-lg font-medium text-gray-900">Review your Booking</h3>
+                  <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Package</p>
+                      <p className="text-base text-gray-900">{pkg.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Dates</p>
+                      <p className="text-base text-gray-900">{dates.start} — {dates.end}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Experience</p>
+                      <p className="text-base text-gray-900">{tier} Level</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Guests</p>
+                      <p className="text-base text-gray-900">{guests} traveler(s), {rooms} room(s)</p>
                     </div>
                   </div>
                 </div>
+
                 <Separator />
+
                 <div className="flex items-center justify-between">
                   <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
-                  <Button onClick={onConfirm} className="bg-green-600 text-white hover:bg-green-700">
-                    Confirm your ultra-luxury journey
-                    <Check className="ml-2 size-4" />
+                  <Button
+                    onClick={handlePayment}
+                    className="bg-black text-white hover:bg-gray-800"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        Proceed to Payment
+                        <Check className="ml-2 size-4" />
+                      </>
+                    )}
                   </Button>
                 </div>
               </CardContent>

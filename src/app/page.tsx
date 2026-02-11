@@ -17,6 +17,9 @@ import {
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
+
+
+
 export default function Home() {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -576,6 +579,7 @@ export default function Home() {
         </div>
       </section>
 
+
       {/* Tour Packages Carousel */}
       <section className="bg-white py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -642,7 +646,7 @@ export default function Home() {
                         Get Up To
                       </p>
                       <p
-                        className="text-3xl text-gray-900" 
+                        className="text-3xl text-gray-900"
                         style={{ fontWeight: '700', fontFamily: 'var(--font-mystery-quest)' }}
                       >
                         Discount on Next Booking
@@ -660,7 +664,7 @@ export default function Home() {
                     </button>
                     <button
                       className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-8 py-4 text-sm tracking-wider text-gray-900 uppercase transition-all duration-300 hover:border-gray-400"
-                      onClick={() => router.push('/journeys/1?media=360&day=1')}
+                      onClick={() => window.open('https://www.airpano.com/embed.php?3D=fiordland-new-zealand', '_blank')}
                     >
                       View 360° Examples
                     </button>
@@ -803,6 +807,7 @@ export default function Home() {
           }
         `}</style>
       </section>
-    </div>
+
+    </div >
   );
 }

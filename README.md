@@ -4,7 +4,7 @@
 
 ![Landing Preview](public/home/landing.gif)
 
-Modern, animated travel discovery and booking prototype built with Next.js 16, React 19, TypeScript, and Tailwind CSS v4. Features an interactive AI travel co-pilot (Charizard), rich destination pages, and delightful UI powered by Radix primitives and Framer Motion.
+Modern, animated travel discovery and booking prototype built with Next.js 16, React 19, TypeScript, and Tailwind CSS v4. Features an interactive AI travel co-pilot (Charizard), rich destination pages, and a full booking flow.
 
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React-149ECA?style=for-the-badge&logo=react&logoColor=white)
@@ -20,7 +20,7 @@ Modern, animated travel discovery and booking prototype built with Next.js 16, R
 
 ## Overview
 
-This app showcases a full travel flow: destination discovery, trip planning, and booking preview—wrapped in a polished UX. It includes an AI chat assistant (“Charizard”) that helps users brainstorm and shape itineraries right on the page.
+This app showcases a full travel flow: destination discovery, trip planning, and booking preview—wrapped in a polished UX. It includes an AI chat assistant ("Charizard") that helps users brainstorm itineraries, view flights/hotels, and confirm bookings—all with a responsive, modern design.
 
 ## Features
 
@@ -130,7 +130,7 @@ Tip: You can add `start`: `next start` for production runtime.
 
 ## Environment Variables
 
-No environment variables are required to run the demo. If you add external services (e.g., real flight search, auth, vector stores), place variables in `.env.local` and access via `process.env.NEXT_PUBLIC_*` as appropriate.
+No environment variables are required to run the demo. If you add external services (e.g., real flight search, auth, vector stores), place variables in `.env.local` and access via `process.env.NEXT_PUBLIC_*` or `process.env.*` on the server side.
 
 ## Deployment
 

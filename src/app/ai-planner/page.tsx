@@ -72,8 +72,8 @@ type DayPlan = {
   title: string;
   daySummary?: string; // Short catchy summary of the day (e.g., "Imperial History and Fine Dining")
   summary?: string;
-  weather?: { 
-    condition?: string; 
+  weather?: {
+    condition?: string;
     tempRange?: string;
     text?: string; // fallback
     tempC?: number; // fallback
@@ -184,10 +184,10 @@ const CITY_COUNTRY_MAP: Record<string, string> = {
 const isInternationalTravel = (cityA: string, cityB: string): boolean => {
   const countryA = CITY_COUNTRY_MAP[cityA] || CITY_COUNTRY_MAP[cityA.trim()];
   const countryB = CITY_COUNTRY_MAP[cityB] || CITY_COUNTRY_MAP[cityB.trim()];
-  
+
   // If we can't find country info, assume international for safety if it's a long distance
   if (!countryA || !countryB) return true;
-  
+
   // Different countries = international = plane
   return countryA !== countryB;
 };
@@ -207,7 +207,7 @@ const ActivityCard = ({
   setPlannerState,
   handleApplySuggestion,
 }: { 
-  activity: any, 
+  activity: any,
   onClick: () => void,
   onRemove: () => void,
   onChange: () => void,
@@ -315,19 +315,19 @@ const ActivityCard = ({
           /\+.*$/,  // Remove everything after "+" (e.g., "Sky Tower + SkyWalk" -> "Sky Tower")
           /\s*\(.*\)$/,  // Remove content in parentheses
         ];
-        
+
         for (const pattern of prefixPatterns) {
           query = query.replace(pattern, '');
         }
-        
+
         // Only use the first part if there's a dash or comma
         query = query.split(/[-,]/)[0].trim();
-        
+
         // Limit to first 3-4 words for better matching
         const words = query.split(' ').slice(0, 4).join(' ');
-        
+
         console.log('[ActivityCard] Searching image for:', words, '(original:', activity.title + ')');
-        
+
         const res = await fetch(`/api/unsplash/search?city=${encodeURIComponent(words)}`);
         if (!res.ok) {
           console.warn('[ActivityCard] Failed to fetch image, status:', res.status);
@@ -344,7 +344,7 @@ const ActivityCard = ({
         setIsLoadingImage(false);
       }
     };
-    
+
     fetchImage();
   }, [activity.title, activity.location]);
 
@@ -552,19 +552,19 @@ const ActivityCard = ({
   };
 
   return (
-    <div 
+    <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="group relative flex overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md hover:border-slate-200"
     >
       {/* Left: Image */}
-      <div 
+      <div
         onClick={onClick}
         className="relative h-28 w-32 shrink-0 cursor-pointer overflow-hidden bg-slate-100 sm:h-32 sm:w-40"
       >
         {imageUrl ? (
-          <img 
-            src={imageUrl} 
+          <img
+            src={imageUrl}
             alt={activity.title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
@@ -573,7 +573,7 @@ const ActivityCard = ({
             {activity.type === 'food' ? <Info className="h-8 w-8 opacity-20" /> : <MapPin className="h-8 w-8 opacity-20" />}
           </div>
         )}
-        
+
         {/* Restaurant Badge on Image */}
         {activity.type === 'food' && (
           <div className="absolute top-2 left-2">
@@ -582,7 +582,7 @@ const ActivityCard = ({
             </Badge>
           </div>
         )}
-        
+
         {isLoadingImage && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-100/50">
             <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
@@ -591,7 +591,7 @@ const ActivityCard = ({
       </div>
 
       {/* Right: Info */}
-      <div 
+      <div
         onClick={onClick}
         className="flex flex-1 cursor-pointer flex-col p-3 sm:p-4"
       >
@@ -599,7 +599,7 @@ const ActivityCard = ({
           <h4 className="line-clamp-1 text-sm font-bold text-slate-900 sm:text-base">
             {activity.title}
           </h4>
-          
+
           {/* Action Buttons - Right Top Corner */}
           <div className="flex shrink-0 items-center gap-1">
             {/* UGC Signal Badge - Community Insights */}
@@ -814,14 +814,13 @@ const ActivityCard = ({
                 e.stopPropagation();
                 onChange();
               }}
-              className={`flex items-center gap-1 rounded-lg bg-blue-500 px-2 py-1 text-xs font-medium text-white transition-all hover:bg-blue-600 ${
-                isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
-              }`}
+              className={`flex items-center gap-1 rounded-lg bg-blue-500 px-2 py-1 text-xs font-medium text-white transition-all hover:bg-blue-600 ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
             >
               <Edit3 className="h-3 w-3" />
               <span>Change</span>
             </button>
-            
+
             {/* Dropdown Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -854,9 +853,9 @@ const ActivityCard = ({
               <span className="text-xs font-bold text-green-600">{activity.rating}</span>
               <div className="flex">
                 {[...Array(5)].map((_, i) => (
-                  <Star 
-                    key={i} 
-                    className={`h-2.5 w-2.5 ${i < Math.floor(activity.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-200'}`} 
+                  <Star
+                    key={i}
+                    className={`h-2.5 w-2.5 ${i < Math.floor(activity.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-200'}`}
                   />
                 ))}
               </div>
@@ -1019,9 +1018,19 @@ const GENERATION_STEPS_DATA: ProgressStep[] = [
   { id: 5, label: 'Generating daily itinerary', status: 'pending', estimatedDuration: 6000 },
 ];
 
-export default function AIPlanner() {
+// ... imports
+
+interface AIPlannerProps {
+  tripId?: string;
+}
+
+export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // Prioritize prop tripId, fallback to searchParams
+  const tripIdParam = propTripId || searchParams.get('tripId');
+
   const { user, isLoaded } = useUser();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -1050,7 +1059,7 @@ export default function AIPlanner() {
     activity: any;
     isAdding?: boolean; // true for add mode, false/undefined for replace mode
   } | null>(null);
-  
+
   // Share to community state
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -1092,7 +1101,7 @@ export default function AIPlanner() {
   // Alternatives cache: { "dayNumber-activityIndex": [...alternatives] }
   const [alternativesCache, setAlternativesCache] = useState<Record<string, any[]>>({});
   const [isCaching, setIsCaching] = useState(false);
-  
+
   // Accommodation alternatives cache: { "accommodationIndex": [...alternatives] }
   const [accommodationAlternativesCache, setAccommodationAlternativesCache] = useState<Record<string, any[]>>({});
   const [isCachingAccommodation, setIsCachingAccommodation] = useState(false);
@@ -1113,10 +1122,10 @@ export default function AIPlanner() {
     }
 
     setIsSaving(true);
-    
+
     try {
-      const destination = Array.isArray(activeState.destination) 
-        ? activeState.destination.join(', ') 
+      const destination = Array.isArray(activeState.destination)
+        ? activeState.destination.join(', ')
         : activeState.destination;
 
       const response = await fetch('/api/saved-trips', {
@@ -1195,17 +1204,17 @@ export default function AIPlanner() {
     }
 
     setIsSharing(true);
-    
+
     try {
-      const destination = Array.isArray(activeState.destination) 
-        ? activeState.destination.join(', ') 
+      const destination = Array.isArray(activeState.destination)
+        ? activeState.destination.join(', ')
         : activeState.destination;
 
-      const duration = activeState.summary?.days 
+      const duration = activeState.summary?.days
         ? `${activeState.summary.days} days`
-        : activeState.dates?.durationDays 
-        ? `${activeState.dates.durationDays} days`
-        : '1 day';
+        : activeState.dates?.durationDays
+          ? `${activeState.dates.durationDays} days`
+          : '1 day';
 
       const response = await fetch('/api/community-trips', {
         method: 'POST',
@@ -1237,12 +1246,12 @@ export default function AIPlanner() {
           onClick: () => router.push(`/community-trips/${sharedTrip.id}`),
         },
       });
-      
+
       // Reset all dialog and map states
       setIsShareDialogOpen(false);
       setIsDailyRouteMapOpen(false);
       setSelectedDay(null);
-      
+
     } catch (error) {
       console.error('[Share Trip] Error:', error);
       toast.error('Failed to share trip. Please try again.');
@@ -1254,19 +1263,19 @@ export default function AIPlanner() {
   // Filter day plans by selected city
   const filteredDayPlans = useMemo(() => {
     if (!selectedCity || !activeState.dayPlans) return activeState.dayPlans;
-    
+
     return activeState.dayPlans.filter(dayPlan => {
       // Priority 1: Check if the day plan has a 'city' field (AI explicitly assigned)
       if (dayPlan.city) {
         return dayPlan.city.toLowerCase().includes(selectedCity.toLowerCase());
       }
-      
+
       // Priority 2: Fallback to checking activity locations (for backward compatibility)
       // Add safety check for activities array
       if (!dayPlan.activities || !Array.isArray(dayPlan.activities)) {
         return false;
       }
-      
+
       return dayPlan.activities.some(activity => {
         const location = activity.location || '';
         return location.toLowerCase().includes(selectedCity.toLowerCase());
@@ -1277,7 +1286,7 @@ export default function AIPlanner() {
   // Filter transportation by selected city
   const filteredTransportation = useMemo(() => {
     if (!selectedCity || !activeState.transportation) return activeState.transportation;
-    
+
     return activeState.transportation.filter(transport => {
       const from = transport.from || '';
       const to = transport.to || '';
@@ -1291,7 +1300,7 @@ export default function AIPlanner() {
   // Filter accommodation by selected city
   const filteredAccommodation = useMemo(() => {
     if (!selectedCity || !activeState.accommodation) return activeState.accommodation;
-    
+
     return activeState.accommodation.filter(hotel => {
       const location = hotel.location || '';
       return location.toLowerCase().includes(selectedCity.toLowerCase());
@@ -1301,11 +1310,11 @@ export default function AIPlanner() {
   // Find the next city in the route flow for navigation buttons
   const nextCity = useMemo(() => {
     if (!selectedCity || !activeState.routeFlow) return null;
-    
+
     // Only "stops" (cities in the middle of the routeFlow) are clickable/filterable
     const stops = activeState.routeFlow.filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
     const currentIndex = stops.indexOf(selectedCity);
-    
+
     if (currentIndex !== -1 && currentIndex < stops.length - 1) {
       return stops[currentIndex + 1];
     }
@@ -1315,11 +1324,11 @@ export default function AIPlanner() {
   // Find the previous city in the route flow for navigation buttons
   const previousCity = useMemo(() => {
     if (!selectedCity || !activeState.routeFlow) return null;
-    
+
     // Only "stops" (cities in the middle of the routeFlow) are clickable/filterable
     const stops = activeState.routeFlow.filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
     const currentIndex = stops.indexOf(selectedCity);
-    
+
     if (currentIndex !== -1 && currentIndex > 0) {
       return stops[currentIndex - 1];
     }
@@ -1334,25 +1343,25 @@ export default function AIPlanner() {
         if (act.coords) {
           // Smart type detection based on title keywords
           let detectedType = act.type || 'attraction';
-          
+
           if (!act.type) {
             const title = act.title.toLowerCase();
             const location = (act.location || '').toLowerCase();
             const highlights = (act.highlights || '').toLowerCase();
             const combined = `${title} ${location} ${highlights}`;
-            
+
             // Food/Restaurant keywords
             const foodKeywords = ['food', 'restaurant', 'dinner', 'lunch', 'breakfast', 'brunch', 'cafe', 'coffee', 'dining', 'eat', 'meal', 'sushi', 'ramen', 'cuisine', 'kitchen', 'bar', 'izakaya', 'market', 'snack'];
             // Hotel/Accommodation keywords
             const hotelKeywords = ['hotel', 'accommodation', 'check-in', 'check in', 'hostel', 'inn', 'resort', 'lodge', 'stay'];
-            
+
             if (foodKeywords.some(keyword => combined.includes(keyword))) {
               detectedType = 'food';
             } else if (hotelKeywords.some(keyword => combined.includes(keyword))) {
               detectedType = 'hotel';
             }
           }
-          
+
           points.push({
             name: act.title,
             lat: act.coords.lat,
@@ -1383,11 +1392,11 @@ export default function AIPlanner() {
 
     // Strategy: Use routeFlow (with order and duplicates) + mapPoints (with coordinates)
     // This ensures round trips are correctly displayed
-    
+
     if (activeState.routeFlow && activeState.routeFlow.length > 0 && activeState.mapPoints && activeState.mapPoints.length > 0) {
       // Build ordered route from routeFlow using coordinates from mapPoints
       const orderedRoute: { name: string; lat: number; lng: number }[] = [];
-      
+
       activeState.routeFlow.forEach((cityName) => {
         const cityData = activeState.mapPoints!.find(p => p.name === cityName);
         if (cityData) {
@@ -1397,11 +1406,11 @@ export default function AIPlanner() {
           console.warn('[mapCityPoints] City in routeFlow not found in mapPoints:', cityName);
         }
       });
-      
+
       console.log('[mapCityPoints] Final route from routeFlow:', orderedRoute.map(p => p.name).join(' → '));
       return orderedRoute;
     }
-    
+
     // Fallback: Use mapRoute if available (for backward compatibility)
     if (activeState.mapRoute?.points) {
       const route = activeState.mapRoute.points.map((p) => ({
@@ -1412,7 +1421,7 @@ export default function AIPlanner() {
       console.log('[mapCityPoints] Using mapRoute fallback:', route.map(p => p.name).join(' → '));
       return route;
     }
-    
+
     // Fallback: Just use mapPoints as-is
     if (activeState.mapPoints && activeState.mapPoints.length > 0) {
       console.log('[mapCityPoints] Using mapPoints only:', activeState.mapPoints.map(p => p.name).join(' → '));
@@ -1509,12 +1518,12 @@ export default function AIPlanner() {
     }
 
     console.log('[Unsplash] Fetching image for:', heroCity);
-    
+
     const fetchImage = async () => {
       try {
         const res = await fetch(`/api/unsplash/search?city=${encodeURIComponent(heroCity)}`);
         const data = await res.json();
-        
+
         if (data.imageUrl) {
           console.log('[Unsplash] Image URL received:', data.imageUrl);
           setHeroImageUrl(data.imageUrl);
@@ -1536,15 +1545,15 @@ export default function AIPlanner() {
   useEffect(() => {
     const preloadImages = async () => {
       if (!activeState?.dayPlans || !Array.isArray(activeState.dayPlans)) return;
-      
-      const titlesToPreload = activeState.dayPlans.flatMap(day => 
-        (day?.activities && Array.isArray(day.activities)) 
-          ? day.activities.map(act => act.title).filter(Boolean) 
+
+      const titlesToPreload = activeState.dayPlans.flatMap(day =>
+        (day?.activities && Array.isArray(day.activities))
+          ? day.activities.map(act => act.title).filter(Boolean)
           : []
       ) as string[];
-      
+
       console.log('[ImagePreload] Starting preload for', titlesToPreload.length, 'activities');
-      
+
       // Preload images in background
       for (const title of titlesToPreload) {
         if (title && !activityImageCache[title]) {
@@ -1556,17 +1565,17 @@ export default function AIPlanner() {
               /\+.*$/,
               /\s*\(.*\)$/,
             ];
-            
+
             for (const pattern of prefixPatterns) {
               query = query.replace(pattern, '');
             }
-            
+
             query = query.split(/[-,]/)[0].trim();
             const words = query.split(' ').slice(0, 4).join(' ');
-            
+
             const res = await fetch(`/api/unsplash/search?city=${encodeURIComponent(words)}`);
             const data = await res.json();
-            
+
             if (data.imageUrl) {
               setActivityImageCache(prev => ({ ...prev, [title]: data.imageUrl }));
             }
@@ -1576,7 +1585,7 @@ export default function AIPlanner() {
         }
       }
     };
-    
+
     preloadImages();
   }, [activeState?.dayPlans, activityImageCache]);
 
@@ -1585,7 +1594,7 @@ export default function AIPlanner() {
     const preloadActivityAlternatives = async () => {
       if (!activeState?.dayPlans || !Array.isArray(activeState.dayPlans)) return;
       if (isCaching) return; // Prevent concurrent caching
-      
+
       // Extract unique cities from day plans
       const cities = new Set<string>();
       activeState.dayPlans.forEach(day => {
@@ -1593,15 +1602,15 @@ export default function AIPlanner() {
           cities.add(day.city);
         }
       });
-      
+
       if (cities.size === 0) {
         console.log('[ActivityCache] No cities found in day plans');
         return;
       }
-      
+
       console.log('[ActivityCache] Starting preload for cities:', Array.from(cities));
       setIsCaching(true);
-      
+
       try {
         // Preload alternatives for each city
         for (const city of cities) {
@@ -1611,7 +1620,7 @@ export default function AIPlanner() {
             console.log('[ActivityCache] Already cached for:', city);
             continue;
           }
-          
+
           try {
             console.log('[ActivityCache] Fetching alternatives for:', city);
             const response = await fetch('/api/ai-planner/search-activities', {
@@ -1623,7 +1632,7 @@ export default function AIPlanner() {
                 context: {},
               }),
             });
-            
+
             if (response.ok) {
               const data = await response.json();
               if (data.results && data.results.length > 0) {
@@ -1637,7 +1646,7 @@ export default function AIPlanner() {
           } catch (err) {
             console.error('[ActivityCache] Error fetching alternatives for', city, ':', err);
           }
-          
+
           // Small delay between requests to avoid overwhelming the API
           await new Promise(resolve => setTimeout(resolve, 500));
         }
@@ -1646,7 +1655,7 @@ export default function AIPlanner() {
         console.log('[ActivityCache] Preload complete');
       }
     };
-    
+
     // Only preload when itinerary exists and we haven't cached yet
     if (activeState?.dayPlans?.length && Object.keys(alternativesCache).length === 0) {
       preloadActivityAlternatives();
@@ -1655,28 +1664,30 @@ export default function AIPlanner() {
 
   // Load saved trip from URL parameter (tripId)
   useEffect(() => {
-    const tripId = searchParams?.get('tripId');
+    const tripId = tripIdParam;
     if (!tripId || !isLoaded || !user) return;
 
     const loadSavedTrip = async () => {
       try {
         console.log('[LoadTrip] Loading saved trip:', tripId);
         const response = await fetch(`/api/saved-trips/${tripId}`);
-        
+
         if (!response.ok) {
           throw new Error('Failed to load trip');
         }
 
         const savedTrip = await response.json();
-        
+
         // Restore planner state
         let restoredState: TripState | null = null;
         if (savedTrip.plannerState) {
-          restoredState = typeof savedTrip.plannerState === 'string' 
-            ? JSON.parse(savedTrip.plannerState) 
+          restoredState = typeof savedTrip.plannerState === 'string'
+            ? JSON.parse(savedTrip.plannerState)
             : savedTrip.plannerState;
-          setPlannerState(restoredState);
-          console.log('[LoadTrip] Restored planner state:', restoredState.tripTitle);
+          if (restoredState) {
+            setPlannerState(restoredState);
+            console.log('[LoadTrip] Restored planner state:', restoredState.tripTitle);
+          }
         }
 
         // Restore chat history
@@ -1685,7 +1696,7 @@ export default function AIPlanner() {
           const restoredMessages = typeof savedTrip.chatHistory === 'string'
             ? JSON.parse(savedTrip.chatHistory)
             : savedTrip.chatHistory;
-          
+
           // Check if there's meaningful chat history (more than just the initial greeting)
           if (restoredMessages.length > 1) {
             setMessages(restoredMessages);
@@ -1696,20 +1707,20 @@ export default function AIPlanner() {
 
         // If no chat history (imported trip or new trip), generate initial greeting with recommendations
         if (!hasExistingChat && restoredState) {
-          const destination = Array.isArray(restoredState.destination) 
-            ? restoredState.destination.join(' and ') 
+          const destination = Array.isArray(restoredState.destination)
+            ? restoredState.destination.join(' and ')
             : restoredState.destination || 'your destination';
-          
+
           const tripTitle = restoredState.tripTitle || savedTrip.title || 'your trip';
           const duration = restoredState.dates?.durationDays || restoredState.summary?.days;
-          
+
           let greetingMessage = `Hey! 🔥 Welcome back to **${tripTitle}**!\n\n`;
           greetingMessage += `I see you're planning an adventure to **${destination}**`;
-          
+
           if (duration) {
             greetingMessage += ` for **${duration} days**`;
           }
-          
+
           greetingMessage += `! Excited to help you make the most of this journey.\n\n`;
           greetingMessage += `**Here's what I can help you with:**\n`;
           greetingMessage += `✨ Discover hidden gems and local favorites\n`;
@@ -1718,7 +1729,7 @@ export default function AIPlanner() {
           greetingMessage += `🍽️ Recommend authentic dining experiences\n`;
           greetingMessage += `💡 Share insider tips and local insights\n\n`;
           greetingMessage += `What would you like to explore or adjust in your itinerary?`;
-          
+
           setMessages([{
             type: 'ai',
             text: greetingMessage,
@@ -1734,39 +1745,38 @@ export default function AIPlanner() {
         toast.error('Failed to load trip');
       }
     };
-
     loadSavedTrip();
-  }, [searchParams, isLoaded, user]);
+  }, [tripIdParam, isLoaded, user]);
 
   // Handle initial message from URL parameter
   useEffect(() => {
     const initialMessage = searchParams?.get('initialMessage');
-    const tripId = searchParams?.get('tripId');
-    
+    const tripId = tripIdParam;
+
     // Don't auto-send message if loading a saved trip
     if (tripId) return;
-    
+
     if (initialMessage && messages.length === 1) {
       // Only auto-send if we haven't started chatting yet
       setInput(initialMessage);
-      
+
       // Auto-send the message after a brief delay
       const timer = setTimeout(async () => {
         const userText = initialMessage.trim();
         setMessages((prev) => [...prev, { type: 'user', text: userText }]);
         setInput('');
         setIsChatting(true);
-        
+
         try {
           const res = await fetch('/api/ai-planner/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
               messages: [{
                 type: 'ai',
                 text: "Hey there! I'm Charizard 🔥 Your AI travel co-pilot. Ready to ignite your next adventure? Tell me where you're dreaming of going!",
-              }], 
-              input: userText 
+              }],
+              input: userText
             }),
           });
           const data = await res.json();
@@ -1780,24 +1790,25 @@ export default function AIPlanner() {
           setIsChatting(false);
         }
       }, 500);
-      
+
       return () => clearTimeout(timer);
     }
-  }, [searchParams, messages.length]);
+  }, [searchParams, messages.length, tripIdParam]);
+
 
   const handleSend = async () => {
     if (!input.trim()) return;
     const userText = input.trim();
     setMessages((prev) => [...prev, { type: 'user', text: userText }]);
     setInput('');
-    
+
     // Detect if this is likely a trip generation request
     // (when user has filled in key fields like destination, dates, or explicitly asks for itinerary)
-    const isLikelyGeneration = 
-      plannerState.destination || 
-      plannerState.dates?.start || 
+    const isLikelyGeneration =
+      plannerState.destination ||
+      plannerState.dates?.start ||
       /\b(plan|itinerary|trip|generate|create|help me plan|suggest|recommend)\b/i.test(userText);
-    
+
     if (isLikelyGeneration) {
       setIsGenerating(true);
       setProgressSteps(GENERATION_STEPS_DATA.map(step => ({ ...step, status: 'pending' })));
@@ -1805,7 +1816,7 @@ export default function AIPlanner() {
     } else {
       setIsChatting(true);
     }
-    
+
     try {
       const res = await fetch('/api/ai-planner/chat', {
         method: 'POST',
@@ -1815,21 +1826,21 @@ export default function AIPlanner() {
       const data = await res.json();
       const reply = data?.reply ?? 'Got it!';
       const stateUpdate = data?.plannerState ?? {};
-      
+
       setMessages((prev) => [...prev, { type: 'ai', text: reply }]);
       setPlannerState((prev) => ({ ...prev, ...stateUpdate }));
-      
+
       // If we weren't already showing progress and API returned plannerState
       if (!isLikelyGeneration && stateUpdate && Object.keys(stateUpdate).length > 0) {
         setIsGenerating(true);
         setProgressSteps(GENERATION_STEPS_DATA.map(step => ({ ...step, status: 'pending' })));
         simulateProgress();
       }
-      
+
       // API completed - mark all steps as completed
       if (isLikelyGeneration || (stateUpdate && Object.keys(stateUpdate).length > 0)) {
         setProgressSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
-        
+
         setTimeout(() => setIsGenerating(false), 500);
       }
     } catch (err) {
@@ -1873,10 +1884,10 @@ export default function AIPlanner() {
     // Reset progress steps
     setProgressSteps(GENERATION_STEPS_DATA.map(step => ({ ...step, status: 'pending' })));
     setIsGenerating(true);
-    
+
     // Start progress simulation
     simulateProgress();
-    
+
     try {
       console.log('[handleGenerate] Sending plannerState to API:', plannerState);
       const res = await fetch('/api/ai-planner/itinerary', {
@@ -1891,7 +1902,7 @@ export default function AIPlanner() {
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
-      
+
       if (!reader) {
         throw new Error('No response stream available');
       }
@@ -1913,7 +1924,7 @@ export default function AIPlanner() {
             const jsonStr = line.slice(6);
             try {
               const message = JSON.parse(jsonStr);
-              
+
               if (message.type === 'overview') {
                 overview = message.data;
                 // Update itinerary with overview first
@@ -1941,10 +1952,10 @@ export default function AIPlanner() {
           }
         }
       }
-      
+
       // Force complete all steps when API returns
       setProgressSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
-      
+
     } catch (err: any) {
       console.error('[handleGenerate] Error:', err);
       setMessages((prev) => [
@@ -1962,7 +1973,7 @@ export default function AIPlanner() {
   // Preload alternatives cache for all activities
   const preloadAlternativesCache = useCallback(async (dayPlans: DayPlan[]) => {
     if (!dayPlans || dayPlans.length === 0) return;
-    
+
     console.log('[AIPlanner] Starting to preload alternatives cache...');
     setIsCaching(true);
 
@@ -1971,7 +1982,7 @@ export default function AIPlanner() {
     dayPlans.forEach((day) => {
       day.activities?.forEach((activity, activityIndex) => {
         const cacheKey = `${day.day}-${activityIndex}`;
-        
+
         // Extract city from location
         const extractCity = (location?: string): string => {
           if (!location) return '';
@@ -1980,9 +1991,9 @@ export default function AIPlanner() {
         };
 
         const city = day.city || extractCity(activity.location);
-        
+
         console.log(`[AIPlanner] Preloading cache for ${cacheKey}: ${activity.title} in ${city}`);
-        
+
         const promise = fetch('/api/ai-planner/search-activities', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2030,11 +2041,11 @@ export default function AIPlanner() {
 
   // Trigger preload when itinerary is fully generated
   const hasPreloadedRef = useRef(false);
-  
+
   useEffect(() => {
     // Use activeState to check both itinerary and plannerState
     const dayPlans = activeState?.dayPlans;
-    
+
     console.log('[AIPlanner] Preload effect triggered:', {
       hasDayPlans: !!dayPlans,
       dayPlansLength: dayPlans?.length || 0,
@@ -2042,34 +2053,34 @@ export default function AIPlanner() {
       hasPreloaded: hasPreloadedRef.current,
       hasItinerary: !!itinerary?.dayPlans,
       hasPlannerState: !!plannerState?.dayPlans,
-      willPreload: dayPlans && 
-                   dayPlans.length > 0 && 
-                   !isCaching && 
-                   !hasPreloadedRef.current
+      willPreload: dayPlans &&
+        dayPlans.length > 0 &&
+        !isCaching &&
+        !hasPreloadedRef.current
     });
-    
+
     if (
-      dayPlans && 
-      dayPlans.length > 0 && 
-      !isCaching && 
+      dayPlans &&
+      dayPlans.length > 0 &&
+      !isCaching &&
       !hasPreloadedRef.current
     ) {
       console.log('[AIPlanner] Trip ready, scheduling cache preload for', dayPlans.length, 'days');
       hasPreloadedRef.current = true;
-      
+
       // Delay preloading slightly to avoid blocking UI
       const timer = setTimeout(() => {
         preloadAlternativesCache(dayPlans);
       }, 1000);
-      
+
       return () => clearTimeout(timer);
     }
   }, [activeState?.dayPlans, isCaching, preloadAlternativesCache, itinerary?.dayPlans, plannerState?.dayPlans]);
-  
+
   // Preload accommodation alternatives cache
   const preloadAccommodationCache = useCallback(async (accommodation: TripState['accommodation']) => {
     if (!accommodation || accommodation.length === 0) return;
-    
+
     console.log('[AIPlanner] Starting to preload accommodation alternatives cache...');
     setIsCachingAccommodation(true);
 
@@ -2077,9 +2088,9 @@ export default function AIPlanner() {
 
     accommodation.forEach((stay, index) => {
       const cacheKey = String(index);
-      
+
       console.log(`[AIPlanner] Preloading accommodation cache for ${cacheKey}: ${stay.name} in ${stay.city}`);
-      
+
       const promise = fetch('/api/ai-planner/search-accommodations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2128,39 +2139,39 @@ export default function AIPlanner() {
 
   // Trigger accommodation preload when itinerary is fully generated
   const hasPreloadedAccommodationRef = useRef(false);
-  
+
   useEffect(() => {
     const accommodation = activeState?.accommodation;
-    
+
     console.log('[AIPlanner] Accommodation preload effect triggered:', {
       hasAccommodation: !!accommodation,
       accommodationLength: accommodation?.length || 0,
       isCachingAccommodation,
       hasPreloaded: hasPreloadedAccommodationRef.current,
     });
-    
+
     if (
-      accommodation && 
-      accommodation.length > 0 && 
-      !isCachingAccommodation && 
+      accommodation &&
+      accommodation.length > 0 &&
+      !isCachingAccommodation &&
       !hasPreloadedAccommodationRef.current
     ) {
       console.log('[AIPlanner] Trip ready, scheduling accommodation cache preload for', accommodation.length, 'stays');
       hasPreloadedAccommodationRef.current = true;
-      
+
       // Delay preloading slightly to avoid blocking UI, and start after activity cache
       const timer = setTimeout(() => {
         preloadAccommodationCache(accommodation);
       }, 2000); // Start 1s after activity cache
-      
+
       return () => clearTimeout(timer);
     }
   }, [activeState?.accommodation, isCachingAccommodation, preloadAccommodationCache, itinerary?.accommodation, plannerState?.accommodation]);
-  
+
   // Reset accommodation preload flag when trip changes or cleared
   useEffect(() => {
     const accommodationLength = activeState?.accommodation?.length || 0;
-    
+
     if (accommodationLength === 0 && hasPreloadedAccommodationRef.current) {
       console.log('[AIPlanner] Accommodation cleared, resetting preload flag and cache.');
       hasPreloadedAccommodationRef.current = false;
@@ -2171,12 +2182,12 @@ export default function AIPlanner() {
   // Reset preload flag when trip changes or cleared
   useEffect(() => {
     const dayPlansLength = activeState?.dayPlans?.length || 0;
-    
+
     console.log('[AIPlanner] Trip change detected:', {
       hasDayPlans: !!activeState?.dayPlans,
       length: dayPlansLength
     });
-    
+
     if (dayPlansLength === 0) {
       console.log('[AIPlanner] Resetting cache and preload flag');
       hasPreloadedRef.current = false;
@@ -2186,7 +2197,7 @@ export default function AIPlanner() {
 
   const handleActivityClick = (activity: any) => {
     console.log('[AIPlanner] Activity clicked:', activity);
-    
+
     // Transform activity data to match AttractionDetailPanel's expected format
     const attractionData = {
       name: activity.title || 'Unknown Place',
@@ -2200,7 +2211,7 @@ export default function AIPlanner() {
       address: activity.location,
       imageUrl: activity.imageUrl,
     };
-    
+
     console.log('[AIPlanner] Opening attraction detail:', attractionData);
     setSelectedAttraction(attractionData);
     setIsAttractionDetailOpen(true);
@@ -2208,7 +2219,7 @@ export default function AIPlanner() {
 
   const handleRemoveActivity = (dayNumber: number, activityIndex: number) => {
     console.log('[AIPlanner] Removing activity:', { dayNumber, activityIndex });
-    
+
     // Update itinerary if it exists, otherwise update plannerState
     if (itinerary?.dayPlans) {
       const updatedDayPlans = itinerary.dayPlans.map((day) => {
@@ -2237,16 +2248,16 @@ export default function AIPlanner() {
 
   const handleChangeActivity = (dayNumber: number, activityIndex: number) => {
     console.log('[AIPlanner] Change activity requested:', { dayNumber, activityIndex });
-    
+
     // Find the activity to change
     const dayPlan = activeState.dayPlans?.find((d) => d.day === dayNumber);
     const activity = dayPlan?.activities?.[activityIndex];
-    
+
     if (!activity) {
       console.error('[AIPlanner] Activity not found:', { dayNumber, activityIndex });
       return;
     }
-    
+
     setChangingActivity({
       dayNumber,
       activityIndex,
@@ -2258,15 +2269,15 @@ export default function AIPlanner() {
 
   const handleAddActivity = (dayNumber: number) => {
     console.log('[AIPlanner] Add activity requested for day:', dayNumber);
-    
+
     // Find the day plan to get city and coords for context
     const dayPlan = activeState.dayPlans?.find((d) => d.day === dayNumber);
-    
+
     if (!dayPlan) {
       console.error('[AIPlanner] Day plan not found:', dayNumber);
       return;
     }
-    
+
     // Use the last activity's location as reference, or day's city
     const lastActivity = dayPlan.activities?.[dayPlan.activities.length - 1];
     const referenceActivity = lastActivity || {
@@ -2274,7 +2285,7 @@ export default function AIPlanner() {
       coords: { lat: 0, lng: 0 },
       location: dayPlan.city || '',
     };
-    
+
     setChangingActivity({
       dayNumber,
       activityIndex: -1, // -1 indicates add mode
@@ -2286,7 +2297,7 @@ export default function AIPlanner() {
 
   const handleReplaceActivity = (dayNumber: number, activityIndex: number, newActivity: any, isAdding: boolean = false) => {
     console.log('[AIPlanner]', isAdding ? 'Adding' : 'Replacing', 'activity:', { dayNumber, activityIndex, newActivity });
-    
+
     // Update itinerary if it exists, otherwise update plannerState
     if (itinerary?.dayPlans) {
       const updatedDayPlans = itinerary.dayPlans.map((day) => {
@@ -2333,15 +2344,15 @@ export default function AIPlanner() {
       });
       setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
     }
-    
+
     // Show success message
     setMessages((prev) => [
       ...prev,
-      { 
-        type: 'ai', 
-        text: isAdding 
-          ? `Great! I've added "${newActivity.title}" to your itinerary!` 
-          : `Great! I've replaced the activity with "${newActivity.title}". Your itinerary has been updated!` 
+      {
+        type: 'ai',
+        text: isAdding
+          ? `Great! I've added "${newActivity.title}" to your itinerary!`
+          : `Great! I've replaced the activity with "${newActivity.title}". Your itinerary has been updated!`
       },
     ]);
   };
@@ -2361,8 +2372,8 @@ export default function AIPlanner() {
   const handleReplaceAccommodation = (newAccommodation: any) => {
     if (changingAccommodation === null) return;
 
-    console.log('[AIPlanner] Replacing accommodation:', { 
-      index: changingAccommodation.accommodationIndex, 
+    console.log('[AIPlanner] Replacing accommodation:', {
+      index: changingAccommodation.accommodationIndex,
       newAccommodation,
       currentAccommodation: changingAccommodation.accommodation
     });
@@ -2385,9 +2396,9 @@ export default function AIPlanner() {
     // Show success message
     setMessages((prev) => [
       ...prev,
-      { 
-        type: 'ai', 
-        text: `Great! I've updated your accommodation to "${newAccommodation.name}". Your trip has been updated!` 
+      {
+        type: 'ai',
+        text: `Great! I've updated your accommodation to "${newAccommodation.name}". Your trip has been updated!`
       },
     ]);
 
@@ -2560,7 +2571,7 @@ export default function AIPlanner() {
         </div>
       );
     }
-    
+
     if (!plans?.length) {
       if (selectedCity) {
         return (
@@ -2584,50 +2595,87 @@ export default function AIPlanner() {
         {plans
           .filter(day => day.activities && day.activities.length > 0) // Only show days with activities
           .map((day, dayIdx) => {
-          const dayNumber = typeof day.day === 'number' ? day.day : dayIdx + 1;
-          const dateInfo = getDateForDay(dayNumber);
-          
-          return (
-          <div key={`${dayNumber}-${day.title ?? 'untitled'}-${dayIdx}`} className="space-y-3">
-            {/* Day Header */}
-            <div className="space-y-1">
-              <div className="border-b border-slate-100 pb-1 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-800">
-                  Day {dayNumber}: {day.title}
-                </h3>
-                
-                {/* NEW: View Day Route Button */}
-                <button
-                  onClick={() => {
-                    setSelectedDay(dayNumber);
-                    setIsDailyRouteMapOpen(true); // Open daily route map
-                  }}
-                  className="flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  title="Click to view this day's route on map"
-                >
-                  <MapPin className="h-3 w-3" />
-                  View route
-                </button>
-              </div>
-              
-              {/* Date, Weekday and Weather */}
-              <div className="flex items-center gap-2 px-1">
-                {dateInfo && (
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-sm font-bold text-slate-900">{dateInfo.date}</span>
-                    <span className="text-xs font-medium text-slate-500">{dateInfo.weekday}</span>
+            const dayNumber = typeof day.day === 'number' ? day.day : dayIdx + 1;
+            const dateInfo = getDateForDay(dayNumber);
+
+            return (
+              <div key={`${dayNumber}-${day.title ?? 'untitled'}-${dayIdx}`} className="space-y-3">
+                {/* Day Header */}
+                <div className="space-y-1">
+                  <div className="border-b border-slate-100 pb-1 flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-slate-800">
+                      Day {dayNumber}: {day.title}
+                    </h3>
+
+                    {/* NEW: View Day Route Button */}
+                    <button
+                      onClick={() => {
+                        setSelectedDay(dayNumber);
+                        setIsDailyRouteMapOpen(true); // Open daily route map
+                      }}
+                      className="flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      title="Click to view this day's route on map"
+                    >
+                      <MapPin className="h-3 w-3" />
+                      View route
+                    </button>
                   </div>
-                )}
-                
-                {day.weather && (
-                  <div className="flex items-center gap-1.5 ml-1">
-                    <span className="text-slate-300">·</span>
-                    {getWeatherIcon(day.weather.condition)}
-                    <span className="text-sm font-semibold text-slate-700">
-                      {day.weather.tempRange || (day.weather.tempC ? `${day.weather.tempC}°C` : '')}
+
+                  {/* Date, Weekday and Weather */}
+                  <div className="flex items-center gap-2 px-1">
+                    {dateInfo && (
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-sm font-bold text-slate-900">{dateInfo.date}</span>
+                        <span className="text-xs font-medium text-slate-500">{dateInfo.weekday}</span>
+                      </div>
+                    )}
+
+                    {day.weather && (
+                      <div className="flex items-center gap-1.5 ml-1">
+                        <span className="text-slate-300">·</span>
+                        {getWeatherIcon(day.weather.condition)}
+                        <span className="text-sm font-semibold text-slate-700">
+                          {day.weather.tempRange || (day.weather.tempC ? `${day.weather.tempC}°C` : '')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Activity Count (Moved below date) */}
+                  {day.activities && day.activities.length > 0 && (
+                    <div className="flex items-center gap-1.5 px-1 text-xs text-slate-500">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200">
+                        <span className="text-[10px] font-bold text-slate-600">{day.activities.length}</span>
+                      </div>
+                      <span>{day.activities.length === 1 ? 'activity' : 'activities'}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid gap-3">
+                  {(day.activities ?? []).map((act, idx) => (
+                    <ActivityCard
+                      key={`${day.day}-${idx}`}
+                      activity={act}
+                      onClick={() => handleActivityClick(act)}
+                      onRemove={() => handleRemoveActivity(day.day, idx)}
+                      onChange={() => handleChangeActivity(day.day, idx)}
+                    />
+                  ))}
+
+                  {/* Add Activity Button */}
+                  <button
+                    onClick={() => handleAddActivity(day.day)}
+                    className="group flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white p-6 transition-all hover:border-blue-400 hover:bg-blue-50"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 transition-colors group-hover:bg-blue-500">
+                      <Plus className="h-5 w-5 text-blue-600 transition-colors group-hover:text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-slate-600 transition-colors group-hover:text-blue-600">
+                      Add Activity
                     </span>
-                  </div>
-                )}
+                  </button>
+                </div>
               </div>
 
               {/* Activity Count (Moved below date) */}
@@ -2787,7 +2835,22 @@ export default function AIPlanner() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pt-24 text-black">
+    <div className="relative min-h-screen pt-24 text-black">
+      {/* Background Image with Overlay */}
+      <div className="fixed inset-0 z-0">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url('/images/AI-BACKGROUND.jpg')",
+            backgroundAttachment: 'fixed'
+          }}
+        />
+        {/* Dark overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/70 via-slate-900/60 to-slate-800/70" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10">
       <style jsx>{`
         .route-scroll {
           scrollbar-width: thin;
@@ -2810,28 +2873,46 @@ export default function AIPlanner() {
       <div className="w-full px-4 pb-6 sm:px-6 lg:px-10">
         <div className="grid gap-8 lg:grid-cols-[30%_1fr]">
           {/* Left: Chat */}
-          <Card className="sticky top-24 flex flex-col self-start border border-orange-200/60 bg-white/90 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
-            <CardHeader className="py-2 pb-0">
-              <div className="inline-flex items-center gap-2 px-1 text-slate-900">
-                <CharizardOrb size="medium" />
-                <div className="flex flex-col leading-tight">
-                  <span className="text-sm font-semibold md:text-base">Plan your trip with Charizard</span>
+          <Card className="sticky top-24 flex flex-col self-start border-0 backdrop-blur-xl shadow-2xl shadow-slate-900/20 min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden rounded-3xl relative">
+            {/* nepal.jpg Background with overlay - confined to chat panel only */}
+            <div className="absolute inset-0 z-0">
+              <div 
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage: "url('/images/nepal.jpg')",
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
+              />
+              {/* Lighter overlay for better mountain visibility */}
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-900/55 via-slate-800/45 to-slate-900/60 backdrop-blur-[1px]" />
+            </div>
+            
+            <CardHeader className="px-6 pt-6 pb-4 border-b border-white/10 relative z-10">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/images/Pokémon_Charizard_art.png"
+                  alt="Charizard AI Travel Assistant"
+                  className="h-12 w-auto object-contain drop-shadow-2xl"
+                />
+                <div className="flex flex-col">
+                  <span className="text-base font-bold text-white tracking-tight drop-shadow-lg">Charizard</span>
+                  <span className="text-xs text-slate-300 font-medium drop-shadow">AI Travel Assistant</span>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="flex flex-1 flex-col gap-3 px-4 pt-2 pb-2 min-h-0">
-              <div className="flex-1 space-y-2 overflow-y-auto rounded-lg border border-white/60 bg-white/60 p-3 min-h-0">
+            <CardContent className="flex flex-1 flex-col gap-4 px-6 pt-6 pb-6 min-h-0 relative z-10">
+              <div className="flex-1 space-y-5 overflow-y-auto pr-2 min-h-0 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-white/30">
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
-                    className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow ${
-                        msg.type === 'user'
-                          ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
-                          : 'bg-slate-900 text-white'
-                      }`}
+                      className={`max-w-[80%] px-5 py-4 text-[15.5px] leading-[1.6] shadow-sm transition-all ${msg.type === 'user'
+                          ? 'rounded-[20px] rounded-tr-sm bg-blue-500 text-white font-medium'
+                          : 'rounded-[20px] rounded-tl-sm bg-white text-slate-900 font-normal border border-slate-200'
+                        }`}
                     >
                       {msg.text}
                     </div>
@@ -2839,39 +2920,51 @@ export default function AIPlanner() {
                 ))}
 
                 {isChatting && (
-                  <div className="flex justify-start">
-                    <div className="flex max-w-[80%] items-center gap-1.5 rounded-2xl bg-slate-900 px-4 py-3 text-sm text-white shadow">
-                      <span className="mr-1 text-xs font-medium text-slate-400">Charizard is thinking</span>
-                      <div className="flex gap-1">
-                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-400 [animation-delay:-0.3s]"></span>
-                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-400 [animation-delay:-0.15s]"></span>
-                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-400"></span>
+                  <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-center gap-3 rounded-[20px] rounded-tl-sm bg-white border border-slate-200 px-5 py-4 text-sm text-slate-600 shadow-sm">
+                      <span className="text-xs font-semibold text-slate-600">Thinking</span>
+                      <div className="flex gap-1.5">
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400 [animation-delay:-0.3s]"></span>
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400 [animation-delay:-0.15s]"></span>
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400"></span>
                       </div>
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="mt-auto space-y-2">
+              <div className="mt-auto space-y-3 pt-2">
                 <div className="flex items-center gap-2">
                   <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder="Tell me destination, dates, travellers, preferences..."
-                    className="flex-1"
+                    placeholder="Where would you like to go?"
+                    className="flex-1 h-14 rounded-[20px] border border-slate-300 bg-white text-[15px] text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all shadow-sm"
                   />
-                  <Button onClick={handleSend} disabled={isChatting}>
-                    <Send className="mr-1 h-4 w-4" />
-                    Send
+                  <Button 
+                    onClick={handleSend} 
+                    disabled={isChatting}
+                    className="h-14 w-14 rounded-[20px] bg-blue-500 hover:bg-blue-600 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 p-0"
+                  >
+                    <Send className="h-5 w-5" />
                   </Button>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-gray-600">
-                  <span>Destination: {destinationLabel}</span>
-                  <Button size="sm" variant="secondary" onClick={handleGenerate} disabled={isGenerating}>
-                    <Sparkles className="mr-1 h-4 w-4" />
-                    {isGenerating ? 'Generating...' : 'Generate itinerary'}
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                    <MapPin className="h-3.5 w-3.5 text-slate-500" />
+                    <span className="font-medium">{destinationLabel}</span>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={handleGenerate} 
+                    disabled={isGenerating}
+                    className="h-8 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-all"
+                  >
+                    <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                    {isGenerating ? 'Generating...' : 'Generate Plan'}
                   </Button>
                 </div>
               </div>
@@ -2882,29 +2975,34 @@ export default function AIPlanner() {
           <div className="min-w-0 space-y-4 self-start">
             {/* State 1: Idle - Show Static Charizard */}
             {!activeState.tripTitle && !isChatting && !isGenerating && (
-              <Card className="sticky top-24 flex flex-col self-start border border-slate-200 bg-gradient-to-br from-slate-50 to-gray-50 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
-                <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-8 text-center">
+              <Card className="sticky top-24 flex flex-col self-start border-0 bg-gradient-to-br from-white via-slate-50/30 to-white backdrop-blur-xl shadow-2xl shadow-slate-200/40 min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden rounded-3xl">
+                <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-12 text-center">
                   {/* Static Charizard Image */}
-                  <div className="relative mb-6 flex h-48 w-48 items-center justify-center overflow-hidden">
-                    <img 
-                      src="https://d30mgvfwc9sz4j.cloudfront.net/charizard/charizard-static.png" 
-                      alt="Charizard" 
-                      className="h-full w-full object-contain"
+                  <div className="relative mb-8 flex h-64 w-64 items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-full blur-3xl"></div>
+                    <img
+                      src="/charizard/charizard-static.png"
+                      alt="Charizard"
+                      className="relative h-full w-full object-contain drop-shadow-2xl"
                     />
                   </div>
-                  
+
                   {/* Welcome Text */}
-                  <h2 className="mb-2 text-2xl font-bold text-slate-900">
-                    Ready to Plan Your Adventure?
+                  <h2 className="mb-3 text-3xl font-bold text-slate-900 tracking-tight">
+                    Ready to Explore?
                   </h2>
-                  <p className="mb-4 max-w-md text-base text-slate-600">
-                    Chat with Charizard on the left to start creating your dream itinerary!
+                  <p className="mb-8 max-w-md text-base text-slate-600 leading-relaxed">
+                    Start chatting to create your perfect AI-powered itinerary
                   </p>
-                  
+
                   {/* Example Prompts */}
-                  <div className="space-y-2 text-sm text-slate-500">
-                    <p className="italic">"Plan a 5-day trip to Tokyo"</p>
-                    <p className="italic">"I want to visit Paris and Rome"</p>
+                  <div className="space-y-3 w-full max-w-sm">
+                    <div className="px-5 py-3 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200/50 text-sm text-slate-700 font-medium backdrop-blur-sm hover:shadow-md transition-all cursor-default">
+                      "Plan a 5-day trip to Tokyo"
+                    </div>
+                    <div className="px-5 py-3 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200/50 text-sm text-slate-700 font-medium backdrop-blur-sm hover:shadow-md transition-all cursor-default">
+                      "I want to visit Paris and Rome"
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -2912,33 +3010,34 @@ export default function AIPlanner() {
 
             {/* State 2: Thinking - Show Animated Charizard */}
             {(isChatting || isGenerating) && !activeState.tripTitle && (
-              <Card className="sticky top-24 flex flex-col self-start border border-slate-200 bg-gradient-to-br from-slate-50 to-gray-50 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
-                <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-8 text-center">
+              <Card className="sticky top-24 flex flex-col self-start border-0 bg-gradient-to-br from-white via-slate-50/30 to-white backdrop-blur-xl shadow-2xl shadow-slate-200/40 min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden rounded-3xl">
+                <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-12 text-center">
                   {/* Animated Charizard */}
-                  <div className="relative mb-8 flex h-40 w-40 items-center justify-center overflow-hidden">
-                    <img 
-                      src="https://d30mgvfwc9sz4j.cloudfront.net/charizard/charizard-animated.gif" 
-                      alt="Charizard thinking" 
-                      className="h-full w-full object-contain"
+                  <div className="relative mb-10 flex h-56 w-56 items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-full blur-3xl animate-pulse"></div>
+                    <img
+                      src="/charizard/charizard-animated.gif"
+                      alt="Charizard thinking"
+                      className="relative h-full w-full object-contain drop-shadow-2xl"
                     />
                     {/* Fire effect */}
-                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
-                      <div className="flex gap-1">
-                        <span className="animate-bounce text-2xl" style={{ animationDelay: '0ms' }}>🔥</span>
-                        <span className="animate-bounce text-2xl" style={{ animationDelay: '150ms' }}>🔥</span>
-                        <span className="animate-bounce text-2xl" style={{ animationDelay: '300ms' }}>🔥</span>
+                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2">
+                      <div className="flex gap-2">
+                        <span className="animate-bounce text-3xl drop-shadow-lg" style={{ animationDelay: '0ms' }}>🔥</span>
+                        <span className="animate-bounce text-3xl drop-shadow-lg" style={{ animationDelay: '150ms' }}>🔥</span>
+                        <span className="animate-bounce text-3xl drop-shadow-lg" style={{ animationDelay: '300ms' }}>🔥</span>
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Conditional Content: Progress for generating, static text for chatting */}
                   {isGenerating ? (
                     <>
                       {/* Generating Trip - Show Progress */}
-                      <h2 className="mb-6 text-2xl font-bold text-slate-900">
-                        Charizard is crafting your perfect journey...
+                      <h2 className="mb-8 text-3xl font-bold text-slate-900 tracking-tight">
+                        Crafting your perfect journey
                       </h2>
-                      
+
                       {/* Progress Indicator */}
                       <div className="w-full max-w-md">
                         <ProgressIndicator steps={progressSteps} />
@@ -2947,11 +3046,11 @@ export default function AIPlanner() {
                   ) : (
                     <>
                       {/* Chatting - Static Content */}
-                      <h2 className="mb-4 text-2xl font-bold text-slate-900">
-                        Charizard is thinking...
+                      <h2 className="mb-3 text-3xl font-bold text-slate-900 tracking-tight">
+                        Analyzing your request
                       </h2>
-                      <p className="text-sm text-slate-600">
-                        Ready to help you plan your adventure!
+                      <p className="text-base text-slate-600">
+                        Getting everything ready for you...
                       </p>
                     </>
                   )}
@@ -2961,220 +3060,232 @@ export default function AIPlanner() {
 
             {/* State 3: Trip Generated - Show Visualization Cards */}
             {activeState.tripTitle && (
-              <Card className="relative min-w-0 overflow-hidden border border-slate-200 bg-white/90 shadow-lg">
-              {/* Background photo + gradient (only after we have a trip) */}
-              {heroImageUrl ? (
-                <>
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${heroImageUrl})` }}
-                  />
-                  {/* Darker gradient overlay for better visibility */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-slate-900/30 to-slate-900/20" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/40 to-transparent" />
-                </>
-              ) : null}
+              <Card className="relative min-w-0 overflow-hidden border-0 bg-white shadow-2xl shadow-slate-200/50 rounded-3xl">
+                {/* Background photo + gradient (only after we have a trip) */}
+                {heroImageUrl ? (
+                  <>
+                    <div
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${heroImageUrl})` }}
+                    />
+                    {/* Darker gradient overlay for better visibility */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 via-slate-900/40 to-slate-900/30" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-white via-white/60 to-transparent" />
+                  </>
+                ) : null}
 
-              <CardHeader className="relative space-y-3 pb-6">
-                <div className="flex items-start justify-between gap-4">
-                  <CardTitle className="text-3xl font-extrabold tracking-tight text-slate-900">
-                    {activeState.tripTitle || 'Your Dream Journey'}
-                  </CardTitle>
-                  
-                  <div className="flex gap-2 shrink-0">
-                    {/* Save Button */}
-                    <Button
-                      onClick={handleSaveTrip}
-                      disabled={isSaving || savedTripId !== null}
-                      className={`transition-all ${
-                        savedTripId
-                          ? 'bg-green-500 hover:bg-green-600'
-                          : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
-                      }`}
-                    >
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : savedTripId ? (
-                        <>
-                          <Check className="mr-2 h-4 w-4" />
-                          Saved
-                        </>
-                      ) : (
-                        <>
-                          <Save className="mr-2 h-4 w-4" />
-                          Save Trip
-                        </>
-                      )}
-                    </Button>
-
-                    {/* Share to Community Button */}
-                    <Button
-                      onClick={handleShareToCommunity}
-                      disabled={!activeState.tripTitle}
-                      variant="outline"
-                      className="border-2 border-purple-500 text-purple-600 hover:bg-purple-50"
-                    >
-                      <Share2 className="mr-2 h-4 w-4" />
-                      Share
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Icons & Counts Summary */}
-                <div className="min-w-0 lg:w-[56%] lg:min-w-[520px]">
-                  <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-slate-900">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="h-4 w-4 text-slate-900" />
-                      <span>{activeState.summary?.days || plannerState.dates?.durationDays || '—'} days</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="h-4 w-4 text-slate-900" />
-                      <span>{activeState.summary?.cities || 1} cities</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Star className="h-4 w-4 text-slate-900" />
-                      <span>{activeState.summary?.activitiesCount || '—'} activities</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Hotel className="h-4 w-4 text-slate-900" />
-                      <span>{activeState.summary?.hotelsCount || '—'} hotels</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Plane className="h-4 w-4 text-slate-900" />
-                      <span>{activeState.summary?.transportsCount || '—'} transports</span>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="relative min-w-0 overflow-hidden px-6 py-6">
-                <div className="flex min-w-0 flex-col gap-6 lg:flex-row">
-                  {/* Left: Route Flow */}
-                  <div className="min-w-0 lg:w-[56%] lg:min-w-[520px] lg:pr-6">
-                    <div className="relative">
-                      <div className="w-full max-w-full overflow-x-auto pb-2 route-scroll">
-                        <div className="inline-flex min-w-max items-center gap-2">
-                          {(activeState.routeFlow || [
-                            activeState.departureCity || 'Departure',
-                            destinationLabel,
-                          ]).map((city, idx, arr) => {
-                            const isDeparture = idx === 0;
-                            const isArrival = idx === arr.length - 1;
-                            const isStop = idx > 0 && idx < arr.length - 1;
-                            const isSelected = selectedCity === city;
-                            const isClickable = isStop; // Only stops are clickable
-
-                            return (
-                              <div key={`${city}-${idx}`} className="flex items-center">
-                                <div className="shrink-0">
-                                  <button
-                                    onClick={() => {
-                                      if (isClickable) {
-                                        setSelectedCity(isSelected ? null : city);
-                                      }
-                                    }}
-                                    disabled={!isClickable}
-                                    className={`flex h-12 items-center justify-center rounded-2xl px-6 shadow-sm transition-all ${
-                                      isClickable ? 'cursor-pointer hover:shadow-md' : 'cursor-default'
-                                    } ${
-                                      isDeparture || isArrival
-                                        ? 'border border-slate-200 bg-white'
-                                        : isSelected
-                                        ? 'border-2 border-blue-500 bg-blue-500 text-white'
-                                        : 'border border-indigo-200 bg-white text-slate-900 hover:border-blue-400'
-                                    }`}
-                                  >
-                                    <div className="flex flex-col items-center gap-0.5">
-                                      <span className="whitespace-nowrap text-xs font-bold">{city}</span>
-                                      {isStop ? (
-                                        <span className={`text-[10px] ${isSelected ? 'opacity-90' : 'opacity-70'}`}>
-                                          Stop
-                                        </span>
-                                      ) : null}
-                                    </div>
-                                  </button>
-                                </div>
-
-                              {idx < arr.length - 1 ? (
-                                <div className="flex shrink-0 items-center px-0.5">
-                                  <div className="dashed-line h-[2px] w-4 shrink-0 bg-slate-200"></div>
-                                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 shadow-inner">
-                                    {isInternationalTravel(city, arr[idx + 1]) ? (
-                                      <Plane className="h-3.5 w-3.5 text-slate-400" />
-                                    ) : (
-                                      <Train className="h-3.5 w-3.5 text-slate-400" />
-                                    )}
-                                  </div>
-                                  <div className="dashed-line h-[2px] w-4 shrink-0 bg-slate-200"></div>
-                                </div>
-                              ) : null}
-                              </div>
-                            );
-                          })}
+                <CardHeader className="relative space-y-4 pb-8 pt-8 px-8">
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-4xl font-black tracking-tight text-slate-900 mb-2 leading-tight">
+                        {activeState.tripTitle || 'Your Dream Journey'}
+                      </CardTitle>
+                      
+                      {/* Statistics badges */}
+                      <div className="flex flex-wrap gap-3 mt-4">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/50 shadow-sm">
+                          <Calendar className="h-4 w-4 text-orange-600" />
+                          <span className="text-sm font-semibold text-slate-900">{activeState.summary?.days || plannerState.dates?.durationDays || '—'} days</span>
+                        </div>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/50 shadow-sm">
+                          <MapPin className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-semibold text-slate-900">{activeState.summary?.cities || 1} cities</span>
+                        </div>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/50 shadow-sm">
+                          <Star className="h-4 w-4 text-amber-500" />
+                          <span className="text-sm font-semibold text-slate-900">{activeState.summary?.activitiesCount || '—'} activities</span>
+                        </div>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/50 shadow-sm">
+                          <Hotel className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-semibold text-slate-900">{activeState.summary?.hotelsCount || '—'} hotels</span>
+                        </div>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/50 shadow-sm">
+                          <Plane className="h-4 w-4 text-sky-600" />
+                          <span className="text-sm font-semibold text-slate-900">{activeState.summary?.transportsCount || '—'} flights</span>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Right: Map Thumbnail + Dialog */}
-                  <div className="min-w-0 lg:w-[44%]">
-                    <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
-                      <DialogTrigger asChild>
-                        <button className="group relative h-24 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm transition-all hover:shadow-md lg:h-full">
-                          {/* Map Image Placeholder / Background */}
-                          <div className="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
-                          
-                          {/* Overlay Content */}
-                          <div className="relative flex h-full flex-col items-center justify-center text-white">
-                            <div className="mb-1 rounded-full bg-white/20 p-2 backdrop-blur-md transition-transform group-hover:scale-110">
-                              <Globe2 className="h-5 w-5" />
-                            </div>
-                            <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-white/90">
-                              View full map <ArrowRight className="h-3 w-3" />
-                            </span>
-                          </div>
-                        </button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl h-[80vh] p-0 overflow-hidden bg-slate-950 border-slate-800 [&_svg]:text-white">
-                        <DialogHeader className="absolute top-4 left-6 z-10">
-                          <DialogTitle className="text-white text-xl font-bold bg-slate-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg">
-                            3D Trip Journey
-                          </DialogTitle>
-                        </DialogHeader>
-                        
-                        <div className="h-full w-full">
-                          {activeState.mapPoints || activeState.mapRoute ? (
-                            <TripMap 
-                              cityPoints={mapCityPoints} 
-                              attractionPoints={attractionPoints}
-                              dayRoutes={dayRoutes}
-                              selectedDay={selectedDay}
-                              isDetailPanelOpen={isDetailPanelOpen}
-                              setIsDetailPanelOpen={setIsDetailPanelOpen}
-                              selectedPlace={selectedPlace}
-                              setSelectedPlace={setSelectedPlace}
-                            />
-                          ) : (
-                            <div className="flex h-full w-full flex-col items-center justify-center text-white space-y-4">
-                              <Globe2 className="h-12 w-12 text-slate-500 animate-pulse" />
-                              <p className="text-slate-400">Waiting for route data to ignite the map...</p>
-                            </div>
-                          )}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    <div className="flex gap-3 shrink-0">
+                      {/* Save Button */}
+                      <Button
+                        onClick={handleSaveTrip}
+                        disabled={isSaving || savedTripId !== null}
+                        className={`h-12 px-6 rounded-2xl font-semibold shadow-lg transition-all hover:scale-105 disabled:hover:scale-100 ${savedTripId
+                            ? 'bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-green-500/30'
+                            : 'bg-gradient-to-br from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-orange-500/30'
+                          }`}
+                      >
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving
+                          </>
+                        ) : savedTripId ? (
+                          <>
+                            <Check className="mr-2 h-4 w-4" />
+                            Saved
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Save Trip
+                          </>
+                        )}
+                      </Button>
+
+                      {/* Share to Community Button */}
+                      <Button
+                        onClick={handleShareToCommunity}
+                        disabled={!activeState.tripTitle}
+                        className="h-12 px-6 rounded-2xl font-semibold bg-white hover:bg-slate-50 text-purple-600 border-2 border-purple-600/30 shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20 transition-all hover:scale-105 disabled:hover:scale-100"
+                      >
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Share
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardHeader>
+
+                <CardContent className="relative min-w-0 overflow-hidden px-8 py-8">
+                  <div className="flex min-w-0 flex-col gap-8 lg:flex-row">
+                    {/* Left: Route Flow */}
+                    <div className="min-w-0 lg:w-[60%] lg:min-w-[560px]">
+                      <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-orange-600" />
+                        Your Journey
+                      </h3>
+                      <div className="relative">
+                        <div className="w-full max-w-full overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
+                          <div className="inline-flex min-w-max items-center gap-3">
+                            {(activeState.routeFlow || [
+                              activeState.departureCity || 'Departure',
+                              destinationLabel,
+                            ]).map((city, idx, arr) => {
+                              const isDeparture = idx === 0;
+                              const isArrival = idx === arr.length - 1;
+                              const isStop = idx > 0 && idx < arr.length - 1;
+                              const isSelected = selectedCity === city;
+                              const isClickable = isStop; // Only stops are clickable
+
+                              return (
+                                <div key={`${city}-${idx}`} className="flex items-center">
+                                  <div className="shrink-0">
+                                    <button
+                                      onClick={() => {
+                                        if (isClickable) {
+                                          setSelectedCity(isSelected ? null : city);
+                                        }
+                                      }}
+                                      disabled={!isClickable}
+                                      className={`flex h-14 items-center justify-center rounded-2xl px-6 shadow-md transition-all ${isClickable ? 'cursor-pointer hover:shadow-lg hover:scale-105' : 'cursor-default'
+                                        } ${isDeparture || isArrival
+                                          ? 'border-2 border-slate-200/80 bg-gradient-to-br from-white to-slate-50 backdrop-blur-sm'
+                                          : isSelected
+                                            ? 'border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-blue-500/40'
+                                            : 'border-2 border-indigo-200/80 bg-white text-slate-900 hover:border-blue-400 hover:bg-blue-50'
+                                        }`}
+                                    >
+                                      <div className="flex flex-col items-center gap-1">
+                                        <span className="whitespace-nowrap text-sm font-bold">{city}</span>
+                                        {isStop ? (
+                                          <span className={`text-[10px] font-medium uppercase tracking-wider ${isSelected ? 'opacity-90' : 'opacity-60'}`}>
+                                            Stop
+                                          </span>
+                                        ) : isDeparture ? (
+                                          <span className="text-[10px] font-medium uppercase tracking-wider opacity-60">
+                                            Start
+                                          </span>
+                                        ) : isArrival ? (
+                                          <span className="text-[10px] font-medium uppercase tracking-wider opacity-60">
+                                            End
+                                          </span>
+                                        ) : null}
+                                      </div>
+                                    </button>
+                                  </div>
+
+                                  {idx < arr.length - 1 ? (
+                                    <div className="flex shrink-0 items-center px-2">
+                                      <div className="h-0.5 w-6 shrink-0 bg-gradient-to-r from-slate-300 to-slate-200 rounded-full"></div>
+                                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-white to-slate-50 shadow-sm">
+                                        {isInternationalTravel(city, arr[idx + 1]) ? (
+                                          <Plane className="h-4 w-4 text-orange-600" />
+                                        ) : (
+                                          <Train className="h-4 w-4 text-blue-600" />
+                                        )}
+                                      </div>
+                                      <div className="h-0.5 w-6 shrink-0 bg-gradient-to-r from-slate-200 to-slate-300 rounded-full"></div>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Map Thumbnail + Dialog */}
+                    <div className="min-w-0 lg:w-[40%]">
+                      <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <Globe2 className="h-5 w-5 text-blue-600" />
+                        Route Map
+                      </h3>
+                      <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
+                        <DialogTrigger asChild>
+                          <button className="group relative h-32 w-full overflow-hidden rounded-3xl border-2 border-slate-200 bg-slate-900 shadow-lg transition-all hover:shadow-2xl hover:scale-[1.02] lg:h-full">
+                            {/* Map Image Placeholder / Background */}
+                            <div className="absolute inset-0 opacity-50 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
+
+                            {/* Overlay Content */}
+                            <div className="relative flex h-full flex-col items-center justify-center text-white">
+                              <div className="mb-2 rounded-2xl bg-white/20 p-3 backdrop-blur-md transition-transform group-hover:scale-110">
+                                <Globe2 className="h-6 w-6" />
+                              </div>
+                              <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-white/95">
+                                View 3D Map <ArrowRight className="h-3.5 w-3.5" />
+                              </span>
+                            </div>
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-5xl h-[85vh] p-0 overflow-hidden bg-slate-950 border-slate-800 rounded-3xl [&_svg]:text-white">
+                          <DialogHeader className="absolute top-6 left-8 z-10">
+                            <DialogTitle className="text-white text-2xl font-bold bg-slate-900/70 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white/10 shadow-2xl">
+                              Your Trip Journey
+                            </DialogTitle>
+                          </DialogHeader>
+
+                          <div className="h-full w-full">
+                            {activeState.mapPoints || activeState.mapRoute ? (
+                              <TripMap
+                                cityPoints={mapCityPoints}
+                                attractionPoints={attractionPoints}
+                                dayRoutes={dayRoutes}
+                                selectedDay={selectedDay}
+                                isDetailPanelOpen={isDetailPanelOpen}
+                                setIsDetailPanelOpen={setIsDetailPanelOpen}
+                                selectedPlace={selectedPlace}
+                                setSelectedPlace={setSelectedPlace}
+                              />
+                            ) : (
+                              <div className="flex h-full w-full flex-col items-center justify-center text-white space-y-4">
+                                <Globe2 className="h-12 w-12 text-slate-500 animate-pulse" />
+                                <p className="text-slate-400">Waiting for route data to ignite the map...</p>
+                              </div>
+                            )}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Travel Safety Alert - Show when trip is generated */}
             {activeState.tripTitle && activeState.destination && (
-              <TravelSafetyCard 
+              <TravelSafetyCard
                 destination={selectedCity || (typeof activeState.destination === 'string' ? activeState.destination : activeState.destination[0])}
                 dates={activeState.dates?.start && activeState.dates?.end ? {
                   start: activeState.dates.start,
@@ -3185,7 +3296,7 @@ export default function AIPlanner() {
 
             {/* Things to Know - Show when trip is generated */}
             {activeState.tripTitle && activeState.destination && (
-              <ThingsToKnowCard 
+              <ThingsToKnowCard
                 destination={selectedCity || (typeof activeState.destination === 'string' ? activeState.destination : activeState.destination[0])}
                 userOrigin={activeState.origin}
               />
@@ -3193,257 +3304,275 @@ export default function AIPlanner() {
 
             {/* Day Plans, Transportation, Accommodation - Only show when trip is generated */}
             {activeState.tripTitle && (
-            <>
-            <Card id="day-plans-section" className="border border-slate-200 bg-white/90 shadow transition-all duration-500">
-              <CardHeader className="space-y-2 pb-4">
-                <div className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">
-                    Day Plans
-                    {selectedCity && (
-                      <span className="ml-2 text-sm font-normal text-blue-600">
-                        • {selectedCity}
-                      </span>
-                    )}
-                  </CardTitle>
-                  {selectedCity && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedCity(null)}
-                      className="text-xs text-slate-600 hover:text-slate-900"
-                    >
-                      Show All
-                    </Button>
-                  )}
-                </div>
-                
-                {/* Date Range */}
-                {getDateRange() && (
-                  <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <Calendar className="h-4 w-4" />
-                    <span>{getDateRange()}</span>
-                  </div>
-                )}
-              </CardHeader>
-              <CardContent>
-                {renderDayPlans(filteredDayPlans)}
-              </CardContent>
-            </Card>
-
-            <Card className="border border-slate-200 bg-white/90 shadow">
-              <CardHeader className="flex flex-row items-center justify-between p-0 px-4 pt-2 pb-1">
-                <div className="flex items-center gap-2">
-                  <Plane className="h-5 w-5 text-slate-700" />
-                  <CardTitle className="text-lg">
-                    Transportation
-                    {selectedCity && (
-                      <span className="ml-2 text-sm font-normal text-blue-600">
-                        • {selectedCity}
-                      </span>
-                    )}
-                  </CardTitle>
-                </div>
-                {selectedCity && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedCity(null)}
-                    className="text-xs text-slate-600 hover:text-slate-900"
-                  >
-                    Show All
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-4 p-0 px-4 pt-2 pb-3">
-                {(filteredTransportation ?? []).map((leg, idx) => {
-                  // Find the original index in the full transportation array
-                  const originalIndex = activeState.transportation?.findIndex(
-                    t => t.from === leg.from && t.to === leg.to && t.mode === leg.mode
-                  ) ?? idx;
-                  
-                  return (
-                    <TransportationCard
-                      key={`trans-${originalIndex}`}
-                      transportation={{
-                        mode: leg.mode || 'flight',
-                        from: leg.from,
-                        to: leg.to,
-                        fromCode: (leg as any).fromCode,
-                        toCode: (leg as any).toCode,
-                        time: leg.time,
-                        date: (leg as any).date,
-                        priceEstimate: leg.priceEstimate,
-                        price: (leg as any).price,
-                        flightNumber: (leg as any).flightNumber,
-                        airline: (leg as any).airline,
-                        airlineCode: (leg as any).airlineCode,
-                        duration: (leg as any).duration,
-                        stops: (leg as any).stops,
-                        aircraft: (leg as any).aircraft,
-                        bookingUrl: (leg as any).bookingUrl,
-                        coords: leg.coords,
-                      }}
-                      travellers={activeState.travellers || 2}
-                      onView={() => {
-                        // TODO: Could open a detail panel
-                        console.log('[AIPlanner] View transportation:', leg);
-                      }}
-                      onRemove={() => {
-                        // TODO: Implement remove functionality
-                        console.log('[AIPlanner] Remove transportation:', leg);
-                      }}
-                    />
-                  );
-                })}
-                {!(filteredTransportation?.length) && (
-                  <div className="flex flex-col items-center justify-center py-4 text-center">
-                    <Plane className="mb-2 h-8 w-8 text-slate-200" />
-                    {selectedCity ? (
-                      <>
-                        <p className="text-sm text-gray-500 mb-2">No transportation found for {selectedCity}</p>
+              <>
+                <Card id="day-plans-section" className="border-0 bg-white shadow-2xl shadow-slate-200/50 rounded-3xl transition-all duration-500">
+                  <CardHeader className="space-y-3 pb-6 px-8 pt-8">
+                    <div className="flex flex-row items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 shadow-lg shadow-orange-500/20">
+                          <Calendar className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-2xl font-bold text-slate-900">
+                            Day-by-Day Plan
+                          </CardTitle>
+                          {selectedCity && (
+                            <span className="text-sm font-medium text-blue-600 flex items-center gap-1.5 mt-1">
+                              <MapPin className="h-3.5 w-3.5" />
+                              {selectedCity}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {selectedCity && (
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
                           onClick={() => setSelectedCity(null)}
-                          className="text-xs"
+                          className="text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl px-4 py-2"
                         >
-                          Show all cities
+                          Show All Cities
                         </Button>
-                      </>
-                    ) : (
-                      <p className="text-sm text-gray-500">No transportation yet.</p>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      )}
+                    </div>
 
-            <Card className="border border-slate-200 bg-white/90 shadow">
-              <CardHeader className="flex flex-row items-center justify-between p-0 px-4 pt-2 pb-1">
-                <div className="flex items-center gap-2">
-                  <Hotel className="h-5 w-5 text-slate-700" />
-                  <CardTitle className="text-lg">
-                    Accommodation
+                    {/* Date Range */}
+                    {getDateRange() && (
+                      <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200/50 w-fit">
+                        <Calendar className="h-4 w-4 text-slate-500" />
+                        <span className="text-sm font-medium text-slate-700">{getDateRange()}</span>
+                      </div>
+                    )}
+                  </CardHeader>
+                  <CardContent className="px-8 pb-8">
+                    {renderDayPlans(filteredDayPlans)}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 bg-white shadow-2xl shadow-slate-200/50 rounded-3xl">
+                  <CardHeader className="flex flex-row items-center justify-between px-8 pt-8 pb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 shadow-lg shadow-sky-500/20">
+                        <Plane className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-2xl font-bold text-slate-900">
+                          Transportation
+                        </CardTitle>
+                        {selectedCity && (
+                          <span className="text-sm font-medium text-blue-600 flex items-center gap-1.5 mt-1">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {selectedCity}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                     {selectedCity && (
-                      <span className="ml-2 text-sm font-normal text-blue-600">
-                        • {selectedCity}
-                      </span>
-                    )}
-                  </CardTitle>
-                </div>
-                {selectedCity && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedCity(null)}
-                    className="text-xs text-slate-600 hover:text-slate-900"
-                  >
-                    Show All
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-4 p-0 px-4 pt-2 pb-3">
-                {(filteredAccommodation ?? []).map((stay, idx) => {
-                  // Find the original index in the full accommodation array (for proper caching/updating)
-                  const originalIndex = activeState.accommodation?.findIndex(a => a.name === stay.name && a.location === stay.location) ?? idx;
-                  
-                  return (
-                    <AccommodationCard
-                      key={`stay-${originalIndex}`}
-                      accommodation={{
-                        name: stay.name,
-                        location: stay.location,
-                        city: stay.city || '',
-                        checkIn: stay.checkIn || '',
-                        checkOut: stay.checkOut || '',
-                        nights: stay.nights || 1,
-                        pricePerNight: stay.pricePerNight || 'NZ$0',
-                        totalPrice: stay.totalPrice || 'NZ$0',
-                        rating: stay.rating,
-                        reviewCount: stay.reviewCount,
-                        hotelType: stay.hotelType,
-                        amenities: stay.amenities,
-                        coords: stay.coords || { lat: 0, lng: 0 },
-                        imageQuery: stay.imageQuery,
-                        imageUrl: stay.imageUrl,
-                      }}
-                      onView={() => {
-                        // TODO: Could open a detail panel similar to AttractionDetailPanel
-                        console.log('[AIPlanner] View accommodation:', stay.name);
-                      }}
-                      onChange={() => handleChangeAccommodation(originalIndex)}
-                      onRemove={() => handleRemoveAccommodation(originalIndex)}
-                    />
-                  );
-                })}
-                {!(filteredAccommodation?.length) && (
-                  <div className="flex flex-col items-center justify-center py-4 text-center">
-                    <Hotel className="mb-2 h-8 w-8 text-slate-200" />
-                    {selectedCity ? (
-                      <>
-                        <p className="text-sm text-gray-500 mb-2">No accommodation found in {selectedCity}</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedCity(null)}
-                          className="text-xs"
-                        >
-                          Show all cities
-                        </Button>
-                      </>
-                    ) : (
-                      <p className="text-sm text-gray-500">No accommodation yet.</p>
-                    )}
-                  </div>
-                )}
-                
-                {/* Navigation Buttons */}
-                {(previousCity || nextCity) && (
-                  <div className="mt-2 flex justify-center gap-3 border-t border-slate-100 pt-2 -mb-2">
-                    {/* Previous City Button */}
-                    {previousCity && (
-                      <Button 
-                        onClick={() => {
-                          setSelectedCity(previousCity);
-                          // Smooth scroll back to top of section
-                          document.getElementById('day-plans-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }}
-                        className="group flex items-center gap-2.5 bg-slate-600 px-5 py-4 text-white hover:bg-slate-700 rounded-xl shadow-md hover:shadow-lg transition-all"
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedCity(null)}
+                        className="text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl px-4 py-2"
                       >
-                        <div className="rounded-full bg-white/20 p-1.5 group-hover:-translate-x-1 transition-transform">
-                          <ArrowLeft className="h-4 w-4" />
-                        </div>
-                        <div className="text-left">
-                          <p className="text-[9px] uppercase tracking-wide opacity-70">Previous Destination</p>
-                          <p className="text-base font-bold">View {previousCity} Plan</p>
-                        </div>
+                        Show All Cities
                       </Button>
                     )}
-                    
-                    {/* Next City Button */}
-                    {nextCity && (
-                      <Button 
-                        onClick={() => {
-                          setSelectedCity(nextCity);
-                          // Smooth scroll back to top of section
-                          document.getElementById('day-plans-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }}
-                        className="group flex items-center gap-2.5 bg-blue-600 px-5 py-4 text-white hover:bg-blue-700 rounded-xl shadow-md hover:shadow-lg transition-all"
+                  </CardHeader>
+                  <CardContent className="space-y-4 px-8 pb-8">
+                    {(filteredTransportation ?? []).map((leg, idx) => {
+                      // Find the original index in the full transportation array
+                      const originalIndex = activeState.transportation?.findIndex(
+                        t => t.from === leg.from && t.to === leg.to && t.mode === leg.mode
+                      ) ?? idx;
+
+                      return (
+                        <TransportationCard
+                          key={`trans-${originalIndex}`}
+                          transportation={{
+                            mode: leg.mode || 'flight',
+                            from: leg.from,
+                            to: leg.to,
+                            fromCode: (leg as any).fromCode,
+                            toCode: (leg as any).toCode,
+                            time: leg.time,
+                            date: (leg as any).date,
+                            priceEstimate: leg.priceEstimate,
+                            price: (leg as any).price,
+                            flightNumber: (leg as any).flightNumber,
+                            airline: (leg as any).airline,
+                            airlineCode: (leg as any).airlineCode,
+                            duration: (leg as any).duration,
+                            stops: (leg as any).stops,
+                            aircraft: (leg as any).aircraft,
+                            bookingUrl: (leg as any).bookingUrl,
+                            coords: leg.coords,
+                          }}
+                          travellers={activeState.travellers || 2}
+                          onView={() => {
+                            // TODO: Could open a detail panel
+                            console.log('[AIPlanner] View transportation:', leg);
+                          }}
+                          onRemove={() => {
+                            // TODO: Implement remove functionality
+                            console.log('[AIPlanner] Remove transportation:', leg);
+                          }}
+                        />
+                      );
+                    })}
+                    {!(filteredTransportation?.length) && (
+                      <div className="flex flex-col items-center justify-center py-4 text-center">
+                        <Plane className="mb-2 h-8 w-8 text-slate-200" />
+                        {selectedCity ? (
+                          <>
+                            <p className="text-sm text-gray-500 mb-2">No transportation found for {selectedCity}</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedCity(null)}
+                              className="text-xs"
+                            >
+                              Show all cities
+                            </Button>
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-500">No transportation yet.</p>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 bg-white shadow-2xl shadow-slate-200/50 rounded-3xl">
+                  <CardHeader className="flex flex-row items-center justify-between px-8 pt-8 pb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/20">
+                        <Hotel className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-2xl font-bold text-slate-900">
+                          Accommodation
+                        </CardTitle>
+                        {selectedCity && (
+                          <span className="text-sm font-medium text-blue-600 flex items-center gap-1.5 mt-1">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {selectedCity}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {selectedCity && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedCity(null)}
+                        className="text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl px-4 py-2"
                       >
-                        <div className="text-left">
-                          <p className="text-[9px] uppercase tracking-wide opacity-70">Next Destination</p>
-                          <p className="text-base font-bold">View {nextCity} Plan</p>
-                        </div>
-                        <div className="rounded-full bg-white/20 p-1.5 group-hover:translate-x-1 transition-transform">
-                          <ArrowRight className="h-4 w-4" />
-                        </div>
+                        Show All Cities
                       </Button>
                     )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            </>
+                  </CardHeader>
+                  <CardContent className="space-y-4 px-8 pb-8">
+                    {(filteredAccommodation ?? []).map((stay, idx) => {
+                      // Find the original index in the full accommodation array (for proper caching/updating)
+                      const originalIndex = activeState.accommodation?.findIndex(a => a.name === stay.name && a.location === stay.location) ?? idx;
+
+                      return (
+                        <AccommodationCard
+                          key={`stay-${originalIndex}`}
+                          accommodation={{
+                            name: stay.name,
+                            location: stay.location,
+                            city: stay.city || '',
+                            checkIn: stay.checkIn || '',
+                            checkOut: stay.checkOut || '',
+                            nights: stay.nights || 1,
+                            pricePerNight: stay.pricePerNight || 'NZ$0',
+                            totalPrice: stay.totalPrice || 'NZ$0',
+                            rating: stay.rating,
+                            reviewCount: stay.reviewCount,
+                            hotelType: stay.hotelType,
+                            amenities: stay.amenities,
+                            coords: stay.coords || { lat: 0, lng: 0 },
+                            imageQuery: stay.imageQuery,
+                            imageUrl: stay.imageUrl,
+                          }}
+                          onView={() => {
+                            // TODO: Could open a detail panel similar to AttractionDetailPanel
+                            console.log('[AIPlanner] View accommodation:', stay.name);
+                          }}
+                          onChange={() => handleChangeAccommodation(originalIndex)}
+                          onRemove={() => handleRemoveAccommodation(originalIndex)}
+                        />
+                      );
+                    })}
+                    {!(filteredAccommodation?.length) && (
+                      <div className="flex flex-col items-center justify-center py-4 text-center">
+                        <Hotel className="mb-2 h-8 w-8 text-slate-200" />
+                        {selectedCity ? (
+                          <>
+                            <p className="text-sm text-gray-500 mb-2">No accommodation found in {selectedCity}</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedCity(null)}
+                              className="text-xs"
+                            >
+                              Show all cities
+                            </Button>
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-500">No accommodation yet.</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Navigation Buttons */}
+                    {(previousCity || nextCity) && (
+                      <div className="mt-2 flex justify-center gap-3 border-t border-slate-100 pt-2 -mb-2">
+                        {/* Previous City Button */}
+                        {previousCity && (
+                          <Button
+                            onClick={() => {
+                              setSelectedCity(previousCity);
+                              // Smooth scroll back to top of section
+                              document.getElementById('day-plans-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }}
+                            className="group flex items-center gap-2.5 bg-slate-600 px-5 py-4 text-white hover:bg-slate-700 rounded-xl shadow-md hover:shadow-lg transition-all"
+                          >
+                            <div className="rounded-full bg-white/20 p-1.5 group-hover:-translate-x-1 transition-transform">
+                              <ArrowLeft className="h-4 w-4" />
+                            </div>
+                            <div className="text-left">
+                              <p className="text-[9px] uppercase tracking-wide opacity-70">Previous Destination</p>
+                              <p className="text-base font-bold">View {previousCity} Plan</p>
+                            </div>
+                          </Button>
+                        )}
+
+                        {/* Next City Button */}
+                        {nextCity && (
+                          <Button
+                            onClick={() => {
+                              setSelectedCity(nextCity);
+                              // Smooth scroll back to top of section
+                              document.getElementById('day-plans-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }}
+                            className="group flex items-center gap-2.5 bg-blue-600 px-5 py-4 text-white hover:bg-blue-700 rounded-xl shadow-md hover:shadow-lg transition-all"
+                          >
+                            <div className="text-left">
+                              <p className="text-[9px] uppercase tracking-wide opacity-70">Next Destination</p>
+                              <p className="text-base font-bold">View {nextCity} Plan</p>
+                            </div>
+                            <div className="rounded-full bg-white/20 p-1.5 group-hover:translate-x-1 transition-transform">
+                              <ArrowRight className="h-4 w-4" />
+                            </div>
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
             )}
           </div>
         </div>
@@ -3480,14 +3609,14 @@ export default function AIPlanner() {
             // Try to get cached alternatives based on the day's city
             const dayPlan = activeState?.dayPlans?.find(d => d.day === changingActivity.dayNumber);
             let cachedResults: any[] | undefined;
-            
+
             // First, try to get the city from the day plan
             if (dayPlan?.city) {
               const cacheKey = `city-${dayPlan.city}`;
               cachedResults = alternativesCache[cacheKey];
               console.log('[AIPlanner] Using cached alternatives for city:', dayPlan.city, '- Found:', cachedResults?.length || 0);
             }
-            
+
             // If no cached results, try to extract city from activity location
             if (!cachedResults && changingActivity.activity.location) {
               const extractCity = (location: string): string => {
@@ -3501,7 +3630,7 @@ export default function AIPlanner() {
                 console.log('[AIPlanner] Using cached alternatives for extracted city:', city, '- Found:', cachedResults?.length || 0);
               }
             }
-            
+
             console.log('[AIPlanner] All cache keys:', Object.keys(alternativesCache));
             return cachedResults;
           })()}
@@ -3544,7 +3673,7 @@ export default function AIPlanner() {
           activities={(() => {
             const day = activeState.dayPlans!.find((_, index) => index + 1 === selectedDay);
             if (!day) return [];
-            
+
             // Filter activities that have valid coordinates and map to DailyRouteMap format
             return day.activities
               .filter(activity => activity.coords?.lat && activity.coords?.lng)
@@ -3567,7 +3696,7 @@ export default function AIPlanner() {
           }}
           onActivitiesReorder={(reorderedActivities) => {
             console.log('[AIPlanner] Reordering activities for day', selectedDay, ':', reorderedActivities);
-            
+
             // Update the activities order in the active state
             if (itinerary?.dayPlans) {
               const updatedDayPlans = itinerary.dayPlans.map((day, index) => {
@@ -3576,18 +3705,18 @@ export default function AIPlanner() {
                   const activityMap = new Map(
                     day.activities.map(act => [act.title || '', act])
                   );
-                  
+
                   // Reorder based on the new order, preserving full activity data
                   const reordered = reorderedActivities
                     .map(reorderedAct => activityMap.get(reorderedAct.name))
                     .filter(Boolean) as typeof day.activities;
-                  
+
                   // Add any activities that weren't in the reordered list (shouldn't happen, but safe)
                   const reorderedNames = new Set(reorderedActivities.map(a => a.name));
                   const remaining = day.activities.filter(
                     act => !reorderedNames.has(act.title || '')
                   );
-                  
+
                   return {
                     ...day,
                     activities: [...reordered, ...remaining],
@@ -3595,7 +3724,7 @@ export default function AIPlanner() {
                 }
                 return day;
               });
-              
+
               setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
               console.log('[AIPlanner] Day plan activities reordered successfully');
             } else if (plannerState?.dayPlans) {
@@ -3604,16 +3733,16 @@ export default function AIPlanner() {
                   const activityMap = new Map(
                     day.activities.map(act => [act.title || '', act])
                   );
-                  
+
                   const reordered = reorderedActivities
                     .map(reorderedAct => activityMap.get(reorderedAct.name))
                     .filter(Boolean) as typeof day.activities;
-                  
+
                   const reorderedNames = new Set(reorderedActivities.map(a => a.name));
                   const remaining = day.activities.filter(
                     act => !reorderedNames.has(act.title || '')
                   );
-                  
+
                   return {
                     ...day,
                     activities: [...reordered, ...remaining],
@@ -3621,7 +3750,7 @@ export default function AIPlanner() {
                 }
                 return day;
               });
-              
+
               setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
               console.log('[AIPlanner] Day plan activities reordered successfully');
             }
@@ -3635,8 +3764,8 @@ export default function AIPlanner() {
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-2xl font-bold">Share to Community</DialogTitle>
           </DialogHeader>
-          
-          <div 
+
+          <div
             className="share-dialog-scroll space-y-4 py-4 overflow-y-auto flex-1 pr-2 pl-1"
             style={{
               scrollbarWidth: 'thin',
@@ -3738,7 +3867,7 @@ export default function AIPlanner() {
                     Share your experiences and tips for each day. You can use **bold** or *italic* for formatting.
                   </p>
                 </div>
-                
+
                 {shareForm.dayGuides.map((dayGuide, dayIndex) => (
                   <div key={dayIndex} className="space-y-3 p-4 bg-slate-50 rounded-lg border">
                     <div className="flex items-center gap-2">
@@ -3747,7 +3876,7 @@ export default function AIPlanner() {
                       </Badge>
                       <h4 className="text-sm font-semibold">{dayGuide.dayTitle}</h4>
                     </div>
-                    
+
                     {/* Show activities preview */}
                     <div className="flex flex-wrap gap-2">
                       {dayGuide.activities.slice(0, 3).map((activity, idx) => (
@@ -3761,7 +3890,7 @@ export default function AIPlanner() {
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Guide textarea with formatting help */}
                     <div className="space-y-2">
                       <textarea
