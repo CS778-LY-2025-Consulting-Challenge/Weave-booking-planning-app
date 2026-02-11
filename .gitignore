@@ -51,9 +51,11 @@ next-env.d.ts
 # markdown files (except README)
 *.md
 !README.md
+!docs/**/*.md
 
-# scripts
-/scripts
+# scripts (except seed scripts)
+/scripts/*
+!/scripts/seed-*.ts
 # clerk configuration (can include secrets)
 /.clerk/
 
