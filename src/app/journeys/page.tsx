@@ -748,9 +748,6 @@ export default function Journeys() {
             </motion.div>
           </motion.div>
         </div>
-
-        {/* Gradient overlay at bottom */}
-        <div className="absolute right-0 bottom-0 left-0 z-10 h-32 bg-gradient-to-t from-white to-transparent" />
       </section>
 
       <main id="gallery-section" className="relative h-screen w-full">

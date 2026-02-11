@@ -596,7 +596,7 @@ export default function YourJourneys({
                         </div>
                       </div>
 
-                      {journey.status === 'past' && journey.packageIncludes && journey.packageIncludes.length > 0 && (
+                      {journey.packageIncludes && journey.packageIncludes.length > 0 && (
                         <div className="mt-4 space-y-3">
                           <div className="flex items-center gap-2 text-gray-600">
                             <Calendar className="size-4" />
