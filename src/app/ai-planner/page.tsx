@@ -2799,7 +2799,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
   };
 
   return (
-    <div className="relative min-h-screen pt-24 text-black">
+    <div className="relative min-h-screen text-black">
       {/* Background Image with Overlay */}
       <div className="fixed inset-0 z-0">
         <div 
@@ -2814,7 +2814,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
       </div>
 
       {/* Content */}
-      <div className="relative z-10">
+      <div className="relative z-10 pt-24">
       <style jsx>{`
         .route-scroll {
           scrollbar-width: thin;
@@ -2834,10 +2834,10 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
           background-color: #94a3b8; /* slate-400 */
         }
       `}</style>
-      <div className="w-full px-4 pb-6 sm:px-6 lg:px-10">
-        <div className="grid gap-8 lg:grid-cols-[30%_1fr]">
-          {/* Left: Chat */}
-          <Card className="sticky top-24 flex flex-col self-start border-0 backdrop-blur-xl shadow-2xl shadow-slate-900/20 min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden rounded-3xl relative">
+      <div className="w-full pb-6 px-4 sm:px-6 lg:px-10">
+        {/* Left: Chat - Fixed on screen */}
+        <div className="hidden lg:block fixed top-[5.5rem] left-[2.5rem] z-20" style={{ width: 'calc(30% - 2rem)' }}>
+          <Card className="flex flex-col border-0 backdrop-blur-xl shadow-2xl shadow-slate-900/20 overflow-hidden rounded-3xl relative py-0 px-0 h-[calc(100vh-6.5rem)]">
             {/* nepal.jpg Background with overlay - confined to chat panel only */}
             <div className="absolute inset-0 z-0">
               <div 
@@ -2934,12 +2934,13 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
               </div>
             </CardContent>
           </Card>
+        </div>
 
-          {/* Right: Visualization */}
-          <div className="min-w-0 space-y-4 self-start">
+          {/* Right: Visualization - offset by left chat width */}
+          <div className="min-w-0 space-y-4 lg:ml-[calc(30%+0.5rem)]">
             {/* State 1: Idle - Show Static Charizard */}
             {!activeState.tripTitle && !isChatting && !isGenerating && (
-              <Card className="sticky top-24 flex flex-col self-start border-0 bg-gradient-to-br from-white via-slate-50/30 to-white backdrop-blur-xl shadow-2xl shadow-slate-200/40 min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden rounded-3xl">
+              <Card className="flex flex-col border-0 bg-gradient-to-br from-white via-slate-50/30 to-white backdrop-blur-xl shadow-2xl shadow-slate-200/40 min-h-[calc(100vh-6.5rem)] overflow-hidden rounded-3xl">
                 <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-12 text-center">
                   {/* Static Charizard Image */}
                   <div className="relative mb-8 flex h-64 w-64 items-center justify-center overflow-hidden">
@@ -2974,7 +2975,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
 
             {/* State 2: Thinking - Show Animated Charizard */}
             {(isChatting || isGenerating) && !activeState.tripTitle && (
-              <Card className="sticky top-24 flex flex-col self-start border-0 bg-gradient-to-br from-white via-slate-50/30 to-white backdrop-blur-xl shadow-2xl shadow-slate-200/40 min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden rounded-3xl">
+              <Card className="flex flex-col border-0 bg-gradient-to-br from-white via-slate-50/30 to-white backdrop-blur-xl shadow-2xl shadow-slate-200/40 min-h-[calc(100vh-6.5rem)] overflow-hidden rounded-3xl">
                 <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-12 text-center">
                   {/* Animated Charizard */}
                   <div className="relative mb-10 flex h-56 w-56 items-center justify-center overflow-hidden">
@@ -3539,7 +3540,6 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
               </>
             )}
           </div>
-        </div>
       </div>
 
       {/* Shared Detail Panel */}
