@@ -26,6 +26,7 @@ import {
   Loader2 as Loader,
   Map,
   MapPin,
+  Plus,
   Sun
 } from 'lucide-react';
 import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
@@ -472,9 +473,15 @@ export default function Journeys() {
                 <Compass className="size-16 text-zinc-300 mb-4" />
                 <h3 className="text-xl font-semibold text-zinc-800 mb-2">No community trips yet</h3>
                 <p className="text-zinc-600 mb-6">Be the first to share your journey!</p>
-                <Button onClick={() => router.push('/ai-planner')}>
-                  Create a Trip
-                </Button>
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => router.push('/ai-planner')}>
+                    Plan with AI
+                  </Button>
+                  <Button onClick={() => router.push('/community-trips/create')}>
+                    <Plus className="size-4 mr-2" />
+                    Share Your Journey
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -576,6 +583,30 @@ export default function Journeys() {
                   </div>
                 </motion.div>
               ))}
+
+              {/* Create New Trip Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                whileHover={{ y: -8 }}
+                onClick={() => router.push('/community-trips/create')}
+                className="group relative flex min-h-[420px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-zinc-300 bg-white/50 transition-all duration-300 hover:border-zinc-400 hover:bg-white hover:shadow-lg"
+              >
+                <div className="flex flex-col items-center gap-4 px-6 text-center">
+                  <div className="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-zinc-300 transition-colors group-hover:border-zinc-500 group-hover:bg-zinc-50">
+                    <Plus className="size-8 text-zinc-400 transition-colors group-hover:text-zinc-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-cormorant text-xl font-semibold text-zinc-600 group-hover:text-zinc-800">
+                      Share Your Journey
+                    </h3>
+                    <p className="mt-2 text-sm text-zinc-400 group-hover:text-zinc-500">
+                      Create a travel guide from your own experience and share it with the community
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
             </div>
             )}
           </div>

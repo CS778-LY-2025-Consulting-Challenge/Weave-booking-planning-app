@@ -35,6 +35,8 @@ import {
   Save,
   Check,
   Share2,
+  Lightbulb,
+  StickyNote,
 } from 'lucide-react';
 import CharizardOrb from '@/components/CharizardOrb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +44,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,6 +63,7 @@ import TransportationCard from '@/components/TransportationCard';
 import TravelSafetyCard from '@/components/TravelSafetyCard';
 import ThingsToKnowCard from '@/components/ThingsToKnowCard';
 import DailyRouteMap from '@/components/DailyRouteMap';
+import FloatingAssistant from '@/components/FloatingAssistant';
 
 type Coordinates = { lat: number; lng: number };
 type DayPlan = {
@@ -193,16 +197,106 @@ const ActivityCard = ({
   activity, 
   onClick, 
   onRemove, 
-  onChange 
+  onChange,
+  destination,
+  dayNumber,
+  activityIndex,
+  itinerary,
+  setItinerary,
+  activeState,
+  setPlannerState,
+  handleApplySuggestion,
 }: { 
   activity: any, 
   onClick: () => void,
   onRemove: () => void,
   onChange: () => void,
+  destination?: string,
+  dayNumber?: number,
+  activityIndex?: number,
+  itinerary: TripState | null,
+  setItinerary: (state: TripState) => void,
+  activeState: TripState,
+  setPlannerState: (state: TripState) => void,
+  handleApplySuggestion: (suggestion: any) => void,
 }) => {
+  const { user } = useUser();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoadingImage, setIsLoadingImage] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+  const [signals, setSignals] = useState<any[]>([]);
+  const [isLoadingSignals, setIsLoadingSignals] = useState(false);
+  
+  // AI Optimization state
+  const [optimizations, setOptimizations] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isLoadingOptimizations, setIsLoadingOptimizations] = useState(false);
+  const [isOptimizationPopoverOpen, setIsOptimizationPopoverOpen] = useState(false);
+  
+  // Notes state - moved to top level to comply with React Hooks rules
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [notes, setNotes] = useState<Array<{id: string, content: string, timestamp: number}>>([]);
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  
+  // Track applied suggestions to hide them
+  const [appliedSuggestions, setAppliedSuggestions] = useState<Set<string>>(new Set());
+
+  // Calculate visible optimizations based on applied suggestions
+  const visibleOptimizations = useMemo(() => {
+    return optimizations.filter(opt => {
+      const relatedSuggestions = suggestions.filter((s: any) => s.issueId === opt.id);
+      // If there are suggestions, only show the optimization if NOT all are applied
+      if (relatedSuggestions.length > 0) {
+        return !relatedSuggestions.every((s: any) => appliedSuggestions.has(s.id));
+      }
+      // If no suggestions, show the optimization (informational)
+      return true;
+    });
+  }, [optimizations, suggestions, appliedSuggestions]);
+
+  // Fetch AI optimizations for this day
+  useEffect(() => {
+    const fetchOptimizations = async () => {
+      if (!dayNumber || !itinerary?.dayPlans && !activeState?.dayPlans) return;
+      
+      setIsLoadingOptimizations(true);
+      try {
+        const dayPlans = itinerary?.dayPlans || activeState?.dayPlans || [];
+        const response = await fetch('/api/planner/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dayPlans }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[AI Optimization] Full response:', data);
+          console.log('[AI Optimization] Looking for day:', dayNumber, 'dayIndex:', dayNumber - 1);
+          console.log('[AI Optimization] All suggestions:', data.suggestions);
+          
+          // Filter optimizations for this specific day
+          const dayOptimizations = data.issues?.filter((issue: any) => {
+            console.log('[AI Optimization] Issue dayIndex:', issue.dayIndex, 'matches:', issue.dayIndex === dayNumber - 1);
+            return issue.dayIndex === dayNumber - 1;
+          }) || [];
+          
+          console.log('[AI Optimization] Filtered optimizations:', dayOptimizations);
+          setOptimizations(dayOptimizations);
+          // Save all suggestions - we'll filter by issueId when displaying
+          setSuggestions(data.suggestions || []);
+          console.log('[AI Optimization] Saved suggestions count:', data.suggestions?.length || 0);
+        }
+      } catch (error) {
+        console.error('[AI Optimization] Error:', error);
+      } finally {
+        setIsLoadingOptimizations(false);
+      }
+    };
+    
+    fetchOptimizations();
+  }, [dayNumber, itinerary, activeState]);
 
   useEffect(() => {
     const fetchImage = async () => {
@@ -253,6 +347,209 @@ const ActivityCard = ({
     
     fetchImage();
   }, [activity.title, activity.location]);
+
+  // Fetch UGC signals for this activity
+  useEffect(() => {
+    const fetchSignals = async () => {
+      if (!destination || !activity.title) return;
+      
+      setIsLoadingSignals(true);
+      try {
+        const params = new URLSearchParams({
+          destination,
+          activityTitle: activity.title,
+        });
+        
+        if (activity.location) params.append('activityLocation', activity.location);
+        if (activity.type) params.append('activityType', activity.type);
+        
+        const res = await fetch(`/api/planner/signals?${params.toString()}`);
+        if (!res.ok) return;
+        
+        const data = await res.json();
+        if (data.matches && data.matches.length > 0) {
+          setSignals(data.matches.slice(0, 3)); // Top 3 matches
+        }
+      } catch (error) {
+        console.warn('[ActivityCard] Failed to fetch signals:', error);
+      } finally {
+        setIsLoadingSignals(false);
+      }
+    };
+    
+    fetchSignals();
+  }, [destination, activity.title, activity.location, activity.type]);
+  
+  // Sync notes with activity.highlights changes (e.g., from "Apply to Notes")
+  useEffect(() => {
+    const tips = activity.highlights 
+      ? activity.highlights.split('\n').filter((line: string) => line.trim().length > 0)
+      : [];
+    setNotes(tips.map((tip: string, idx: number) => ({
+      id: `note-${idx}`,
+      content: tip,
+      timestamp: Date.now() - (idx * 1000)
+    })));
+  }, [activity.highlights]);
+  
+  // Notes handler functions
+  const handleSaveNewNote = () => {
+    if (!newNoteContent.trim()) return;
+    
+    const newNote = {
+      id: `note-${Date.now()}`,
+      content: `📍 Traveler Tip: ${newNoteContent.trim()}`,
+      timestamp: Date.now()
+    };
+    
+    const updatedNotes = [...notes, newNote];
+    setNotes(updatedNotes);
+    
+    // Update activity highlights
+    if (dayNumber !== undefined && activityIndex !== undefined) {
+      const newHighlights = updatedNotes.map(n => n.content).join('\n');
+      
+      if (itinerary?.dayPlans) {
+        const updatedDayPlans = itinerary.dayPlans.map((day) => {
+          if (day.day === dayNumber) {
+            const updatedActivities = day.activities.map((act, idx) => {
+              if (idx === activityIndex) {
+                return { ...act, highlights: newHighlights };
+              }
+              return act;
+            });
+            return { ...day, activities: updatedActivities };
+          }
+          return day;
+        });
+        setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
+      } else if (activeState.dayPlans) {
+        const updatedDayPlans = activeState.dayPlans.map((day) => {
+          if (day.day === dayNumber) {
+            const updatedActivities = day.activities.map((act, idx) => {
+              if (idx === activityIndex) {
+                return { ...act, highlights: newHighlights };
+              }
+              return act;
+            });
+            return { ...day, activities: updatedActivities };
+          }
+          return day;
+        });
+        const newState = { ...activeState, dayPlans: updatedDayPlans };
+        setPlannerState(newState);
+        setItinerary(newState);
+      }
+    }
+    
+    setNewNoteContent('');
+    toast.success('Note added!');
+  };
+  
+  const handleDeleteNote = (noteId: string) => {
+    const updatedNotes = notes.filter(n => n.id !== noteId);
+    setNotes(updatedNotes);
+    
+    // Update activity highlights
+    if (dayNumber !== undefined && activityIndex !== undefined) {
+      const newHighlights = updatedNotes.length > 0 
+        ? updatedNotes.map(n => n.content).join('\n')
+        : '';
+      
+      if (itinerary?.dayPlans) {
+        const updatedDayPlans = itinerary.dayPlans.map((day) => {
+          if (day.day === dayNumber) {
+            const updatedActivities = day.activities.map((act, idx) => {
+              if (idx === activityIndex) {
+                return { ...act, highlights: newHighlights };
+              }
+              return act;
+            });
+            return { ...day, activities: updatedActivities };
+          }
+          return day;
+        });
+        setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
+      } else if (activeState.dayPlans) {
+        const updatedDayPlans = activeState.dayPlans.map((day) => {
+          if (day.day === dayNumber) {
+            const updatedActivities = day.activities.map((act, idx) => {
+              if (idx === activityIndex) {
+                return { ...act, highlights: newHighlights };
+              }
+              return act;
+            });
+            return { ...day, activities: updatedActivities };
+          }
+          return day;
+        });
+        const newState = { ...activeState, dayPlans: updatedDayPlans };
+        setPlannerState(newState);
+        setItinerary(newState);
+      }
+    }
+    
+    toast.success('Note deleted!');
+  };
+  
+  const handleStartEdit = (noteId: string, content: string) => {
+    setEditingNoteId(noteId);
+    // Remove the "📍 Traveler Tip: " prefix for editing
+    const cleanContent = content.replace(/^📍 Traveler Tip: /, '');
+    setEditContent(cleanContent);
+  };
+  
+  const handleSaveEdit = (noteId: string) => {
+    if (!editContent.trim()) return;
+    
+    const updatedNotes = notes.map(n => 
+      n.id === noteId 
+        ? { ...n, content: `📍 Traveler Tip: ${editContent.trim()}`, timestamp: Date.now() }
+        : n
+    );
+    setNotes(updatedNotes);
+    
+    // Update activity highlights
+    if (dayNumber !== undefined && activityIndex !== undefined) {
+      const newHighlights = updatedNotes.map(n => n.content).join('\n');
+      
+      if (itinerary?.dayPlans) {
+        const updatedDayPlans = itinerary.dayPlans.map((day) => {
+          if (day.day === dayNumber) {
+            const updatedActivities = day.activities.map((act, idx) => {
+              if (idx === activityIndex) {
+                return { ...act, highlights: newHighlights };
+              }
+              return act;
+            });
+            return { ...day, activities: updatedActivities };
+          }
+          return day;
+        });
+        setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
+      } else if (activeState.dayPlans) {
+        const updatedDayPlans = activeState.dayPlans.map((day) => {
+          if (day.day === dayNumber) {
+            const updatedActivities = day.activities.map((act, idx) => {
+              if (idx === activityIndex) {
+                return { ...act, highlights: newHighlights };
+              }
+              return act;
+            });
+            return { ...day, activities: updatedActivities };
+          }
+          return day;
+        });
+        const newState = { ...activeState, dayPlans: updatedDayPlans };
+        setPlannerState(newState);
+        setItinerary(newState);
+      }
+    }
+    
+    setEditingNoteId(null);
+    setEditContent('');
+    toast.success('Note updated!');
+  };
 
   return (
     <div 
@@ -305,6 +602,212 @@ const ActivityCard = ({
           
           {/* Action Buttons - Right Top Corner */}
           <div className="flex shrink-0 items-center gap-1">
+            {/* UGC Signal Badge - Community Insights */}
+            {signals.length > 0 && (
+              <Popover open={isOptimizationPopoverOpen} onOpenChange={setIsOptimizationPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <button 
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium bg-amber-500/90 text-white rounded-full shadow-sm hover:bg-amber-600/90 transition-colors"
+                  >
+                    <Lightbulb className="h-3 w-3 fill-white" />
+                    <span>{signals.length}</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[720px] p-0" side="left" align="start">
+                  <div className="grid grid-cols-2 gap-0 divide-x">
+                    {/* Left: AI Optimization (Blue Theme) */}
+                    <div className="flex flex-col">
+                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 border-b">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-blue-600" />
+                          <h4 className="font-semibold text-sm text-blue-900">AI Optimization</h4>
+                        </div>
+                        <p className="text-xs text-blue-700 mt-1">Smart suggestions for Day {dayNumber}</p>
+                      </div>
+                      <div className="p-3 space-y-2 max-h-64 overflow-y-auto">
+                        {isLoadingOptimizations ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                          </div>
+                        ) : visibleOptimizations.length === 0 ? (
+                          <div className="text-center py-8">
+                            <Check className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                            <p className="text-xs text-slate-500">No optimization needed</p>
+                          </div>
+                        ) : (
+                          visibleOptimizations.map((opt: any, idx: number) => {
+                            // Get related suggestions for this issue
+                            const relatedSuggestions = suggestions.filter((s: any) => s.issueId === opt.id);
+                            console.log('[AI Optimization] Issue:', opt.id, 'Related suggestions:', relatedSuggestions);
+                            
+                            return (
+                              <div key={idx} className="p-2 bg-white rounded-lg border border-blue-100 hover:border-blue-200 transition-colors">
+                                <div className="flex items-start gap-2 mb-1">
+                                  <Badge variant="outline" className="text-[9px] px-1 py-0 border-0 bg-blue-100 text-blue-700">
+                                    {opt.type || 'suggestion'}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs font-medium text-slate-900 mb-1">
+                                  {opt.title}
+                                </p>
+                                <p className="text-[11px] text-slate-600 leading-relaxed">
+                                  {opt.description}
+                                </p>
+                                {relatedSuggestions.length > 0 && (
+                                  <div className="mt-2 pt-2 border-t border-blue-100 space-y-2">
+                                    <p className="text-[10px] font-semibold text-blue-700 flex items-center gap-1">
+                                      <Lightbulb className="h-3 w-3 fill-blue-700" />
+                                      Suggested Solutions
+                                    </p>
+                                    {relatedSuggestions.map((suggestion: any, sIdx: number) => (
+                                      <div key={sIdx} className="space-y-1">
+                                        <p className="text-[11px] text-slate-700 font-medium">
+                                          {suggestion.title}
+                                        </p>
+                                        <p className="text-[10px] text-slate-500 leading-relaxed">
+                                          {suggestion.description}
+                                        </p>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="w-full h-7 text-[11px] bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300 text-blue-900"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            try {
+                                              console.log('[Apply Suggestion] Full suggestion:', suggestion);
+                                              console.log('[Apply Suggestion] Action:', suggestion.action);
+                                              console.log('[Apply Suggestion] Payload:', suggestion.action?.payload);
+                                              handleApplySuggestion(suggestion);
+                                              setAppliedSuggestions(prev => new Set([...prev, suggestion.id]));
+                                              toast.success('Suggestion applied successfully!');
+                                              setIsOptimizationPopoverOpen(false);
+                                            } catch (error) {
+                                              console.error('[Apply Suggestion] Error:', error);
+                                              toast.error('Failed to apply suggestion');
+                                            }
+                                          }}
+                                        >
+                                          <Check className="h-3 w-3 mr-1" />
+                                          Apply
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Right: Community Insights (Amber Theme) */}
+                    <div className="flex flex-col">
+                      <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-3 border-b">
+                        <div className="flex items-center gap-2">
+                          <Lightbulb className="h-4 w-4 text-amber-600" />
+                          <h4 className="font-semibold text-sm text-amber-900">Community Insights</h4>
+                        </div>
+                        <p className="text-xs text-amber-700 mt-1">Tips from travelers who've been here</p>
+                      </div>
+                      <div className="p-3 space-y-2 max-h-64 overflow-y-auto">
+                    {signals.map((match: any, idx: number) => (
+                      <div key={idx} className="p-2 bg-white rounded-lg border border-amber-100 hover:border-amber-200 transition-colors">
+                        <div className="flex items-start gap-2 mb-1">
+                          <Badge 
+                            variant="outline" 
+                            className={`text-[9px] px-1 py-0 border-0 ${
+                              match.signal.signalType === 'positive' ? 'bg-green-100 text-green-700' :
+                              match.signal.signalType === 'negative' ? 'bg-red-100 text-red-700' :
+                              'bg-blue-100 text-blue-700'
+                            }`}
+                          >
+                            {match.signal.signalType}
+                          </Badge>
+                        </div>
+                        <p className="text-xs font-medium text-slate-900 mb-1">
+                          {match.signal.title}
+                        </p>
+                        <p className="text-[11px] text-slate-600 leading-relaxed">
+                          {match.signal.content}
+                        </p>
+                        {match.signal.actionable && (
+                          <div className="mt-2 pt-2 border-t border-amber-100">
+                            <p className="text-[11px] text-amber-700 font-medium mb-2">
+                              💡 {match.signal.actionable}
+                            </p>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full h-7 text-[11px] bg-amber-50 border-amber-200 hover:bg-amber-100 hover:border-amber-300 text-amber-900"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Add signal content to activity highlights
+                                if (dayNumber !== undefined && activityIndex !== undefined) {
+                                  const noteText = `📍 Traveler Tip: ${match.signal.actionable || match.signal.content}`;
+                                  
+                                  // Update activity highlights
+                                  if (itinerary?.dayPlans) {
+                                    const updatedDayPlans = itinerary.dayPlans.map((day) => {
+                                      if (day.day === dayNumber) {
+                                        const updatedActivities = day.activities.map((act, idx) => {
+                                          if (idx === activityIndex) {
+                                            const currentHighlights = act.highlights || '';
+                                            const newHighlights = currentHighlights 
+                                              ? `${currentHighlights}\n${noteText}`
+                                              : noteText;
+                                            return { ...act, highlights: newHighlights };
+                                          }
+                                          return act;
+                                        });
+                                        return { ...day, activities: updatedActivities };
+                                      }
+                                      return day;
+                                    });
+                                    
+                                    setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
+                                    toast.success('Tip added to activity notes!');
+                                  } else if (activeState.dayPlans) {
+                                    const updatedDayPlans = activeState.dayPlans.map((day) => {
+                                      if (day.day === dayNumber) {
+                                        const updatedActivities = day.activities.map((act, idx) => {
+                                          if (idx === activityIndex) {
+                                            const currentHighlights = act.highlights || '';
+                                            const newHighlights = currentHighlights 
+                                              ? `${currentHighlights}\n${noteText}`
+                                              : noteText;
+                                            return { ...act, highlights: newHighlights };
+                                          }
+                                          return act;
+                                        });
+                                        return { ...day, activities: updatedActivities };
+                                      }
+                                      return day;
+                                    });
+                                    
+                                    const newState = { ...activeState, dayPlans: updatedDayPlans };
+                                    setPlannerState(newState);
+                                    setItinerary(newState);
+                                    toast.success('Tip added to activity notes!');
+                                  }
+                                }
+                              }}
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Apply to Notes
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+            
             {/* Change Button - Shows on hover */}
             <button
               onClick={(e) => {
@@ -379,6 +882,128 @@ const ActivityCard = ({
               <span className="text-sm font-bold text-slate-900">{activity.price}</span>
             </div>
           )}
+        </div>
+        
+        {/* Notes Button - Always visible */}
+        <div 
+          className="mt-2 pt-2 border-t border-slate-100"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
+            <DialogTrigger asChild>
+              <button 
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1.5 text-[11px] text-amber-600 hover:text-amber-700 font-medium transition-colors"
+              >
+                <StickyNote className="h-3.5 w-3.5" />
+                <span>
+                  {notes.length > 0 ? `${notes.length} ` : ''}note{notes.length !== 1 ? 's' : ''}
+                </span>
+              </button>
+            </DialogTrigger>
+            <DialogContent 
+              className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDownOutside={(e) => e.preventDefault()}
+            >
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <StickyNote className="h-5 w-5 text-amber-600" />
+                  <span>Design notes - {activity.name}</span>
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="flex-1 overflow-y-auto space-y-3 py-4">
+                {notes.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400">
+                    <StickyNote className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm">No notes yet. Add your first note below!</p>
+                  </div>
+                ) : (
+                  notes.map((note) => (
+                    <div key={note.id} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="text-xs text-slate-500">
+                          <span className="font-medium">{user?.firstName || 'You'}</span>
+                          <span className="mx-1">-</span>
+                          <span>{new Date(note.timestamp).toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {editingNoteId === note.id ? (
+                            <>
+                              <button
+                                onClick={() => handleSaveEdit(note.id)}
+                                className="p-1 hover:bg-slate-200 rounded transition-colors"
+                              >
+                                <Check className="h-3.5 w-3.5 text-green-600" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingNoteId(null);
+                                  setEditContent('');
+                                }}
+                                className="p-1 hover:bg-slate-200 rounded transition-colors"
+                              >
+                                <X className="h-3.5 w-3.5 text-slate-600" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleStartEdit(note.id, note.content)}
+                                className="p-1 hover:bg-slate-200 rounded transition-colors"
+                              >
+                                <Edit3 className="h-3.5 w-3.5 text-slate-600" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteNote(note.id)}
+                                className="p-1 hover:bg-slate-200 rounded transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {editingNoteId === note.id ? (
+                        <textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          className="w-full p-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                          rows={3}
+                          autoFocus
+                        />
+                      ) : (
+                        <p className="text-sm text-slate-700 leading-relaxed">
+                          {note.content.replace(/^📍 Traveler Tip: /, '')}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+              
+              <div className="pt-4 border-t border-slate-200">
+                <textarea
+                  value={newNoteContent}
+                  onChange={(e) => setNewNoteContent(e.target.value)}
+                  placeholder="Write your note here..."
+                  className="w-full p-3 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none mb-3"
+                  rows={3}
+                />
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleSaveNewNote}
+                    disabled={!newNoteContent.trim()}
+                    className="bg-teal-500 hover:bg-teal-600 text-white"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
@@ -2024,6 +2649,14 @@ export default function AIPlanner() {
                   onClick={() => handleActivityClick(act)}
                   onRemove={() => handleRemoveActivity(day.day, idx)}
                   onChange={() => handleChangeActivity(day.day, idx)}
+                  destination={day.city || (typeof activeState.destination === 'string' ? activeState.destination : activeState.destination?.[0])}
+                  dayNumber={day.day}
+                  activityIndex={idx}
+                  itinerary={itinerary}
+                  setItinerary={setItinerary}
+                  activeState={activeState}
+                  setPlannerState={setPlannerState}
+                  handleApplySuggestion={handleApplySuggestion}
                 />
               ))}
               
@@ -2045,6 +2678,112 @@ export default function AIPlanner() {
         })}
       </div>
     );
+  };
+
+  // Handle applying optimization suggestions from FloatingAssistant
+  const handleApplySuggestion = (suggestion: any) => {
+    console.log('[handleApplySuggestion] Called with:', suggestion);
+    const { action } = suggestion;
+    console.log('[handleApplySuggestion] Action:', action);
+    console.log('[handleApplySuggestion] Action type:', action?.type);
+    console.log('[handleApplySuggestion] Action payload:', action?.payload);
+    
+    if (action.type === 'add_highlight') {
+      console.log('[handleApplySuggestion] Processing add_highlight action');
+      const { dayIndex, activityIndex, highlight } = action.payload;
+      console.log('[handleApplySuggestion] dayIndex:', dayIndex, 'activityIndex:', activityIndex, 'highlight:', highlight);
+      
+      const updatedDayPlans = [...(activeState?.dayPlans || [])];
+      console.log('[handleApplySuggestion] updatedDayPlans length:', updatedDayPlans.length);
+      console.log('[handleApplySuggestion] Day exists?', !!updatedDayPlans[dayIndex]);
+      console.log('[handleApplySuggestion] Activity exists?', !!updatedDayPlans[dayIndex]?.activities[activityIndex]);
+      
+      if (updatedDayPlans[dayIndex]?.activities[activityIndex]) {
+        const activity = updatedDayPlans[dayIndex].activities[activityIndex];
+        console.log('[handleApplySuggestion] Current activity:', activity);
+        const existingHighlights = activity.highlights || '';
+        const newHighlights = existingHighlights 
+          ? `${existingHighlights}\n${highlight}`
+          : highlight;
+        
+        console.log('[handleApplySuggestion] New highlights:', newHighlights);
+        
+        updatedDayPlans[dayIndex].activities[activityIndex] = {
+          ...activity,
+          highlights: newHighlights,
+        };
+        
+        console.log('[handleApplySuggestion] Updated activity:', updatedDayPlans[dayIndex].activities[activityIndex]);
+        console.log('[handleApplySuggestion] Using itinerary?', !!itinerary);
+        
+        if (itinerary) {
+          setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
+        } else {
+          setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
+        }
+        
+        console.log('[handleApplySuggestion] State updated successfully');
+      } else {
+        console.error('[handleApplySuggestion] Activity not found at dayIndex:', dayIndex, 'activityIndex:', activityIndex);
+      }
+    } else if (action.type === 'add_note') {
+      console.log('[handleApplySuggestion] Processing add_note action');
+      const { dayIndex, activityIndex, note } = action.payload;
+      console.log('[handleApplySuggestion] dayIndex:', dayIndex, 'activityIndex:', activityIndex, 'note:', note);
+      
+      const updatedDayPlans = [...(activeState?.dayPlans || [])];
+      console.log('[handleApplySuggestion] updatedDayPlans length:', updatedDayPlans.length);
+      console.log('[handleApplySuggestion] Day exists?', !!updatedDayPlans[dayIndex]);
+      console.log('[handleApplySuggestion] Activity exists?', !!updatedDayPlans[dayIndex]?.activities[activityIndex]);
+      
+      if (updatedDayPlans[dayIndex]?.activities[activityIndex]) {
+        const activity = updatedDayPlans[dayIndex].activities[activityIndex];
+        console.log('[handleApplySuggestion] Current activity:', activity);
+        const existingNotes = activity.notes || '';
+        const newNotes = existingNotes 
+          ? `${existingNotes}\n${note}`
+          : note;
+        
+        console.log('[handleApplySuggestion] New notes:', newNotes);
+        
+        updatedDayPlans[dayIndex].activities[activityIndex] = {
+          ...activity,
+          notes: newNotes,
+        };
+        
+        console.log('[handleApplySuggestion] Updated activity:', updatedDayPlans[dayIndex].activities[activityIndex]);
+        console.log('[handleApplySuggestion] Using itinerary?', !!itinerary);
+        
+        if (itinerary) {
+          setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
+        } else {
+          setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
+        }
+        
+        console.log('[handleApplySuggestion] State updated successfully');
+      } else {
+        console.error('[handleApplySuggestion] Activity not found at dayIndex:', dayIndex, 'activityIndex:', activityIndex);
+      }
+    } else if (action.type === 'reorder_activities') {
+      const { dayIndex, newOrder } = action.payload;
+      
+      const updatedDayPlans = [...(activeState?.dayPlans || [])];
+      if (updatedDayPlans[dayIndex]) {
+        const activities = updatedDayPlans[dayIndex].activities;
+        const reordered = newOrder.map((idx: number) => activities[idx]);
+        
+        updatedDayPlans[dayIndex] = {
+          ...updatedDayPlans[dayIndex],
+          activities: reordered,
+        };
+        
+        if (itinerary) {
+          setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
+        } else {
+          setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
+        }
+      }
+    }
   };
 
   return (
@@ -3144,6 +3883,15 @@ export default function AIPlanner() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Floating AI Optimization Assistant */}
+      {activeState?.dayPlans && activeState.dayPlans.length > 0 && (
+        <FloatingAssistant
+          dayPlans={activeState.dayPlans}
+          tripId={savedTripId || undefined}
+          onApplySuggestion={handleApplySuggestion}
+        />
+      )}
     </div>
   );
 }

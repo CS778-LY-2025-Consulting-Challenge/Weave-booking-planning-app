@@ -227,7 +227,7 @@ export default function Dashboard() {
         </div>
 
         {/* World Map Section */}
-        <Card className="mb-8 overflow-hidden shadow-lg">
+        <Card className="mb-8 overflow-hidden shadow-2xl border-0 rounded-2xl bg-slate-900">
           <CardContent className="p-0">
             <DashboardMap destinations={mapDestinations} height={500} />
           </CardContent>
