@@ -133,22 +133,22 @@ export default function AIChat() {
         transition={{ duration: 0.25, ease: 'easeOut' }}
         className="fixed bottom-6 right-6 z-50 max-w-[90vw]"
       >
-        <Card className="flex h-[480px] w-[380px] max-w-full flex-col overflow-hidden rounded-3xl border border-orange-300/40 bg-slate-950/95 shadow-[0_30px_80px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+        <Card className="flex h-[480px] w-[380px] max-w-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg">
 
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 px-5 py-4 text-white">
+          <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4 text-slate-900">
             <div className="flex items-center gap-3">
               {/* Orb on the left, not overlapping text */}
               <CharizardOrb />
 
               <div className="flex flex-col leading-tight">
-                <span className="text-[11px] font-semibold tracking-[0.16em] text-white/85">
+                <span className="text-[11px] font-semibold tracking-[0.16em] text-slate-600">
                   TRAVEL AI AGENT
                 </span>
-                <span className="mt-0.5 flex items-center gap-1 text-[15px] font-semibold text-white drop-shadow-sm">
+                <span className="mt-0.5 flex items-center gap-1 text-[15px] font-semibold text-slate-900">
                   Charizard
                 </span>
-                <span className="mt-0.5 text-[11px] text-white/90">
+                <span className="mt-0.5 text-[11px] text-slate-500">
                   Ignite your next itinerary
                 </span>
               </div>
@@ -158,7 +158,7 @@ export default function AIChat() {
               variant="ghost"
               size="icon"
               onClick={() => setIsOpen(false)}
-              className="rounded-full text-white hover:bg-white/15"
+              className="rounded-full text-slate-600 hover:bg-slate-100"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -167,7 +167,7 @@ export default function AIChat() {
 
 
           {/* Messages */}
-          <div className="flex-1 space-y-3 overflow-y-auto bg-gradient-to-b from-slate-950 via-slate-900 to-black px-3 py-3">
+          <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 px-3 py-3">
             {messages.map((message, index) => (
               <div
                 key={index}
@@ -175,9 +175,9 @@ export default function AIChat() {
                   }`}
               >
                 <div
-                  className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-[0_10px_25px_rgba(0,0,0,0.6)] ${message.type === 'user'
-                    ? 'rounded-br-sm bg-gradient-to-r from-orange-500 to-rose-500 text-white'
-                    : 'rounded-bl-sm bg-white/10 text-slate-50 border border-white/10'
+                  className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm ${message.type === 'user'
+                    ? 'rounded-br-sm bg-blue-500 text-white'
+                    : 'rounded-bl-sm bg-white text-slate-800 border border-slate-200'
                     }`}
                 >
                   {message.text}
@@ -187,18 +187,18 @@ export default function AIChat() {
           </div>
 
           {/* Input */}
-          <div className="border-t border-white/10 bg-slate-950/95 px-3 py-2">
-            <div className="flex items-center gap-2 rounded-2xl bg-white/5 px-2 py-2">
+          <div className="border-t border-slate-200 bg-white px-3 py-2">
+            <div className="flex items-center gap-2 rounded-2xl bg-slate-100 px-2 py-2">
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Tell Charizard your origin, dates & dream trip..."
-                className="border-none bg-transparent text-xs text-white placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="border-none bg-transparent text-xs text-slate-900 placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0"
               />
               <Button
                 size="icon"
-                className="h-8 w-8 rounded-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                className="h-8 w-8 rounded-full bg-blue-500 hover:bg-blue-600"
                 onClick={handleSend}
               >
                 <Send className="h-4 w-4" />

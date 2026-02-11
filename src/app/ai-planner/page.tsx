@@ -2059,7 +2059,22 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pt-24 text-black">
+    <div className="relative min-h-screen pt-24 text-black">
+      {/* Background Image with Overlay */}
+      <div className="fixed inset-0 z-0">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url('/images/AI-BACKGROUND.jpg')",
+            backgroundAttachment: 'fixed'
+          }}
+        />
+        {/* Dark overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/70 via-slate-900/60 to-slate-800/70" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10">
       <style jsx>{`
         .route-scroll {
           scrollbar-width: thin;
@@ -2082,26 +2097,45 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
       <div className="w-full px-4 pb-6 sm:px-6 lg:px-10">
         <div className="grid gap-8 lg:grid-cols-[30%_1fr]">
           {/* Left: Chat */}
-          <Card className="sticky top-24 flex flex-col self-start border border-orange-200/60 bg-white/90 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
-            <CardHeader className="py-2 pb-0">
-              <div className="inline-flex items-center gap-2 px-1 text-slate-900">
-                <CharizardOrb size="medium" />
-                <div className="flex flex-col leading-tight">
-                  <span className="text-sm font-semibold md:text-base">Plan your trip with Charizard</span>
+          <Card className="sticky top-24 flex flex-col self-start border-0 backdrop-blur-xl shadow-2xl shadow-slate-900/20 min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden rounded-3xl relative">
+            {/* nepal.jpg Background with overlay - confined to chat panel only */}
+            <div className="absolute inset-0 z-0">
+              <div 
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage: "url('/images/nepal.jpg')",
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
+              />
+              {/* Lighter overlay for better mountain visibility */}
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-900/55 via-slate-800/45 to-slate-900/60 backdrop-blur-[1px]" />
+            </div>
+            
+            <CardHeader className="px-6 pt-6 pb-4 border-b border-white/10 relative z-10">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/images/Pokémon_Charizard_art.png"
+                  alt="Charizard AI Travel Assistant"
+                  className="h-12 w-auto object-contain drop-shadow-2xl"
+                />
+                <div className="flex flex-col">
+                  <span className="text-base font-bold text-white tracking-tight drop-shadow-lg">Charizard</span>
+                  <span className="text-xs text-slate-300 font-medium drop-shadow">AI Travel Assistant</span>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="flex flex-1 flex-col gap-3 px-4 pt-2 pb-2 min-h-0">
-              <div className="flex-1 space-y-2 overflow-y-auto rounded-lg border border-white/60 bg-white/60 p-3 min-h-0">
+            <CardContent className="flex flex-1 flex-col gap-4 px-6 pt-6 pb-6 min-h-0 relative z-10">
+              <div className="flex-1 space-y-5 overflow-y-auto pr-2 min-h-0 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-white/30">
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
-                    className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow ${msg.type === 'user'
-                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
-                        : 'bg-slate-900 text-white'
+                      className={`max-w-[80%] px-5 py-4 text-[15.5px] leading-[1.6] shadow-sm transition-all ${msg.type === 'user'
+                          ? 'rounded-[20px] rounded-tr-sm bg-blue-500 text-white font-medium'
+                          : 'rounded-[20px] rounded-tl-sm bg-white text-slate-900 font-normal border border-slate-200'
                         }`}
                     >
                       {msg.text}
@@ -2110,39 +2144,51 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
                 ))}
 
                 {isChatting && (
-                  <div className="flex justify-start">
-                    <div className="flex max-w-[80%] items-center gap-1.5 rounded-2xl bg-slate-900 px-4 py-3 text-sm text-white shadow">
-                      <span className="mr-1 text-xs font-medium text-slate-400">Charizard is thinking</span>
-                      <div className="flex gap-1">
-                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-400 [animation-delay:-0.3s]"></span>
-                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-400 [animation-delay:-0.15s]"></span>
-                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-400"></span>
+                  <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-center gap-3 rounded-[20px] rounded-tl-sm bg-white border border-slate-200 px-5 py-4 text-sm text-slate-600 shadow-sm">
+                      <span className="text-xs font-semibold text-slate-600">Thinking</span>
+                      <div className="flex gap-1.5">
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400 [animation-delay:-0.3s]"></span>
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400 [animation-delay:-0.15s]"></span>
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400"></span>
                       </div>
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="mt-auto space-y-2">
+              <div className="mt-auto space-y-3 pt-2">
                 <div className="flex items-center gap-2">
                   <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder="Tell me destination, dates, travellers, preferences..."
-                    className="flex-1"
+                    placeholder="Where would you like to go?"
+                    className="flex-1 h-14 rounded-[20px] border border-slate-300 bg-white text-[15px] text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all shadow-sm"
                   />
-                  <Button onClick={handleSend} disabled={isChatting}>
-                    <Send className="mr-1 h-4 w-4" />
-                    Send
+                  <Button 
+                    onClick={handleSend} 
+                    disabled={isChatting}
+                    className="h-14 w-14 rounded-[20px] bg-blue-500 hover:bg-blue-600 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 p-0"
+                  >
+                    <Send className="h-5 w-5" />
                   </Button>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-gray-600">
-                  <span>Destination: {destinationLabel}</span>
-                  <Button size="sm" variant="secondary" onClick={handleGenerate} disabled={isGenerating}>
-                    <Sparkles className="mr-1 h-4 w-4" />
-                    {isGenerating ? 'Generating...' : 'Generate itinerary'}
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                    <MapPin className="h-3.5 w-3.5 text-slate-500" />
+                    <span className="font-medium">{destinationLabel}</span>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={handleGenerate} 
+                    disabled={isGenerating}
+                    className="h-8 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-all"
+                  >
+                    <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                    {isGenerating ? 'Generating...' : 'Generate Plan'}
                   </Button>
                 </div>
               </div>
@@ -2153,29 +2199,34 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
           <div className="min-w-0 space-y-4 self-start">
             {/* State 1: Idle - Show Static Charizard */}
             {!activeState.tripTitle && !isChatting && !isGenerating && (
-              <Card className="sticky top-24 flex flex-col self-start border border-slate-200 bg-gradient-to-br from-slate-50 to-gray-50 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
-                <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-8 text-center">
+              <Card className="sticky top-24 flex flex-col self-start border-0 bg-gradient-to-br from-white via-slate-50/30 to-white backdrop-blur-xl shadow-2xl shadow-slate-200/40 min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden rounded-3xl">
+                <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-12 text-center">
                   {/* Static Charizard Image */}
-                  <div className="relative mb-6 flex h-48 w-48 items-center justify-center overflow-hidden">
+                  <div className="relative mb-8 flex h-64 w-64 items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-full blur-3xl"></div>
                     <img
-                      src="https://d30mgvfwc9sz4j.cloudfront.net/charizard/charizard-static.png"
+                      src="/charizard/charizard-static.png"
                       alt="Charizard"
-                      className="h-full w-full object-contain"
+                      className="relative h-full w-full object-contain drop-shadow-2xl"
                     />
                   </div>
 
                   {/* Welcome Text */}
-                  <h2 className="mb-2 text-2xl font-bold text-slate-900">
-                    Ready to Plan Your Adventure?
+                  <h2 className="mb-3 text-3xl font-bold text-slate-900 tracking-tight">
+                    Ready to Explore?
                   </h2>
-                  <p className="mb-4 max-w-md text-base text-slate-600">
-                    Chat with Charizard on the left to start creating your dream itinerary!
+                  <p className="mb-8 max-w-md text-base text-slate-600 leading-relaxed">
+                    Start chatting to create your perfect AI-powered itinerary
                   </p>
 
                   {/* Example Prompts */}
-                  <div className="space-y-2 text-sm text-slate-500">
-                    <p className="italic">"Plan a 5-day trip to Tokyo"</p>
-                    <p className="italic">"I want to visit Paris and Rome"</p>
+                  <div className="space-y-3 w-full max-w-sm">
+                    <div className="px-5 py-3 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200/50 text-sm text-slate-700 font-medium backdrop-blur-sm hover:shadow-md transition-all cursor-default">
+                      "Plan a 5-day trip to Tokyo"
+                    </div>
+                    <div className="px-5 py-3 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200/50 text-sm text-slate-700 font-medium backdrop-blur-sm hover:shadow-md transition-all cursor-default">
+                      "I want to visit Paris and Rome"
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -2183,21 +2234,22 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
 
             {/* State 2: Thinking - Show Animated Charizard */}
             {(isChatting || isGenerating) && !activeState.tripTitle && (
-              <Card className="sticky top-24 flex flex-col self-start border border-slate-200 bg-gradient-to-br from-slate-50 to-gray-50 py-0 shadow-lg min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden gap-0">
-                <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-8 text-center">
+              <Card className="sticky top-24 flex flex-col self-start border-0 bg-gradient-to-br from-white via-slate-50/30 to-white backdrop-blur-xl shadow-2xl shadow-slate-200/40 min-h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-hidden rounded-3xl">
+                <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center p-12 text-center">
                   {/* Animated Charizard */}
-                  <div className="relative mb-8 flex h-40 w-40 items-center justify-center overflow-hidden">
+                  <div className="relative mb-10 flex h-56 w-56 items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-full blur-3xl animate-pulse"></div>
                     <img
-                      src="https://d30mgvfwc9sz4j.cloudfront.net/charizard/charizard-animated.gif"
+                      src="/charizard/charizard-animated.gif"
                       alt="Charizard thinking"
-                      className="h-full w-full object-contain"
+                      className="relative h-full w-full object-contain drop-shadow-2xl"
                     />
                     {/* Fire effect */}
-                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
-                      <div className="flex gap-1">
-                        <span className="animate-bounce text-2xl" style={{ animationDelay: '0ms' }}>🔥</span>
-                        <span className="animate-bounce text-2xl" style={{ animationDelay: '150ms' }}>🔥</span>
-                        <span className="animate-bounce text-2xl" style={{ animationDelay: '300ms' }}>🔥</span>
+                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2">
+                      <div className="flex gap-2">
+                        <span className="animate-bounce text-3xl drop-shadow-lg" style={{ animationDelay: '0ms' }}>🔥</span>
+                        <span className="animate-bounce text-3xl drop-shadow-lg" style={{ animationDelay: '150ms' }}>🔥</span>
+                        <span className="animate-bounce text-3xl drop-shadow-lg" style={{ animationDelay: '300ms' }}>🔥</span>
                       </div>
                     </div>
                   </div>
@@ -2206,8 +2258,8 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
                   {isGenerating ? (
                     <>
                       {/* Generating Trip - Show Progress */}
-                      <h2 className="mb-6 text-2xl font-bold text-slate-900">
-                        Charizard is crafting your perfect journey...
+                      <h2 className="mb-8 text-3xl font-bold text-slate-900 tracking-tight">
+                        Crafting your perfect journey
                       </h2>
 
                       {/* Progress Indicator */}
@@ -2218,11 +2270,11 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
                   ) : (
                     <>
                       {/* Chatting - Static Content */}
-                      <h2 className="mb-4 text-2xl font-bold text-slate-900">
-                        Charizard is thinking...
+                      <h2 className="mb-3 text-3xl font-bold text-slate-900 tracking-tight">
+                        Analyzing your request
                       </h2>
-                      <p className="text-sm text-slate-600">
-                        Ready to help you plan your adventure!
+                      <p className="text-base text-slate-600">
+                        Getting everything ready for you...
                       </p>
                     </>
                   )}
@@ -2232,7 +2284,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
 
             {/* State 3: Trip Generated - Show Visualization Cards */}
             {activeState.tripTitle && (
-              <Card className="relative min-w-0 overflow-hidden border border-slate-200 bg-white/90 shadow-lg">
+              <Card className="relative min-w-0 overflow-hidden border-0 bg-white shadow-2xl shadow-slate-200/50 rounded-3xl">
                 {/* Background photo + gradient (only after we have a trip) */}
                 {heroImageUrl ? (
                   <>
@@ -2241,31 +2293,57 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
                       style={{ backgroundImage: `url(${heroImageUrl})` }}
                     />
                     {/* Darker gradient overlay for better visibility */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-slate-900/30 to-slate-900/20" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 via-slate-900/40 to-slate-900/30" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-white via-white/60 to-transparent" />
                   </>
                 ) : null}
 
-                <CardHeader className="relative space-y-3 pb-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <CardTitle className="text-3xl font-extrabold tracking-tight text-slate-900">
-                      {activeState.tripTitle || 'Your Dream Journey'}
-                    </CardTitle>
+                <CardHeader className="relative space-y-4 pb-8 pt-8 px-8">
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-4xl font-black tracking-tight text-slate-900 mb-2 leading-tight">
+                        {activeState.tripTitle || 'Your Dream Journey'}
+                      </CardTitle>
+                      
+                      {/* Statistics badges */}
+                      <div className="flex flex-wrap gap-3 mt-4">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/50 shadow-sm">
+                          <Calendar className="h-4 w-4 text-orange-600" />
+                          <span className="text-sm font-semibold text-slate-900">{activeState.summary?.days || plannerState.dates?.durationDays || '—'} days</span>
+                        </div>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/50 shadow-sm">
+                          <MapPin className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-semibold text-slate-900">{activeState.summary?.cities || 1} cities</span>
+                        </div>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/50 shadow-sm">
+                          <Star className="h-4 w-4 text-amber-500" />
+                          <span className="text-sm font-semibold text-slate-900">{activeState.summary?.activitiesCount || '—'} activities</span>
+                        </div>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/50 shadow-sm">
+                          <Hotel className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-semibold text-slate-900">{activeState.summary?.hotelsCount || '—'} hotels</span>
+                        </div>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/50 shadow-sm">
+                          <Plane className="h-4 w-4 text-sky-600" />
+                          <span className="text-sm font-semibold text-slate-900">{activeState.summary?.transportsCount || '—'} flights</span>
+                        </div>
+                      </div>
+                    </div>
 
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-3 shrink-0">
                       {/* Save Button */}
                       <Button
                         onClick={handleSaveTrip}
                         disabled={isSaving || savedTripId !== null}
-                        className={`transition-all ${savedTripId
-                          ? 'bg-green-500 hover:bg-green-600'
-                          : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
+                        className={`h-12 px-6 rounded-2xl font-semibold shadow-lg transition-all hover:scale-105 disabled:hover:scale-100 ${savedTripId
+                            ? 'bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-green-500/30'
+                            : 'bg-gradient-to-br from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-orange-500/30'
                           }`}
                       >
                         {isSaving ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Saving...
+                            Saving
                           </>
                         ) : savedTripId ? (
                           <>
@@ -2284,49 +2362,26 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
                       <Button
                         onClick={handleShareToCommunity}
                         disabled={!activeState.tripTitle}
-                        variant="outline"
-                        className="border-2 border-purple-500 text-purple-600 hover:bg-purple-50"
+                        className="h-12 px-6 rounded-2xl font-semibold bg-white hover:bg-slate-50 text-purple-600 border-2 border-purple-600/30 shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20 transition-all hover:scale-105 disabled:hover:scale-100"
                       >
                         <Share2 className="mr-2 h-4 w-4" />
                         Share
                       </Button>
                     </div>
                   </div>
-
-                  {/* Icons & Counts Summary */}
-                  <div className="min-w-0 lg:w-[56%] lg:min-w-[520px]">
-                    <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-slate-900">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-4 w-4 text-slate-900" />
-                        <span>{activeState.summary?.days || plannerState.dates?.durationDays || '—'} days</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="h-4 w-4 text-slate-900" />
-                        <span>{activeState.summary?.cities || 1} cities</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Star className="h-4 w-4 text-slate-900" />
-                        <span>{activeState.summary?.activitiesCount || '—'} activities</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Hotel className="h-4 w-4 text-slate-900" />
-                        <span>{activeState.summary?.hotelsCount || '—'} hotels</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Plane className="h-4 w-4 text-slate-900" />
-                        <span>{activeState.summary?.transportsCount || '—'} transports</span>
-                      </div>
-                    </div>
-                  </div>
                 </CardHeader>
 
-                <CardContent className="relative min-w-0 overflow-hidden px-6 py-6">
-                  <div className="flex min-w-0 flex-col gap-6 lg:flex-row">
+                <CardContent className="relative min-w-0 overflow-hidden px-8 py-8">
+                  <div className="flex min-w-0 flex-col gap-8 lg:flex-row">
                     {/* Left: Route Flow */}
-                    <div className="min-w-0 lg:w-[56%] lg:min-w-[520px] lg:pr-6">
+                    <div className="min-w-0 lg:w-[60%] lg:min-w-[560px]">
+                      <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-orange-600" />
+                        Your Journey
+                      </h3>
                       <div className="relative">
-                        <div className="w-full max-w-full overflow-x-auto pb-2 route-scroll">
-                          <div className="inline-flex min-w-max items-center gap-2">
+                        <div className="w-full max-w-full overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
+                          <div className="inline-flex min-w-max items-center gap-3">
                             {(activeState.routeFlow || [
                               activeState.departureCity || 'Departure',
                               destinationLabel,
@@ -2347,19 +2402,27 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
                                         }
                                       }}
                                       disabled={!isClickable}
-                                      className={`flex h-12 items-center justify-center rounded-2xl px-6 shadow-sm transition-all ${isClickable ? 'cursor-pointer hover:shadow-md' : 'cursor-default'
+                                      className={`flex h-14 items-center justify-center rounded-2xl px-6 shadow-md transition-all ${isClickable ? 'cursor-pointer hover:shadow-lg hover:scale-105' : 'cursor-default'
                                         } ${isDeparture || isArrival
-                                          ? 'border border-slate-200 bg-white'
+                                          ? 'border-2 border-slate-200/80 bg-gradient-to-br from-white to-slate-50 backdrop-blur-sm'
                                           : isSelected
-                                            ? 'border-2 border-blue-500 bg-blue-500 text-white'
-                                            : 'border border-indigo-200 bg-white text-slate-900 hover:border-blue-400'
+                                            ? 'border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-blue-500/40'
+                                            : 'border-2 border-indigo-200/80 bg-white text-slate-900 hover:border-blue-400 hover:bg-blue-50'
                                         }`}
                                     >
-                                      <div className="flex flex-col items-center gap-0.5">
-                                        <span className="whitespace-nowrap text-xs font-bold">{city}</span>
+                                      <div className="flex flex-col items-center gap-1">
+                                        <span className="whitespace-nowrap text-sm font-bold">{city}</span>
                                         {isStop ? (
-                                          <span className={`text-[10px] ${isSelected ? 'opacity-90' : 'opacity-70'}`}>
+                                          <span className={`text-[10px] font-medium uppercase tracking-wider ${isSelected ? 'opacity-90' : 'opacity-60'}`}>
                                             Stop
+                                          </span>
+                                        ) : isDeparture ? (
+                                          <span className="text-[10px] font-medium uppercase tracking-wider opacity-60">
+                                            Start
+                                          </span>
+                                        ) : isArrival ? (
+                                          <span className="text-[10px] font-medium uppercase tracking-wider opacity-60">
+                                            End
                                           </span>
                                         ) : null}
                                       </div>
@@ -2367,16 +2430,16 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
                                   </div>
 
                                   {idx < arr.length - 1 ? (
-                                    <div className="flex shrink-0 items-center px-0.5">
-                                      <div className="dashed-line h-[2px] w-4 shrink-0 bg-slate-200"></div>
-                                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 shadow-inner">
+                                    <div className="flex shrink-0 items-center px-2">
+                                      <div className="h-0.5 w-6 shrink-0 bg-gradient-to-r from-slate-300 to-slate-200 rounded-full"></div>
+                                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-white to-slate-50 shadow-sm">
                                         {isInternationalTravel(city, arr[idx + 1]) ? (
-                                          <Plane className="h-3.5 w-3.5 text-slate-400" />
+                                          <Plane className="h-4 w-4 text-orange-600" />
                                         ) : (
-                                          <Train className="h-3.5 w-3.5 text-slate-400" />
+                                          <Train className="h-4 w-4 text-blue-600" />
                                         )}
                                       </div>
-                                      <div className="dashed-line h-[2px] w-4 shrink-0 bg-slate-200"></div>
+                                      <div className="h-0.5 w-6 shrink-0 bg-gradient-to-r from-slate-200 to-slate-300 rounded-full"></div>
                                     </div>
                                   ) : null}
                                 </div>
@@ -2388,28 +2451,32 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
                     </div>
 
                     {/* Right: Map Thumbnail + Dialog */}
-                    <div className="min-w-0 lg:w-[44%]">
+                    <div className="min-w-0 lg:w-[40%]">
+                      <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <Globe2 className="h-5 w-5 text-blue-600" />
+                        Route Map
+                      </h3>
                       <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
                         <DialogTrigger asChild>
-                          <button className="group relative h-24 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm transition-all hover:shadow-md lg:h-full">
+                          <button className="group relative h-32 w-full overflow-hidden rounded-3xl border-2 border-slate-200 bg-slate-900 shadow-lg transition-all hover:shadow-2xl hover:scale-[1.02] lg:h-full">
                             {/* Map Image Placeholder / Background */}
-                            <div className="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
+                            <div className="absolute inset-0 opacity-50 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
 
                             {/* Overlay Content */}
                             <div className="relative flex h-full flex-col items-center justify-center text-white">
-                              <div className="mb-1 rounded-full bg-white/20 p-2 backdrop-blur-md transition-transform group-hover:scale-110">
-                                <Globe2 className="h-5 w-5" />
+                              <div className="mb-2 rounded-2xl bg-white/20 p-3 backdrop-blur-md transition-transform group-hover:scale-110">
+                                <Globe2 className="h-6 w-6" />
                               </div>
-                              <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-white/90">
-                                View full map <ArrowRight className="h-3 w-3" />
+                              <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-white/95">
+                                View 3D Map <ArrowRight className="h-3.5 w-3.5" />
                               </span>
                             </div>
                           </button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-4xl h-[80vh] p-0 overflow-hidden bg-slate-950 border-slate-800 [&_svg]:text-white">
-                          <DialogHeader className="absolute top-4 left-6 z-10">
-                            <DialogTitle className="text-white text-xl font-bold bg-slate-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg">
-                              3D Trip Journey
+                        <DialogContent className="max-w-5xl h-[85vh] p-0 overflow-hidden bg-slate-950 border-slate-800 rounded-3xl [&_svg]:text-white">
+                          <DialogHeader className="absolute top-6 left-8 z-10">
+                            <DialogTitle className="text-white text-2xl font-bold bg-slate-900/70 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white/10 shadow-2xl">
+                              Your Trip Journey
                             </DialogTitle>
                           </DialogHeader>
 
@@ -2462,67 +2529,80 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
             {/* Day Plans, Transportation, Accommodation - Only show when trip is generated */}
             {activeState.tripTitle && (
               <>
-                <Card id="day-plans-section" className="border border-slate-200 bg-white/90 shadow transition-all duration-500">
-                  <CardHeader className="space-y-2 pb-4">
+                <Card id="day-plans-section" className="border-0 bg-white shadow-2xl shadow-slate-200/50 rounded-3xl transition-all duration-500">
+                  <CardHeader className="space-y-3 pb-6 px-8 pt-8">
                     <div className="flex flex-row items-center justify-between">
-                      <CardTitle className="text-lg">
-                        Day Plans
-                        {selectedCity && (
-                          <span className="ml-2 text-sm font-normal text-blue-600">
-                            • {selectedCity}
-                          </span>
-                        )}
-                      </CardTitle>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 shadow-lg shadow-orange-500/20">
+                          <Calendar className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-2xl font-bold text-slate-900">
+                            Day-by-Day Plan
+                          </CardTitle>
+                          {selectedCity && (
+                            <span className="text-sm font-medium text-blue-600 flex items-center gap-1.5 mt-1">
+                              <MapPin className="h-3.5 w-3.5" />
+                              {selectedCity}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       {selectedCity && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setSelectedCity(null)}
-                          className="text-xs text-slate-600 hover:text-slate-900"
+                          className="text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl px-4 py-2"
                         >
-                          Show All
+                          Show All Cities
                         </Button>
                       )}
                     </div>
 
                     {/* Date Range */}
                     {getDateRange() && (
-                      <div className="flex items-center gap-2 text-sm text-slate-500">
-                        <Calendar className="h-4 w-4" />
-                        <span>{getDateRange()}</span>
+                      <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200/50 w-fit">
+                        <Calendar className="h-4 w-4 text-slate-500" />
+                        <span className="text-sm font-medium text-slate-700">{getDateRange()}</span>
                       </div>
                     )}
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-8 pb-8">
                     {renderDayPlans(filteredDayPlans)}
                   </CardContent>
                 </Card>
 
-                <Card className="border border-slate-200 bg-white/90 shadow">
-                  <CardHeader className="flex flex-row items-center justify-between p-0 px-4 pt-2 pb-1">
-                    <div className="flex items-center gap-2">
-                      <Plane className="h-5 w-5 text-slate-700" />
-                      <CardTitle className="text-lg">
-                        Transportation
+                <Card className="border-0 bg-white shadow-2xl shadow-slate-200/50 rounded-3xl">
+                  <CardHeader className="flex flex-row items-center justify-between px-8 pt-8 pb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 shadow-lg shadow-sky-500/20">
+                        <Plane className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-2xl font-bold text-slate-900">
+                          Transportation
+                        </CardTitle>
                         {selectedCity && (
-                          <span className="ml-2 text-sm font-normal text-blue-600">
-                            • {selectedCity}
+                          <span className="text-sm font-medium text-blue-600 flex items-center gap-1.5 mt-1">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {selectedCity}
                           </span>
                         )}
-                      </CardTitle>
+                      </div>
                     </div>
                     {selectedCity && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedCity(null)}
-                        className="text-xs text-slate-600 hover:text-slate-900"
+                        className="text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl px-4 py-2"
                       >
-                        Show All
+                        Show All Cities
                       </Button>
                     )}
                   </CardHeader>
-                  <CardContent className="space-y-4 p-0 px-4 pt-2 pb-3">
+                  <CardContent className="space-y-4 px-8 pb-8">
                     {(filteredTransportation ?? []).map((leg, idx) => {
                       // Find the original index in the full transportation array
                       const originalIndex = activeState.transportation?.findIndex(
@@ -2586,31 +2666,36 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
                   </CardContent>
                 </Card>
 
-                <Card className="border border-slate-200 bg-white/90 shadow">
-                  <CardHeader className="flex flex-row items-center justify-between p-0 px-4 pt-2 pb-1">
-                    <div className="flex items-center gap-2">
-                      <Hotel className="h-5 w-5 text-slate-700" />
-                      <CardTitle className="text-lg">
-                        Accommodation
+                <Card className="border-0 bg-white shadow-2xl shadow-slate-200/50 rounded-3xl">
+                  <CardHeader className="flex flex-row items-center justify-between px-8 pt-8 pb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/20">
+                        <Hotel className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-2xl font-bold text-slate-900">
+                          Accommodation
+                        </CardTitle>
                         {selectedCity && (
-                          <span className="ml-2 text-sm font-normal text-blue-600">
-                            • {selectedCity}
+                          <span className="text-sm font-medium text-blue-600 flex items-center gap-1.5 mt-1">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {selectedCity}
                           </span>
                         )}
-                      </CardTitle>
+                      </div>
                     </div>
                     {selectedCity && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedCity(null)}
-                        className="text-xs text-slate-600 hover:text-slate-900"
+                        className="text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl px-4 py-2"
                       >
-                        Show All
+                        Show All Cities
                       </Button>
                     )}
                   </CardHeader>
-                  <CardContent className="space-y-4 p-0 px-4 pt-2 pb-3">
+                  <CardContent className="space-y-4 px-8 pb-8">
                     {(filteredAccommodation ?? []).map((stay, idx) => {
                       // Find the original index in the full accommodation array (for proper caching/updating)
                       const originalIndex = activeState.accommodation?.findIndex(a => a.name === stay.name && a.location === stay.location) ?? idx;
@@ -3151,6 +3236,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
