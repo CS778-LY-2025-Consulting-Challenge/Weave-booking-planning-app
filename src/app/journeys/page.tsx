@@ -620,7 +620,7 @@ export default function Journeys() {
         <div className="absolute inset-0">
           <div className="absolute inset-0 z-10 bg-gradient-to-br from-zinc-900/60 via-zinc-800/50 to-amber-900/40" />
           <video
-            src="https://d30mgvfwc9sz4j.cloudfront.net/weave-travel-media/hero-videos/community-hero.mp4"
+            src="https://d30mgvfwc9sz4j.cloudfront.net/hero-videos/community-hero.mp4"
             autoPlay
             loop
             muted

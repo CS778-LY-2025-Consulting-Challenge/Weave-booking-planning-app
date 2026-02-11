@@ -630,17 +630,15 @@ export default function FlightBooking() {
     <div className="relative min-h-screen">
       {/* Full-Screen Hero Video Section - Covers entire viewport including navbar area */}
       <div className="relative h-screen w-full overflow-hidden">
-        {/* YouTube Video - Full Screen */}
-        <div className="pointer-events-none absolute inset-0 h-full w-full">
-          <iframe
-            className="absolute top-1/2 left-1/2 h-[56.25vw] min-h-[170vh] w-[160vw] min-w-[177.77vh] -translate-x-1/2 -translate-y-1/2 scale-[1.02]"
-            src="https://www.youtube.com/embed/2X4_PQXByoY?autoplay=1&mute=1&loop=1&playlist=2X4_PQXByoY&controls=0&showinfo=0&rel=0&modestbranding=1&start=7&iv_load_policy=3&disablekb=1"
-            title="Flight Experience"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            style={{ border: 'none' }}
-          />
-        </div>
+        {/* S3 Video Background */}
+        <video
+          className="absolute top-1/2 left-1/2 h-full w-full object-cover -translate-x-1/2 -translate-y-1/2"
+          src="https://d30mgvfwc9sz4j.cloudfront.net/hero-videos/flights-hero.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
 
         {/* Overlay Gradient */}
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
