@@ -92,6 +92,7 @@ type DayPlan = {
     reviewCount?: number;
     costEstimate?: string;
     imageUrl?: string;
+    notes?: string; // User notes for this activity
   }>;
 };
 
@@ -2654,12 +2655,20 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
 
                 <div className="grid gap-3">
                   {(day.activities ?? []).map((act, idx) => (
-                    <ActivityCard
-                      key={`${day.day}-${idx}`}
-                      activity={act}
+                    <ActivityCard 
+                      key={`${day.day}-${idx}`} 
+                      activity={act} 
                       onClick={() => handleActivityClick(act)}
                       onRemove={() => handleRemoveActivity(day.day, idx)}
                       onChange={() => handleChangeActivity(day.day, idx)}
+                      destination={day.city || (typeof activeState.destination === 'string' ? activeState.destination : activeState.destination?.[0])}
+                      dayNumber={day.day}
+                      activityIndex={idx}
+                      itinerary={itinerary}
+                      setItinerary={setItinerary}
+                      activeState={activeState}
+                      setPlannerState={setPlannerState}
+                      handleApplySuggestion={handleApplySuggestion}
                     />
                   ))}
 
@@ -2677,53 +2686,8 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
                   </button>
                 </div>
               </div>
-
-              {/* Activity Count (Moved below date) */}
-              {day.activities && day.activities.length > 0 && (
-                <div className="flex items-center gap-1.5 px-1 text-xs text-slate-500">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200">
-                    <span className="text-[10px] font-bold text-slate-600">{day.activities.length}</span>
-                  </div>
-                  <span>{day.activities.length === 1 ? 'activity' : 'activities'}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="grid gap-3">
-              {(day.activities ?? []).map((act, idx) => (
-                <ActivityCard 
-                  key={`${day.day}-${idx}`} 
-                  activity={act} 
-                  onClick={() => handleActivityClick(act)}
-                  onRemove={() => handleRemoveActivity(day.day, idx)}
-                  onChange={() => handleChangeActivity(day.day, idx)}
-                  destination={day.city || (typeof activeState.destination === 'string' ? activeState.destination : activeState.destination?.[0])}
-                  dayNumber={day.day}
-                  activityIndex={idx}
-                  itinerary={itinerary}
-                  setItinerary={setItinerary}
-                  activeState={activeState}
-                  setPlannerState={setPlannerState}
-                  handleApplySuggestion={handleApplySuggestion}
-                />
-              ))}
-              
-              {/* Add Activity Button */}
-              <button
-                onClick={() => handleAddActivity(day.day)}
-                className="group flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white p-6 transition-all hover:border-blue-400 hover:bg-blue-50"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 transition-colors group-hover:bg-blue-500">
-                  <Plus className="h-5 w-5 text-blue-600 transition-colors group-hover:text-white" />
-                </div>
-                <span className="text-sm font-semibold text-slate-600 transition-colors group-hover:text-blue-600">
-                  Add Activity
-                </span>
-              </button>
-            </div>
-          </div>
-          );
-        })}
+            );
+          })}
       </div>
     );
   };
@@ -4021,6 +3985,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
           onApplySuggestion={handleApplySuggestion}
         />
       )}
+      </div>
     </div>
   );
 }
