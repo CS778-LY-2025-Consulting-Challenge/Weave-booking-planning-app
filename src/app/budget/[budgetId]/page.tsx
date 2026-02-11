@@ -17,7 +17,11 @@ export default async function BudgetDashboard({ params }: any) {
     console.log('[BudgetPage] Fetching budget for ID:', budgetId);
 
     // Fetch initial data on server to bypass client rules
-    const { success, budget, expenses, error } = await getBudgetDetailsAction(budgetId);
+    const result = await getBudgetDetailsAction(budgetId);
+    const success = result.success;
+    const error = !success ? (result as any).error : null;
+    const budget = success ? (result as any).budget : null;
+    const expenses = success ? (result as any).expenses : [];
 
     return (
         <div className="container mx-auto px-4 py-8 max-w-4xl">

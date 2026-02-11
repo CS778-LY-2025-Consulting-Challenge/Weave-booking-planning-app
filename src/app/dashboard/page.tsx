@@ -10,6 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -30,6 +37,7 @@ import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { getSavedTrips, saveTrip, updateTrip, deleteTrip } from '@/lib/savedTrips';
+import { getBookings, deleteBooking } from '@/lib/bookings';
 import { getUserProfile, type UserProfile } from '@/lib/userProfile';
 import DashboardMap from '@/components/DashboardMap';
 import YourJourneys from '@/components/YourJourneys';
@@ -48,6 +56,13 @@ interface Journey {
   cities?: string[];
   bookingType?: string;
   image?: string;
+  packageId?: string;
+  packageName?: string;
+  packageDestination?: string;
+  packageDuration?: string;
+  packagePrice?: number;
+  packageIncludes?: string[];
+  packageType?: string;
 }
 
 interface SavedPackage {
@@ -71,6 +86,55 @@ export default function Dashboard() {
   const [newTrip, setNewTrip] = useState({ destination: '', date: '' });
   const [editTripId, setEditTripId] = useState<string | null>(null);
   const [editTrip, setEditTrip] = useState({ destination: '', date: '' });
+
+  // Calendar Interactivity State
+  const [selectedCalendarJourney, setSelectedCalendarJourney] = useState<Journey | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) return;
+    setDate(date);
+
+    const clickedJourney = upcomingJourneys.find(journey => {
+      const start = new Date(journey.startDate);
+      const end = new Date(journey.endDate);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      const checkDate = new Date(date);
+      checkDate.setHours(0, 0, 0, 0);
+      return checkDate >= start && checkDate <= end;
+    });
+
+    if (clickedJourney) {
+      setSelectedCalendarJourney(clickedJourney);
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleCancelBooking = async () => {
+    if (!user?.id || !selectedCalendarJourney) return;
+
+    // Only allow cancelling if it's a real booking (starts with BK- or has a specific ID format we know comes from DB)
+    // In our case, we map `id` to `b.id` from firebase.
+    const bookingId = selectedCalendarJourney.id.toString();
+
+    if (confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+      try {
+        await deleteBooking(user.id, bookingId);
+
+        // Update local state to remove the cancelled journey
+        setJourneys(prev => prev.filter(j => j.id !== selectedCalendarJourney.id));
+
+        // Close dialog
+        setIsDialogOpen(false);
+        setSelectedCalendarJourney(null);
+        toast.success('Booking cancelled successfully');
+      } catch (error) {
+        console.error('Failed to cancel booking:', error);
+        toast.error('Failed to cancel booking');
+      }
+    }
+  };
 
   // User Profile State
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -150,6 +214,10 @@ export default function Dashboard() {
     setSavedTrips(data || {});
   };
 
+  const handleDeleteJourney = (journeyId: number | string) => {
+    setJourneys((prev) => prev.filter((journey) => journey.id !== journeyId));
+  };
+
 
 
   const [journeys, setJourneys] = useState<Journey[]>([
@@ -182,6 +250,21 @@ export default function Dashboard() {
       hotelBooked: true,
       type: 'past',
       notes: 'Amazing trip! The temples were breathtaking.',
+      image: '/images/bali-package.jpg',
+      bookingType: 'package',
+      packageId: '6',
+      packageName: 'Bali Wellness Retreat',
+      packageDestination: 'Ubud & Seminyak, Bali',
+      packageDuration: '8 Days / 7 Nights',
+      packagePrice: 1699,
+      packageIncludes: [
+        'Round-trip flights',
+        '7 nights accommodation',
+        'Daily yoga classes',
+        'Spa treatments',
+        'Healthy meals',
+      ],
+      packageType: 'Wellness',
     },
     {
       id: 4,
@@ -202,6 +285,111 @@ export default function Dashboard() {
         'Rome',
       ],
     },
+    {
+      id: 5,
+      destination: 'Athens, Greece',
+      startDate: '2025-08-15',
+      endDate: '2025-08-24',
+      flightBooked: true,
+      hotelBooked: true,
+      type: 'past',
+      notes: 'Greek Island Adventure - stunning sunsets in Santorini!',
+      image: '/images/greek - package.jpg',
+      bookingType: 'package',
+      packageId: '4',
+      packageName: 'Greek Island Adventure',
+      packageDestination: 'Athens, Santorini, Mykonos',
+      packageDuration: '10 Days / 9 Nights',
+      packagePrice: 2199,
+      packageIncludes: [
+        'International flights',
+        'Ferry transfers',
+        '9 nights in hotels',
+        'Sunset cruise',
+        'Archaeological tours',
+      ],
+      packageType: 'Beach & Culture',
+      cities: ['Athens', 'Santorini', 'Mykonos'],
+    },
+    {
+      id: 6,
+      destination: 'Dubai, UAE',
+      startDate: '2025-11-10',
+      endDate: '2025-11-14',
+      flightBooked: true,
+      hotelBooked: true,
+      type: 'past',
+      notes: 'Luxury escape - Burj Khalifa was incredible!',
+      image: '/images/dubai - package.jpg',
+      bookingType: 'package',
+      packageId: '5',
+      packageName: 'Dubai Luxury Escape',
+      packageDestination: 'Dubai, UAE',
+      packageDuration: '5 Days / 4 Nights',
+      packagePrice: 1899,
+      packageIncludes: [
+        'Round-trip flights',
+        '4 nights in 5-star hotel',
+        'Desert safari',
+        'Burj Khalifa tickets',
+        'Dubai Mall tour',
+      ],
+      packageType: 'Luxury',
+    },
+    {
+      id: 7,
+      destination: 'Paris, France',
+      startDate: '2025-04-20',
+      endDate: '2025-05-03',
+      flightBooked: true,
+      hotelBooked: true,
+      type: 'past',
+      notes: 'European Highlights Tour - visited Paris, Rome, and Barcelona!',
+      image: '/images/europe - package.jpg',
+      bookingType: 'package',
+      packageId: '2',
+      packageName: 'European Highlights Tour',
+      packageDestination: 'Paris, Rome, Barcelona',
+      packageDuration: '14 Days / 13 Nights',
+      packagePrice: 3299,
+      packageIncludes: [
+        'International flights',
+        '13 nights in 4-star hotels',
+        'Daily breakfast',
+        'Guided city tours',
+        'Museum passes',
+      ],
+      packageType: 'Culture',
+      cities: ['Paris', 'Rome', 'Barcelona'],
+    },
+    {
+      id: 8,
+      destination: 'Queenstown, New Zealand',
+      startDate: '2025-02-01',
+      endDate: '2025-02-10',
+      flightBooked: true,
+      hotelBooked: true,
+      type: 'past',
+      notes: 'New Zealand Adventure - Milford Sound was breathtaking!',
+      image: '/images/new zealand - package.jpg',
+      bookingType: 'package',
+      packageId: '1',
+      packageName: 'New Zealand Adventure',
+      packageDestination: 'Auckland, Rotorua, Queenstown, Milford Sound',
+      packageDuration: '10 Days / 9 Nights',
+      packagePrice: 2899,
+      packageIncludes: [
+        'Round-trip flights',
+        '9 nights accommodation in scenic locations',
+        'Milford Sound cruise',
+        'Hobbiton movie set tour',
+        'Adventure activities (bungee jumping, sky diving)',
+        'Thermal pools of Rotorua',
+        'Scenic drives and nature hikes',
+      ],
+      packageType: 'Adventure',
+      cities: ['Auckland', 'Rotorua', 'Queenstown'],
+    },
   ]);
 
   // Fetch real bookings and merge into journeys
@@ -211,7 +399,9 @@ export default function Dashboard() {
     import('@/lib/bookings').then(async ({ getBookings }) => {
       try {
         const bookings = await getBookings(user.id);
-        const newJourneys: Journey[] = bookings.map(b => {
+        // Filter out flights since they have their own "Tickets & Reservations" section
+        const nonFlightBookings = bookings.filter(b => b.type !== 'flight');
+        const newJourneys: Journey[] = nonFlightBookings.map(b => {
           const isFlight = b.type === 'flight';
           const isHotel = b.type === 'hotel';
           const isPackage = b.type === 'package';
@@ -290,7 +480,7 @@ export default function Dashboard() {
 
         // Avoid duplicates if possible (simple id check against hardcoded)
         setJourneys(prev => {
-          const hardcodedIds = new Set([1, 2, 3, 4]);
+          const hardcodedIds = new Set([1, 2, 3, 4, 5, 6, 7, 8]);
           // Filter out any previous dynamic additions if we re-fetch (optional, but good practice)
           const baseJourneys = prev.filter(j => hardcodedIds.has(j.id as any));
           return [...baseJourneys, ...newJourneys];
@@ -318,15 +508,68 @@ export default function Dashboard() {
   });
   const copiedJourneys = journeys.filter((j) => j.type === 'copied');
 
-  // Sample map destinations from journeys
-  const mapDestinations = [
-    { name: 'Paris', lat: 48.8566, lng: 2.3522 },
-    { name: 'Tokyo', lat: 35.6762, lng: 139.6503 },
-    { name: 'Bali', lat: -8.3405, lng: 115.0920 },
-    { name: 'New York', lat: 40.7128, lng: -74.0060 },
-    { name: 'Sydney', lat: -33.8688, lng: 151.2093 },
-    { name: 'Dubai', lat: 25.2048, lng: 55.2708 },
-  ];
+  // Coordinates mapping for common destinations
+  const destinationCoordinates: { [key: string]: { lat: number; lng: number } } = {
+    'Paris': { lat: 48.8566, lng: 2.3522 },
+    'Tokyo': { lat: 35.6762, lng: 139.6503 },
+    'Bali': { lat: -8.3405, lng: 115.0920 },
+    'New York': { lat: 40.7128, lng: -74.0060 },
+    'Sydney': { lat: -33.8688, lng: 151.2093 },
+    'Dubai': { lat: 25.2048, lng: 55.2708 },
+    'London': { lat: 51.5074, lng: -0.1278 },
+    'Rome': { lat: 41.9028, lng: 12.4964 },
+    'Barcelona': { lat: 41.3851, lng: 2.1734 },
+    'Amsterdam': { lat: 52.3676, lng: 4.9041 },
+    'Berlin': { lat: 52.5200, lng: 13.4050 },
+    'Prague': { lat: 50.0755, lng: 14.4378 },
+    'Vienna': { lat: 48.2082, lng: 16.3738 },
+    'Venice': { lat: 45.4408, lng: 12.3155 },
+    'Singapore': { lat: 1.3521, lng: 103.8198 },
+    'Thailand': { lat: 13.7563, lng: 100.5018 },
+    'Indonesia': { lat: -8.3405, lng: 115.0920 },
+    'Japan': { lat: 35.6762, lng: 139.6503 },
+    'France': { lat: 48.8566, lng: 2.3522 },
+    'Athens': { lat: 37.9838, lng: 23.7275 },
+    'Greece': { lat: 37.9838, lng: 23.7275 },
+    'Queenstown': { lat: -45.0312, lng: 168.6626 },
+    'New Zealand': { lat: -41.2865, lng: 174.7762 },
+    'UAE': { lat: 25.2048, lng: 55.2708 },
+  };
+
+  // Extract map destinations from past journeys only
+  const mapDestinations = pastJourneys.map(journey => {
+    // Parse destination (format can be "City, Country" or just "City")
+    const destinationParts = journey.destination.split(',');
+    const cityName = destinationParts[0].trim();
+
+    // Try to find coordinates
+    let coords = destinationCoordinates[cityName];
+
+    // If not found, try the full destination string
+    if (!coords && destinationParts.length > 1) {
+      const countryName = destinationParts[1].trim();
+      coords = destinationCoordinates[countryName];
+    }
+
+    // If still not found, try to match partial strings
+    if (!coords) {
+      const matchingKey = Object.keys(destinationCoordinates).find(key =>
+        journey.destination.toLowerCase().includes(key.toLowerCase())
+      );
+      if (matchingKey) {
+        coords = destinationCoordinates[matchingKey];
+      }
+    }
+
+    // Default fallback coordinates (center of world map) if not found
+    const finalCoords = coords || { lat: 0, lng: 0 };
+
+    return {
+      name: cityName,
+      lat: finalCoords.lat,
+      lng: finalCoords.lng,
+    };
+  }).filter(dest => dest.lat !== 0 || dest.lng !== 0); // Filter out fallback coordinates
 
 
   return (
@@ -337,7 +580,10 @@ export default function Dashboard() {
           <h1 className="mb-2 text-4xl" style={{ fontFamily: 'var(--font-bonheur-royale)' }}>
             Welcome back, {user?.firstName || 'Nayak'}!
           </h1>
-          <p className="text-gray-600 text-2xl" style={{ fontFamily: 'var(--font-special-elite)' }}>
+          <p
+            className="text-gray-600 text-2xl"
+            style={{ fontFamily: '"Times New Roman", Times, serif' }}
+          >
             Manage your journeys and plan your next adventure.
           </p>
         </div>
@@ -355,7 +601,12 @@ export default function Dashboard() {
         {/* Upcoming Bookings Tickets */}
         {user?.id && (
           <div className="mb-12">
-            <h3 className="text-2xl font-bold mb-6 text-gray-800">Your Tickets & Reservations</h3>
+            <h3
+              className="text-2xl font-bold mb-6 text-gray-800"
+              style={{ fontFamily: '"Times New Roman", Times, serif' }}
+            >
+              Your Tickets & Reservations
+            </h3>
             <UpcomingBookingsTickets userId={user.id} />
           </div>
         )}
@@ -376,6 +627,27 @@ export default function Dashboard() {
           handleEditTrip={handleEditTrip}
           handleUpdateTrip={handleUpdateTrip}
           handleDeleteTrip={handleDeleteTrip}
+          handleDeleteJourney={handleDeleteJourney}
+          handleCancelBooking={async (journey) => {
+            if (!user?.id) return;
+
+            if (confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+              try {
+                // Optimistically remove from UI immediately
+                setJourneys(prev => prev.filter(j => j.id !== journey.id));
+
+                // Delete from Firebase in background
+                await deleteBooking(user.id, journey.id.toString());
+
+                toast.success('Booking cancelled successfully');
+              } catch (error) {
+                console.error('Failed to cancel booking:', error);
+                toast.error('Failed to cancel booking');
+                // Refresh journeys on error to restore state
+                window.location.reload();
+              }
+            }
+          }}
         />
 
         {/* Profile and Calendar Section */}
@@ -743,6 +1015,76 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{selectedCalendarJourney?.destination}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                <img
+                  src={selectedCalendarJourney?.image || '/images/placeholder.jpg'}
+                  alt={selectedCalendarJourney?.destination}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-500">Dates</Label>
+                  <p className="font-medium">
+                    {selectedCalendarJourney && new Date(selectedCalendarJourney.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {' - '}
+                    {selectedCalendarJourney && new Date(selectedCalendarJourney.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Status</Label>
+                  <Badge variant={selectedCalendarJourney?.type === 'past' ? 'secondary' : 'default'} className="mt-1">
+                    {selectedCalendarJourney?.type === 'past' ? 'Completed' : 'Upcoming'}
+                  </Badge>
+                </div>
+              </div>
+              {selectedCalendarJourney?.notes && (
+                <div>
+                  <Label className="text-gray-500">Notes</Label>
+                  <p className="text-sm text-gray-700">{selectedCalendarJourney.notes}</p>
+                </div>
+              )}
+            </div>
+            <DialogFooter className="flex-col sm:justify-between sm:flex-row gap-2">
+              <div className="flex w-full sm:w-auto">
+                {(selectedCalendarJourney?.type === 'upcoming' || selectedCalendarJourney?.type === 'current') && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="w-full sm:w-auto"
+                    onClick={handleCancelBooking}
+                  >
+                    Cancel Booking
+                  </Button>
+                )}
+              </div>
+              <Button
+                type="button"
+                variant="default"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  if (selectedCalendarJourney?.packageId) {
+                    router.push(`/packages/${selectedCalendarJourney.packageId}`);
+                  } else if (selectedCalendarJourney?.bookingType === 'flight' || selectedCalendarJourney?.bookingType === 'hotel') {
+                    if (selectedCalendarJourney.id && typeof selectedCalendarJourney.id === 'string' && selectedCalendarJourney.id.startsWith('BK-')) {
+                      router.push(`/dashboard?tab=tickets`);
+                    }
+                  }
+                  setIsDialogOpen(false);
+                }}
+              >
+                View Full Details
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
 
       </div>
