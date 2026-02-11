@@ -585,12 +585,16 @@ export default function Journeys() {
         <>
       {/* HERO COVER SECTION */}
       <section className="relative flex h-screen items-center justify-center overflow-hidden">
-        {/* Background Image with Overlay */}
+        {/* Background Video with Overlay */}
         <div className="absolute inset-0">
           <div className="absolute inset-0 z-10 bg-gradient-to-br from-zinc-900/60 via-zinc-800/50 to-amber-900/40" />
-          <img
-            src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920"
-            alt="Travel background"
+          <video
+            src="https://d30mgvfwc9sz4j.cloudfront.net/weave-travel-media/hero-videos/community-hero.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
             className="h-full w-full object-cover"
           />
         </div>
