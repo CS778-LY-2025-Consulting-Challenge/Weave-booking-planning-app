@@ -12,7 +12,6 @@ const isPublicRoute = createRouteMatcher([
   '/journeys(.*)',
   '/packages(.*)',
   '/api/image-proxy(.*)',
-  '/private-jet(.*)',
   '/contact(.*)',
   '/about(.*)',
   '/apply-guide(.*)',
