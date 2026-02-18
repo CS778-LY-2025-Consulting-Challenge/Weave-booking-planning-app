@@ -31,6 +31,7 @@ import {
   ArrowRight,
   CheckCircle,
   ChevronDown,
+  Crown,
   Filter,
   Minus,
   Plane,
@@ -693,6 +694,17 @@ export default function FlightBooking() {
               >
                 <Search className="mr-2 size-5" />
                 Search Flights
+              </Button>
+
+              {/* Hero - Private Jet */}
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/30 bg-white/10 px-8 py-6 text-lg text-white shadow-2xl backdrop-blur-md hover:bg-white/20"
+                onClick={() => router.push('/private-jet')}
+              >
+                <Crown className="mr-2 size-5" />
+                Private Jet
               </Button>
 
             </motion.div>
