@@ -395,12 +395,12 @@ export default function Guides() {
         <div className="mx-auto max-w-7xl px-6 lg:px-12">
           <div className="mb-12 text-center">
             <h2 className="font-bold text-4xl text-[#a20000] md:text-5xl" style={{ fontFamily: 'var(--font-charm)' }}>
-              No one does it like our local experts
+              Travel better with people who truly live it
             </h2><br></br>
             <p className="mx-auto max-w-3x2 text-3xl text-gray-600" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-              These are award-winning trip partners, not tour guides. They know
-              the secret spots, the must do adventures, and have the connections
-              to make anything happen.
+              Our local experts are more than guides, they&apos;re trusted partners
+              with real on-the-ground insight. From hidden neighborhoods to
+              once-in-a-lifetime moments, they open doors most travelers never find.
             </p>
           </div>
         </div>
@@ -432,21 +432,20 @@ export default function Guides() {
               {/* Left Column */}
               <div className="flex flex-col justify-center space-y-6 text-center lg:text-left">
                 <h2 className="text-3xl font-bold text-gray-900 lg:text-4xl xl:text-5xl">
-                  Your time is precious.
+                  Your time matters.
                 </h2>
                 <p className="text-xl font-bold text-gray-800 lg:text-2xl">
-                  The average international trip takes a minimum of 40 hours of
-                  research.
+                  Planning a great international trip can easily take 40+ hours.
                 </p>
               </div>
 
               {/* Right Column */}
               <div className="flex items-center">
                 <p className="text-base leading-relaxed text-gray-700 lg:text-lg">
-                  It&apos;s our job to cut through the noise with tailored
-                  recommendations based on our boots-on-the-ground knowledge and
-                  personal connections. We&apos;ve vetted and tested, so you
-                  don&apos;t have to.
+                  We cut through endless tabs and conflicting advice with
+                  personalized recommendations built from local experience and
+                  trusted networks. Everything we suggest is carefully selected,
+                  so you can book with confidence.
                 </p>
               </div>
             </div>
@@ -471,14 +470,14 @@ export default function Guides() {
         <div className="relative z-10 w-full">
           <div className="max-w-3xl text-left lg:ml-0 lg:mr-auto">
             <h2 className="mb-6 text-4xl font-bold leading-tight text-white lg:text-5xl xl:text-6xl text-left">
-              When a destination thrives, so does your experience there.
+              Better trips begin with stronger local communities.
             </h2>
             <p className="text-lg leading-relaxed text-white/90 lg:text-xl text-left">
-              Our local guides are deeply invested in their communities. They know
-              the hidden gems, support local businesses, and ensure your travel
-              dollars make a positive impact. When you book with us, you&apos;re not
-              just visiting, you&apos;re contributing to sustainable tourism that
-              benefits everyone.
+              Our experts are deeply connected to the places they call home.
+              They champion local businesses, share lesser-known gems, and help
+              direct your travel spend where it creates real impact. When you
+              travel with us, you don&apos;t just explore more meaningfully, you help
+              destinations grow sustainably.
             </p>
           </div>
         </div>
@@ -488,9 +487,10 @@ export default function Guides() {
       <section className="px-6 py-20 lg:px-12">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold lg:text-4xl">Trips you can feel good about</h2>
+            <h2 className="text-3xl font-bold lg:text-4xl">Travel that feels good from start to finish</h2>
             <p className="mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-gray-700">
-              We believe that travel should be built on local insight, created and sold directly from the destination itself.
+              Great journeys should be shaped by local knowledge and created
+              with the people who call the destination home.
             </p>
           </div>
 
@@ -500,7 +500,7 @@ export default function Guides() {
               <div className="relative w-full max-w-55 sm:max-w-60 lg:max-w-62.5 xl:max-w-65">
                 <ImageWithFallback
                   src={circleImage.src}
-                  alt="You and your destination"
+                  alt="You and your impact"
                   width={600}
                   height={900}
                   className="w-full h-auto object-contain bg-transparent"
@@ -513,7 +513,7 @@ export default function Guides() {
                 <div className="absolute left-1/2 top-[60%] -translate-x-1/2 -translate-y-1/2 text-center font-bold uppercase tracking-wide text-white text-xs sm:text-sm lg:text-base drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight">
                   YOUR
                   <br />
-                  DESTINATION
+                  IMPACT
                 </div>
               </div>
             </div>
@@ -522,22 +522,25 @@ export default function Guides() {
             <div className="space-y-10 lg:self-center">
               <div>
                 <h3 className="text-2xl font-bold">
-                  By traveling with Weave Journeys, we guarantee inside access to extraordinary trips
+                  With Weave Journeys, you unlock access most travelers never see
                 </h3>
                 <p className="mt-4 leading-relaxed text-gray-700">
-                  Our network of trusted local experts opens doors that typical itineraries miss. From private viewings and
-                  behind-the-scenes encounters to meaningful cultural exchanges, your journey is crafted with insight from the
-                  people who live there.
+                  Our trusted local experts open doors beyond standard itineraries.
+                  From intimate experiences and behind-the-scenes moments to
+                  meaningful cultural connections, every day is designed with
+                  insight from people who live there.
                 </p>
               </div>
 
               <div>
                 <h3 className="text-2xl font-bold">
-                  By traveling with Weave Journeys, you are supporting the protection and preservation of your host country
+                  With Weave Journeys, your trip helps protect what makes each place special
                 </h3>
                 <p className="mt-4 leading-relaxed text-gray-700">
-                  Your trip contributes to community-led initiatives and sustainable practices. We partner directly with local
-                  guides and organizations so your experience benefits both you and the destination, today and for the future.
+                  Your journey supports community-led initiatives and responsible
+                  tourism practices. We partner directly with local guides and
+                  organizations so your experience benefits both you and the
+                  destination, now and for the future.
                 </p>
               </div>
             </div>
