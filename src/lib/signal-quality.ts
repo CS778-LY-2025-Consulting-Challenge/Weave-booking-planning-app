@@ -10,7 +10,7 @@ interface Signal {
   content: string;
   actionable?: string | null;
   confidence: number;
-  commentCount: number;
+  commentCount?: number;
   priority: 'high' | 'medium' | 'low';
 }
 
@@ -33,9 +33,9 @@ export function calculateActionabilityScore(signal: Signal): number {
   }
 
   // ✅ +0.1: Multiple users mentioned it
-  if (signal.commentCount >= 3) {
+  if ((signal.commentCount ?? 0) >= 3) {
     score += 0.1;
-  } else if (signal.commentCount >= 2) {
+  } else if ((signal.commentCount ?? 0) >= 2) {
     score += 0.05;
   }
 
@@ -43,7 +43,7 @@ export function calculateActionabilityScore(signal: Signal): number {
   if (
     signal.signalType === 'positive' &&
     !signal.actionable &&
-    signal.commentCount < 3
+    (signal.commentCount ?? 0) < 3
   ) {
     score -= 0.3;
   }
@@ -156,7 +156,7 @@ export function deduplicateSignals<
     id?: string;
     title: string;
     content: string;
-    commentCount: number;
+    commentCount?: number;
     actionable?: string | null;
     commentIds: string | string[];
     category?: string;
@@ -199,8 +199,8 @@ export function deduplicateSignals<
 
         // Merge: keep the one with more comments or better actionable
         if (
-          signals[j].commentCount > current.commentCount ||
-          (signals[j].commentCount === current.commentCount &&
+          (signals[j].commentCount ?? 0) > (current.commentCount ?? 0) ||
+          ((signals[j].commentCount ?? 0) === (current.commentCount ?? 0) &&
             (signals[j].actionable?.length || 0) >
               (current.actionable?.length || 0))
         ) {
@@ -241,7 +241,7 @@ export async function deduplicateWithAI<
     id?: string;
     title: string;
     content: string;
-    commentCount: number;
+    commentCount?: number;
     actionabilityScore?: number;
   },
 >(signals: T[], openaiApiKey: string): Promise<T[]> {
@@ -294,7 +294,7 @@ IMPORTANT: Return your response as a JSON object.`;
         const scoreA = a.actionabilityScore ?? 0;
         const scoreB = b.actionabilityScore ?? 0;
         if (scoreA !== scoreB) return scoreA > scoreB ? a : b;
-        return a.commentCount > b.commentCount ? a : b;
+        return (a.commentCount ?? 0) > (b.commentCount ?? 0) ? a : b;
       });
 
       deduped.push(best);
