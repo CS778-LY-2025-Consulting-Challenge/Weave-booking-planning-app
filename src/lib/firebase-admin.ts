@@ -20,7 +20,20 @@ function getFirebaseApp() {
         throw new Error('FIREBASE_SERVICE_ACCOUNT is not configured');
     }
 
-    const serviceAccount = JSON.parse(serviceAccountJson);
+    let serviceAccount: any;
+    try {
+        serviceAccount = typeof serviceAccountJson === 'object' ? serviceAccountJson : JSON.parse(serviceAccountJson);
+        if (typeof serviceAccount === 'string') {
+            serviceAccount = JSON.parse(serviceAccount);
+        }
+    } catch (parseError) {
+        try {
+            serviceAccount = JSON.parse(Buffer.from(serviceAccountJson, 'base64').toString('utf8'));
+        } catch {
+            throw new Error('FIREBASE_SERVICE_ACCOUNT contains invalid JSON. Please check your Vercel environment variable.');
+        }
+    }
+
     console.log('[FirebaseAdmin] Initializing with project:', serviceAccount.project_id);
     return initializeApp({
         credential: cert(serviceAccount),
