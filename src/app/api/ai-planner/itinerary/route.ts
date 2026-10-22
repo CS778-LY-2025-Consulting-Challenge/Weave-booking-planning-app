@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { createAIChatCompletion, extractOrWrapJson } from '@/lib/aiClient';
 import { searchGoogleFlights, getBestFlights, getIATACode, calculateDuration } from '@/services/googleFlightsService';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { aiPlannerLimiter, getClientIdentifier, checkRateLimit, createRateLimitResponse } from '@/lib/rate-limit';
 
 const ITINERARY_SYSTEM_PROMPT = `
 You are Charizard, an expert travel planner AI. The user has provided their trip essentials through chat.
@@ -277,6 +274,19 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
 `;
 
 export async function POST(request: Request) {
+  // Rate Limit: 5 requests per hour per user / visitor
+  const { identifier, isUser } = await getClientIdentifier(request);
+  const rateLimit = await checkRateLimit(aiPlannerLimiter, identifier);
+  if (!rateLimit.success) {
+    console.warn(`[Itinerary API] Rate limit reached for ${identifier}`);
+    return createRateLimitResponse(
+      rateLimit,
+      isUser
+        ? 'You have reached the limit of 5 itinerary generations per hour. Please wait a bit before generating another itinerary.'
+        : 'You have reached the visitor limit of 5 itinerary generations per hour. Please sign in or try again later.'
+    );
+  }
+
   try {
     const body = await request.json().catch(() => ({}));
     const { plannerState = {} } = body as { plannerState?: any };
@@ -302,8 +312,7 @@ This is a strict requirement - the user requested ${durationDays} days, so provi
 Create a comprehensive, day-by-day itinerary that matches these parameters.
 `;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const response = await createAIChatCompletion({
       messages: [
         { role: 'system', content: ITINERARY_SYSTEM_PROMPT },
         { role: 'user', content: contextPrompt },
@@ -313,7 +322,8 @@ Create a comprehensive, day-by-day itinerary that matches these parameters.
       temperature: 0.8,
     });
 
-    const content = JSON.parse(response.choices[0].message.content || '{}');
+    const rawContent = response.choices[0]?.message?.content || '{}';
+    const content = extractOrWrapJson(rawContent);
     console.log('[Itinerary API] Generated itinerary:', {
       tripTitle: content.tripTitle,
       cities: content.mapPoints?.length,
@@ -346,16 +356,33 @@ Create a comprehensive, day-by-day itinerary that matches these parameters.
               if (flights && flights.length > 0) {
                 const flight = flights[0];
                 
-                // Format time string
-                const formattedTime = flight.departure.scheduled && flight.arrival.scheduled
-                  ? `${new Date(flight.departure.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} - ${new Date(flight.arrival.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`
+                // Format time string safely
+                const safeTime = (t?: string) => {
+                  if (!t) return '';
+                  if (/^\d{1,2}:\d{2}/.test(t)) return t;
+                  const d = new Date(t);
+                  return !isNaN(d.getTime()) ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : t;
+                };
+
+                const depTimeStr = flight.departure?.time || flight.departure?.scheduled;
+                const arrTimeStr = flight.arrival?.time || flight.arrival?.scheduled;
+                const formattedTime = depTimeStr && arrTimeStr
+                  ? `${safeTime(depTimeStr)} - ${safeTime(arrTimeStr)}`
                   : transport.time || '10:00 - 14:00';
                 
-                // Get departure date
-                const depDate = flight.departure.scheduled ? new Date(flight.departure.scheduled) : null;
-                const flightDate = depDate 
-                  ? depDate.toISOString().split('T')[0]
-                  : (transport.date || plannerState.dates?.start || content.dates?.start);
+                // Get departure date safely
+                const parseDate = (dStr?: string) => {
+                  if (!dStr) return null;
+                  const d = new Date(dStr);
+                  return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : null;
+                };
+
+                const flightDate =
+                  parseDate(flight.departure?.scheduled) ||
+                  transport.date ||
+                  plannerState.dates?.start ||
+                  content.dates?.start ||
+                  new Date().toISOString().split('T')[0];
                 
                 console.log('[Itinerary API] Enriched with Google Flights:', {
                   airline: flight.airline,

@@ -65,3 +65,5 @@ next-env.d.ts
 
 # Firebase Service Account (DO NOT COMMIT)
 service-account.json
+
+/src/lib/serviceAccountKey.json

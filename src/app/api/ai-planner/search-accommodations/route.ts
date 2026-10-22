@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { createAIChatCompletion } from '@/lib/aiClient';
+import { aiPlannerLimiter, getClientIdentifier, checkRateLimit, createRateLimitResponse } from '@/lib/rate-limit';
 
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
 
@@ -60,6 +57,12 @@ You are a hotel search assistant. Given a city and search criteria, return a lis
 `;
 
 export async function POST(request: Request) {
+  const { identifier } = await getClientIdentifier(request);
+  const rateLimit = await checkRateLimit(aiPlannerLimiter, identifier);
+  if (!rateLimit.success) {
+    return createRateLimitResponse(rateLimit, 'Rate limit reached for accommodation searches. Please try again later.');
+  }
+
   const body = await request.json().catch(() => ({}));
   const { query = '', city = '', checkIn = '', checkOut = '', nights = 1, context = {} } = body;
 
@@ -78,8 +81,7 @@ export async function POST(request: Request) {
       .replace('{{NIGHTS}}', String(nights))
       .replace('{{QUERY}}', query || 'Show me popular hotels');
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const response = await createAIChatCompletion({
       messages: [
         { role: 'system', content: prompt },
         { role: 'user', content: `Find hotels in ${city}. ${query}` },

@@ -1,18 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Amadeus from 'amadeus';
+import { createAmadeusClient } from '@/lib/amadeus-client';
 import Stripe from 'stripe';
-
-// Initialize Amadeus client
-const amadeus = new Amadeus({
-  clientId: process.env.AMADEUS_CLIENT_ID!,
-  clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
-  hostname: process.env.AMADEUS_ENVIRONMENT === 'production' ? 'production' : 'test'
-});
-
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
-});
 
 interface TravelerInfo {
   id: string;
@@ -102,6 +90,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const amadeus = createAmadeusClient();
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    if (!amadeus || !stripeSecretKey) {
+      return NextResponse.json({ error: 'Flight booking is not configured' }, { status: 503 });
+    }
+    const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
 
     console.log('[Flight Booking] Starting booking process for:', {
       offerId: flightOffer.id,

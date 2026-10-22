@@ -6,10 +6,9 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Star } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import AttractionDetailPanel from './AttractionDetailPanel';
+import { MAPBOX_ACCESS_TOKEN } from '@/lib/mapboxConfig';
 
-// IMPORTANT: Keep this token consistent across ALL Mapbox maps in the app.
-mapboxgl.accessToken =
-  'pk.eyJ1IjoibW9vdmFsIiwiYSI6ImNtazJzYmJ1YzA2aDIzcW9xbWlhMGIxencifQ.HicBjVINhGc-IAZVBnsnwg';
+mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
 
 interface SearchResult {
   name: string;

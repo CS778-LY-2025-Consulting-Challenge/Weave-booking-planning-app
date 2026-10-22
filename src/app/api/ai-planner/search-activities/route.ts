@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { createAIChatCompletion } from '@/lib/aiClient';
+import { aiPlannerLimiter, getClientIdentifier, checkRateLimit, createRateLimitResponse } from '@/lib/rate-limit';
 
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
 
@@ -61,6 +58,12 @@ you must return 5-8 relevant, high-quality options with PRECISE coordinates.
 `;
 
 export async function POST(request: Request) {
+  const { identifier } = await getClientIdentifier(request);
+  const rateLimit = await checkRateLimit(aiPlannerLimiter, identifier);
+  if (!rateLimit.success) {
+    return createRateLimitResponse(rateLimit, 'Rate limit reached for activity searches. Please try again later.');
+  }
+
   try {
     const body = await request.json();
     const { query, city, coords, context } = body;
@@ -89,8 +92,7 @@ ${city ? `City/Location: ${city}` : ''}
 Find relevant activities and return them in the specified JSON format.
 `;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const response = await createAIChatCompletion({
       messages: [
         { role: 'system', content: SEARCH_SYSTEM_PROMPT },
         { role: 'user', content: fullPrompt },

@@ -11,6 +11,8 @@
  * - Price insights and history
  */
 
+import { searchAviationStackAsSerpApi } from './aviationstackService';
+
 // In-memory cache for flight data (expires after 10 minutes)
 const flightCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
@@ -248,8 +250,58 @@ export async function searchGoogleFlights(params: {
     return cached.data;
   }
   
+  const hasAviationStack = Boolean(process.env.AVIATIONSTACK_API_KEY);
+  const preferAviationStack = hasAviationStack && (!process.env.SERPAPI_API_KEY || process.env.FLIGHT_API_PROVIDER === 'aviationstack');
+
+  if (preferAviationStack) {
+    try {
+      console.log(`[GoogleFlights] Using AviationStack provider: ${fromCode} → ${toCode}`);
+      const data = await searchAviationStackAsSerpApi({
+        departure_id: fromCode,
+        arrival_id: toCode,
+        outbound_date: date || new Date().toISOString().split('T')[0],
+        return_date: returnDate,
+        type: type.toString(),
+        currency,
+        adults: (passengers.adults || 1).toString(),
+        children: (passengers.children || 0).toString(),
+        infants: (passengers.infants_in_seat || 0).toString(),
+        travel_class: travelClass.toString(),
+      });
+      flightCache.set(cacheKey, { data, timestamp: Date.now() });
+      cleanCache();
+      return data;
+    } catch (aviationErr) {
+      console.error('[GoogleFlights] AviationStack failed:', aviationErr);
+      if (!process.env.SERPAPI_API_KEY) throw aviationErr;
+    }
+  }
+
   try {
-    const config = getSerpAPIConfig();
+    let config;
+    try {
+      config = getSerpAPIConfig();
+    } catch (cfgErr) {
+      if (hasAviationStack) {
+        console.warn('[GoogleFlights] SerpAPI not configured, using AviationStack fallback...');
+        const data = await searchAviationStackAsSerpApi({
+          departure_id: fromCode,
+          arrival_id: toCode,
+          outbound_date: date || new Date().toISOString().split('T')[0],
+          return_date: returnDate,
+          type: type.toString(),
+          currency,
+          adults: (passengers.adults || 1).toString(),
+          children: (passengers.children || 0).toString(),
+          infants: (passengers.infants_in_seat || 0).toString(),
+          travel_class: travelClass.toString(),
+        });
+        flightCache.set(cacheKey, { data, timestamp: Date.now() });
+        cleanCache();
+        return data;
+      }
+      throw cfgErr;
+    }
     
     const url = new URL(config.baseUrl);
     url.searchParams.set('engine', 'google_flights');

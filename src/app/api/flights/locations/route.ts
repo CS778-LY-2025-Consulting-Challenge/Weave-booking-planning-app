@@ -1,12 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Amadeus from 'amadeus';
-
-// Initialize Amadeus client
-const amadeus = new Amadeus({
-  clientId: process.env.AMADEUS_CLIENT_ID!,
-  clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
-  hostname: process.env.AMADEUS_ENVIRONMENT === 'production' ? 'production' : 'test'
-});
+import { createAmadeusClient } from '@/lib/amadeus-client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,6 +12,11 @@ export async function GET(request: NextRequest) {
         { error: 'Keyword must be at least 2 characters' },
         { status: 400 }
       );
+    }
+
+    const amadeus = createAmadeusClient();
+    if (!amadeus) {
+      return NextResponse.json({ error: 'Flight provider is not configured' }, { status: 503 });
     }
 
     console.log('[Location Search] Searching for:', keyword);

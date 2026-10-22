@@ -1,12 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Amadeus from 'amadeus';
-
-// Initialize Amadeus client
-const amadeus = new Amadeus({
-  clientId: process.env.AMADEUS_CLIENT_ID!,
-  clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
-  hostname: process.env.AMADEUS_ENVIRONMENT === 'production' ? 'production' : 'test'
-});
+import { createAmadeusClient } from '@/lib/amadeus-client';
 
 interface FlightSearchParams {
   originLocationCode: string;
@@ -46,6 +39,11 @@ export async function POST(request: NextRequest) {
         { error: 'Missing required parameters: originLocationCode, destinationLocationCode, or departureDate' },
         { status: 400 }
       );
+    }
+
+    const amadeus = createAmadeusClient();
+    if (!amadeus) {
+      return NextResponse.json({ error: 'Flight provider is not configured' }, { status: 503 });
     }
 
     console.log('[Amadeus Flight Search] Searching flights:', {

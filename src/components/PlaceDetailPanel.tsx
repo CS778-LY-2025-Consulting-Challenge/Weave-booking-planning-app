@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Star, MapPin, Phone, Globe, Clock, Loader2, ExternalLink, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MAPBOX_ACCESS_TOKEN } from '@/lib/mapboxConfig';
 
 interface PlaceDetailPanelProps {
   isOpen: boolean;
@@ -314,7 +315,7 @@ const PlaceDetailPanel: React.FC<PlaceDetailPanelProps> = ({ isOpen, onClose, pl
                 <h3 className="mb-3 text-sm font-bold text-slate-700">Location</h3>
                 <div className="h-48 w-full overflow-hidden rounded-lg border border-slate-200">
                   <img
-                    src={`https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+3b82f6(${placeData?.lng},${placeData?.lat})/${placeData?.lng},${placeData?.lat},14,0/600x300@2x?access_token=pk.eyJ1IjoibW9vdmFsIiwiYSI6ImNtanlhejZvbzZpNXMzZHB1Y3NmODA4eXQifQ.zRCSDUXg9OT2rpdA8tMOYQ`}
+                    src={`https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+3b82f6(${placeData?.lng},${placeData?.lat})/${placeData?.lng},${placeData?.lat},14,0/600x300@2x?access_token=${MAPBOX_ACCESS_TOKEN}`}
                     alt="Location map"
                     className="h-full w-full object-cover"
                   />
