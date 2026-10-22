@@ -4,21 +4,34 @@ import { getDatabase } from 'firebase-admin/database';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
-    ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-    : JSON.parse(readFileSync(join(process.cwd(), 'src', 'lib', 'serviceAccountKey.json'), 'utf8'));
+function getFirebaseApp() {
+    if (getApps().length) return getApp();
 
-if (!getApps().length) {
+    let serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!serviceAccountJson && !process.env.VERCEL) {
+        try {
+            serviceAccountJson = readFileSync(join(process.cwd(), 'src', 'lib', 'serviceAccountKey.json'), 'utf8');
+        } catch {
+            // Local development can use the ignored key file; deployments use the environment variable.
+        }
+    }
+
+    if (!serviceAccountJson) {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT is not configured');
+    }
+
+    const serviceAccount = JSON.parse(serviceAccountJson);
     console.log('[FirebaseAdmin] Initializing with project:', serviceAccount.project_id);
-    initializeApp({
+    return initializeApp({
         credential: cert(serviceAccount),
         databaseURL: 'https://weave-travel-default-rtdb.asia-southeast1.firebasedatabase.app'
     });
-} else {
-    console.log('[FirebaseAdmin] Already initialized');
 }
 
-const adminDb = getFirestore();
-const adminRtdb = getDatabase();
+export function getAdminDb() {
+    return getFirestore(getFirebaseApp());
+}
 
-export { adminDb, adminRtdb };
+export function getAdminRtdb() {
+    return getDatabase(getFirebaseApp());
+}

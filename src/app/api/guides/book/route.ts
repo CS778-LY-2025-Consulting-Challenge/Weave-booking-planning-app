@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminRtdb } from '@/lib/firebase-admin';
+import { getAdminRtdb } from '@/lib/firebase-admin';
 import { sendEmail, generateBookingEmailHtml } from '@/lib/email';
 
 export async function POST(request: Request) {
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
         const slotKey = timeSlot.replace(/\s/g, '').replace(/:/g, ''); // 0900-0930
         const lockKey = `${guide.id}_${dateKey}_${slotKey}`;
 
-        const bookingRef = adminRtdb.ref(`guide_bookings/${lockKey}`);
+        const bookingRef = getAdminRtdb().ref(`guide_bookings/${lockKey}`);
 
         // CHECK LOCK (Transaction)
         const transactionResult = await bookingRef.transaction((currentData) => {

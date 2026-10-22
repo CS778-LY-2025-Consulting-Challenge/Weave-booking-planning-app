@@ -1,6 +1,6 @@
 'use server';
 
-import { adminRtdb } from '@/lib/firebase-admin';
+import { getAdminRtdb } from '@/lib/firebase-admin';
 import { ServerValue } from 'firebase-admin/database';
 
 // Helper to get formatted error
@@ -12,7 +12,7 @@ export async function createBudgetAction(name: string, userId: string): Promise<
     if (!name || !userId) return { success: false, error: 'Missing required fields' };
 
     try {
-        const budgetsRef = adminRtdb.ref('budgets');
+        const budgetsRef = getAdminRtdb().ref('budgets');
         const newBudgetRef = budgetsRef.push();
         const budgetId = newBudgetRef.key;
 
@@ -49,7 +49,7 @@ export async function createInviteAction(
     if (!budgetId || !userId) return { success: false, error: 'Missing fields' };
 
     try {
-        const invitesRef = adminRtdb.ref('invites');
+        const invitesRef = getAdminRtdb().ref('invites');
 
         // Optimization: Check for existing active invite
         // RTDB Query: Order by budgetId filtering for userId is hard without composite keys.
@@ -109,7 +109,7 @@ export async function getInviteByCodeAction(inviteCode: string): Promise<ActionR
     if (!inviteCode) return { success: false, error: 'Missing code' };
 
     try {
-        const invitesRef = adminRtdb.ref('invites');
+        const invitesRef = getAdminRtdb().ref('invites');
         const query = invitesRef.orderByChild('inviteCode').equalTo(inviteCode).limitToFirst(1);
         const snapshot = await query.once('value');
 
@@ -143,8 +143,8 @@ export async function joinBudgetAction(inviteCode: string, userId: string): Prom
         if (invite.maxUses && invite.usedCount >= invite.maxUses) return { success: false, error: 'Limit reached' };
 
         // 3. Join (Transaction)
-        const budgetRef = adminRtdb.ref(`budgets/${invite.budgetId}`);
-        const inviteRef = adminRtdb.ref(`invites/${invite.id}`);
+        const budgetRef = getAdminRtdb().ref(`budgets/${invite.budgetId}`);
+        const inviteRef = getAdminRtdb().ref(`invites/${invite.id}`);
 
         // Check if already member
         const budgetSnap = await budgetRef.once('value');
@@ -182,7 +182,7 @@ export async function getBudgetDetailsAction(budgetId: string): Promise<ActionRe
     if (!budgetId) return { success: false, error: 'Missing ID' };
 
     try {
-        const budgetRef = adminRtdb.ref(`budgets/${budgetId}`);
+        const budgetRef = getAdminRtdb().ref(`budgets/${budgetId}`);
         const snapshot = await budgetRef.once('value');
 
         if (!snapshot.exists()) return { success: false, error: 'Not found' };
@@ -217,7 +217,7 @@ export async function addExpenseAction(budgetId: string, expense: any): Promise<
     if (!budgetId || !expense) return { success: false, error: 'Missing fields' };
 
     try {
-        const expensesRef = adminRtdb.ref(`budgets/${budgetId}/expenses`);
+        const expensesRef = getAdminRtdb().ref(`budgets/${budgetId}/expenses`);
         const newExpenseRef = expensesRef.push();
 
         await newExpenseRef.set({
@@ -226,7 +226,7 @@ export async function addExpenseAction(budgetId: string, expense: any): Promise<
         });
 
         // Update budget timestamp
-        await adminRtdb.ref(`budgets/${budgetId}`).update({
+        await getAdminRtdb().ref(`budgets/${budgetId}`).update({
             updatedAt: ServerValue.TIMESTAMP
         });
 
@@ -241,9 +241,9 @@ export async function addExpenseAction(budgetId: string, expense: any): Promise<
 export async function debugServerConnectionAction(): Promise<ActionResult<{ projectId?: string }>> {
     try {
         // Test Read
-        await adminRtdb.ref().child('test_connection').once('value');
+        await getAdminRtdb().ref().child('test_connection').once('value');
         // Type assertion for credential property which might not be in standard definitions
-        const options: any = adminRtdb.app.options;
+        const options: any = getAdminRtdb().app.options;
         const cred = options.credential;
         return {
             success: true,
@@ -258,10 +258,10 @@ export async function deleteExpenseAction(budgetId: string, expenseId: string): 
     if (!budgetId || !expenseId) return { success: false, error: 'Missing fields' };
 
     try {
-        await adminRtdb.ref(`budgets/${budgetId}/expenses/${expenseId}`).remove();
+        await getAdminRtdb().ref(`budgets/${budgetId}/expenses/${expenseId}`).remove();
 
         // Update timestamp
-        await adminRtdb.ref(`budgets/${budgetId}`).update({
+        await getAdminRtdb().ref(`budgets/${budgetId}`).update({
             updatedAt: ServerValue.TIMESTAMP
         });
 
@@ -276,7 +276,7 @@ export async function deleteBudgetAction(budgetId: string, userId: string): Prom
     if (!budgetId || !userId) return { success: false, error: 'Missing fields' };
 
     try {
-        const budgetRef = adminRtdb.ref(`budgets/${budgetId}`);
+        const budgetRef = getAdminRtdb().ref(`budgets/${budgetId}`);
         const snapshot = await budgetRef.once('value');
 
         if (!snapshot.exists()) return { success: false, error: 'Budget not found' };
