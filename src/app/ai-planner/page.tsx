@@ -1040,8 +1040,13 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
     },
   ]);
   const [input, setInput] = useState('');
-  const [plannerState, setPlannerState] = useState<TripState>({});
-  const [itinerary, setItinerary] = useState<TripState | null>(null);
+  // Single shared plan state - unified source of truth for the itinerary
+  const [planState, setPlanState] = useState<TripState>({});
+  const plannerState = planState;
+  const itinerary = planState;
+  const activeState = planState;
+  const setPlannerState = setPlanState;
+  const setItinerary = setPlanState;
   const [isChatting, setIsChatting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -1107,7 +1112,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
   const [accommodationAlternativesCache, setAccommodationAlternativesCache] = useState<Record<string, any[]>>({});
   const [isCachingAccommodation, setIsCachingAccommodation] = useState(false);
 
-  const activeState = useMemo(() => itinerary || plannerState, [itinerary, plannerState]);
+  // activeState is unified with planState above
 
   // Save trip function
   const handleSaveTrip = async () => {
@@ -1777,16 +1782,19 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
                 type: 'ai',
                 text: "Hey there! I'm Charizard 🔥 Your AI travel co-pilot. Ready to ignite your next adventure? Tell me where you're dreaming of going!",
               }],
-              input: userText
+              input: userText,
+              currentPlan: planState,
             }),
           });
           const data = await res.json();
-          const reply = data?.reply ?? 'Got it!';
+          const reply = data?.reply || data?.error || 'Got it!';
           const stateUpdate = data?.plannerState ?? {};
           setMessages((prev) => [...prev, { type: 'ai', text: reply }]);
-          setPlannerState((prev) => ({ ...prev, ...stateUpdate }));
-        } catch (err) {
-          setMessages((prev) => [...prev, { type: 'ai', text: 'Oops, something went wrong.' }]);
+          if (stateUpdate && Object.keys(stateUpdate).length > 0) {
+            setPlanState((prev) => ({ ...prev, ...stateUpdate }));
+          }
+        } catch (err: any) {
+          setMessages((prev) => [...prev, { type: 'ai', text: err?.message || 'Unable to connect to the AI planner service.' }]);
         } finally {
           setIsChatting(false);
         }
@@ -1822,14 +1830,16 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
       const res = await fetch('/api/ai-planner/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, input: userText }),
+        body: JSON.stringify({ messages, input: userText, currentPlan: planState }),
       });
       const data = await res.json();
-      const reply = data?.reply ?? 'Got it!';
+      const reply = data?.reply || data?.error || 'Got it!';
       const stateUpdate = data?.plannerState ?? {};
 
       setMessages((prev) => [...prev, { type: 'ai', text: reply }]);
-      setPlannerState((prev) => ({ ...prev, ...stateUpdate }));
+      if (stateUpdate && Object.keys(stateUpdate).length > 0) {
+        setPlanState((prev) => ({ ...prev, ...stateUpdate }));
+      }
 
       // If we weren't already showing progress and API returned plannerState
       if (!isLikelyGeneration && stateUpdate && Object.keys(stateUpdate).length > 0) {
@@ -1844,8 +1854,8 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
 
         setTimeout(() => setIsGenerating(false), 500);
       }
-    } catch (err) {
-      setMessages((prev) => [...prev, { type: 'ai', text: 'Oops, something went wrong.' }]);
+    } catch (err: any) {
+      setMessages((prev) => [...prev, { type: 'ai', text: err?.message || 'Unable to connect to the AI planner. Please verify your GROQ_API_KEY in .env.local.' }]);
       setIsGenerating(false);
     } finally {
       setIsChatting(false);
@@ -1928,20 +1938,22 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
 
               if (message.type === 'overview') {
                 overview = message.data;
-                // Update itinerary with overview first
-                setItinerary({
+                // Update shared plan state with overview first
+                setPlanState((prev) => ({
+                  ...prev,
                   ...overview,
                   dayPlans: [],
-                });
+                }));
                 console.log('[handleGenerate] Received overview');
               } else if (message.type === 'day') {
                 dayPlans.push(message.data);
-                // Update itinerary progressively with each day
+                // Update shared plan state progressively with each day
                 if (overview) {
-                  setItinerary({
+                  setPlanState((prev) => ({
+                    ...prev,
                     ...overview,
                     dayPlans: [...dayPlans],
-                  });
+                  }));
                   console.log(`[handleGenerate] Received day ${dayPlans.length}`);
                 }
               } else if (message.type === 'complete') {
@@ -2221,9 +2233,8 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
   const handleRemoveActivity = (dayNumber: number, activityIndex: number) => {
     console.log('[AIPlanner] Removing activity:', { dayNumber, activityIndex });
 
-    // Update itinerary if it exists, otherwise update plannerState
-    if (itinerary?.dayPlans) {
-      const updatedDayPlans = itinerary.dayPlans.map((day) => {
+    if (planState.dayPlans) {
+      const updatedDayPlans = planState.dayPlans.map((day) => {
         if (day.day === dayNumber) {
           return {
             ...day,
@@ -2232,18 +2243,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
         }
         return day;
       });
-      setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
-    } else if (plannerState.dayPlans) {
-      const updatedDayPlans = plannerState.dayPlans.map((day) => {
-        if (day.day === dayNumber) {
-          return {
-            ...day,
-            activities: day.activities.filter((_, idx) => idx !== activityIndex),
-          };
-        }
-        return day;
-      });
-      setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
+      setPlanState((prev) => ({ ...prev, dayPlans: updatedDayPlans }));
     }
   };
 
@@ -2299,9 +2299,8 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
   const handleReplaceActivity = (dayNumber: number, activityIndex: number, newActivity: any, isAdding: boolean = false) => {
     console.log('[AIPlanner]', isAdding ? 'Adding' : 'Replacing', 'activity:', { dayNumber, activityIndex, newActivity });
 
-    // Update itinerary if it exists, otherwise update plannerState
-    if (itinerary?.dayPlans) {
-      const updatedDayPlans = itinerary.dayPlans.map((day) => {
+    if (planState.dayPlans) {
+      const updatedDayPlans = planState.dayPlans.map((day) => {
         if (day.day === dayNumber) {
           const updatedActivities = [...(day.activities || [])];
           if (isAdding) {
@@ -2321,29 +2320,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
         }
         return day;
       });
-      setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
-    } else if (plannerState.dayPlans) {
-      const updatedDayPlans = plannerState.dayPlans.map((day) => {
-        if (day.day === dayNumber) {
-          const updatedActivities = [...(day.activities || [])];
-          if (isAdding) {
-            // Add new activity at the end
-            updatedActivities.push(newActivity);
-          } else {
-            // Replace existing activity
-            updatedActivities[activityIndex] = {
-              ...updatedActivities[activityIndex],
-              ...newActivity,
-            };
-          }
-          return {
-            ...day,
-            activities: updatedActivities,
-          };
-        }
-        return day;
-      });
-      setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
+      setPlanState((prev) => ({ ...prev, dayPlans: updatedDayPlans }));
     }
 
     // Show success message
@@ -2379,19 +2356,12 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
       currentAccommodation: changingAccommodation.accommodation
     });
 
-    // Update itinerary if it exists, otherwise update plannerState
-    if (itinerary?.accommodation) {
-      const updatedAccommodation = [...itinerary.accommodation];
+    if (planState.accommodation) {
+      const updatedAccommodation = [...planState.accommodation];
       // Completely replace the accommodation at this index
       updatedAccommodation[changingAccommodation.accommodationIndex] = newAccommodation;
-      console.log('[AIPlanner] Updated itinerary accommodation:', updatedAccommodation);
-      setItinerary({ ...itinerary, accommodation: updatedAccommodation });
-    } else if (plannerState.accommodation) {
-      const updatedAccommodation = [...plannerState.accommodation];
-      // Completely replace the accommodation at this index
-      updatedAccommodation[changingAccommodation.accommodationIndex] = newAccommodation;
-      console.log('[AIPlanner] Updated plannerState accommodation:', updatedAccommodation);
-      setPlannerState({ ...plannerState, accommodation: updatedAccommodation });
+      console.log('[AIPlanner] Updated accommodation:', updatedAccommodation);
+      setPlanState((prev) => ({ ...prev, accommodation: updatedAccommodation }));
     }
 
     // Show success message
@@ -2409,12 +2379,9 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
   const handleRemoveAccommodation = (accommodationIndex: number) => {
     console.log('[AIPlanner] Removing accommodation:', accommodationIndex);
 
-    if (itinerary?.accommodation) {
-      const updatedAccommodation = itinerary.accommodation.filter((_, idx) => idx !== accommodationIndex);
-      setItinerary({ ...itinerary, accommodation: updatedAccommodation });
-    } else if (plannerState.accommodation) {
-      const updatedAccommodation = plannerState.accommodation.filter((_, idx) => idx !== accommodationIndex);
-      setPlannerState({ ...plannerState, accommodation: updatedAccommodation });
+    if (planState.accommodation) {
+      const updatedAccommodation = planState.accommodation.filter((_, idx) => idx !== accommodationIndex);
+      setPlanState((prev) => ({ ...prev, accommodation: updatedAccommodation }));
     }
 
     setMessages((prev) => [
@@ -2728,12 +2695,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
         console.log('[handleApplySuggestion] Updated activity:', updatedDayPlans[dayIndex].activities[activityIndex]);
         console.log('[handleApplySuggestion] Using itinerary?', !!itinerary);
         
-        if (itinerary) {
-          setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
-        } else {
-          setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
-        }
-        
+        setPlanState((prev) => ({ ...prev, dayPlans: updatedDayPlans }));
         console.log('[handleApplySuggestion] State updated successfully');
       } else {
         console.error('[handleApplySuggestion] Activity not found at dayIndex:', dayIndex, 'activityIndex:', activityIndex);
@@ -2764,14 +2726,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
         };
         
         console.log('[handleApplySuggestion] Updated activity:', updatedDayPlans[dayIndex].activities[activityIndex]);
-        console.log('[handleApplySuggestion] Using itinerary?', !!itinerary);
-        
-        if (itinerary) {
-          setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
-        } else {
-          setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
-        }
-        
+        setPlanState((prev) => ({ ...prev, dayPlans: updatedDayPlans }));
         console.log('[handleApplySuggestion] State updated successfully');
       } else {
         console.error('[handleApplySuggestion] Activity not found at dayIndex:', dayIndex, 'activityIndex:', activityIndex);
@@ -2789,11 +2744,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
           activities: reordered,
         };
         
-        if (itinerary) {
-          setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
-        } else {
-          setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
-        }
+        setPlanState((prev) => ({ ...prev, dayPlans: updatedDayPlans }));
       }
     }
   };
@@ -3661,9 +3612,8 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
           onActivitiesReorder={(reorderedActivities) => {
             console.log('[AIPlanner] Reordering activities for day', selectedDay, ':', reorderedActivities);
 
-            // Update the activities order in the active state
-            if (itinerary?.dayPlans) {
-              const updatedDayPlans = itinerary.dayPlans.map((day, index) => {
+            if (planState?.dayPlans) {
+              const updatedDayPlans = planState.dayPlans.map((day, index) => {
                 if (index + 1 === selectedDay) {
                   // Create a map from activity name to original activity
                   const activityMap = new Map(
@@ -3689,33 +3639,7 @@ export default function AIPlanner({ tripId: propTripId }: AIPlannerProps) {
                 return day;
               });
 
-              setItinerary({ ...itinerary, dayPlans: updatedDayPlans });
-              console.log('[AIPlanner] Day plan activities reordered successfully');
-            } else if (plannerState?.dayPlans) {
-              const updatedDayPlans = plannerState.dayPlans.map((day, index) => {
-                if (index + 1 === selectedDay) {
-                  const activityMap = new Map(
-                    day.activities.map(act => [act.title || '', act])
-                  );
-
-                  const reordered = reorderedActivities
-                    .map(reorderedAct => activityMap.get(reorderedAct.name))
-                    .filter(Boolean) as typeof day.activities;
-
-                  const reorderedNames = new Set(reorderedActivities.map(a => a.name));
-                  const remaining = day.activities.filter(
-                    act => !reorderedNames.has(act.title || '')
-                  );
-
-                  return {
-                    ...day,
-                    activities: [...reordered, ...remaining],
-                  };
-                }
-                return day;
-              });
-
-              setPlannerState({ ...plannerState, dayPlans: updatedDayPlans });
+              setPlanState((prev) => ({ ...prev, dayPlans: updatedDayPlans }));
               console.log('[AIPlanner] Day plan activities reordered successfully');
             }
           }}

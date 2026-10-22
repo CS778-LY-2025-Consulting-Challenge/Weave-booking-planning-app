@@ -6,12 +6,9 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Star, MapPin, Phone, Globe, Clock, Loader2 } from 'lucide-react';
 import PlaceDetailPanel from './PlaceDetailPanel';
+import { MAPBOX_ACCESS_TOKEN } from '@/lib/mapboxConfig';
 
-// IMPORTANT: Keep this token consistent across ALL Mapbox maps in the app.
-// We intentionally do NOT read from env here because an incorrect `.env.local`
-// value would override and break all maps in dev.
-mapboxgl.accessToken =
-  'pk.eyJ1IjoibW9vdmFsIiwiYSI6ImNtazJzYmJ1YzA2aDIzcW9xbWlhMGIxencifQ.HicBjVINhGc-IAZVBnsnwg';
+mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
 
 interface DayRoute {
   day: number;

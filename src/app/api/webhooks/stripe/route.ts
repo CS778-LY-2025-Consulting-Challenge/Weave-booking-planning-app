@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { saveBooking } from '@/lib/bookings';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-    apiVersion: '2023-10-16',
-});
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+import { createStripeClient } from '@/lib/stripe-client';
 
 export async function POST(req: NextRequest) {
+    const stripe = createStripeClient();
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!stripe || !webhookSecret) {
+        return NextResponse.json({ error: 'Webhook is not configured' }, { status: 503 });
+    }
     const body = await req.text();
     const signature = req.headers.get('stripe-signature') as string;
 

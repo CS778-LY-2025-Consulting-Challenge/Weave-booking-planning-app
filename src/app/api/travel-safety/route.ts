@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { createAIChatCompletion } from '@/lib/aiClient';
 
 // Simple in-memory cache
 const cache = new Map<string, { data: any; timestamp: number }>();
@@ -149,8 +145,7 @@ Return ONLY valid JSON in this exact format:
 - Be conservative - when in doubt, choose "low"
 `;
 
-    const aiResponse = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const aiResponse = await createAIChatCompletion({
       messages: [
         { role: 'system', content: 'You are a travel safety analyst. Always respond with valid JSON only.' },
         { role: 'user', content: aiPrompt },

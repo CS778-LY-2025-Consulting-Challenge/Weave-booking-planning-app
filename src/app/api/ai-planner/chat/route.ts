@@ -1,19 +1,34 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { createAIChatCompletion, extractOrWrapJson } from '@/lib/aiClient';
 import { searchGoogleFlights, getBestFlights, getIATACode, calculateDuration } from '@/services/googleFlightsService';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { aiChatLimiter, getClientIdentifier, checkRateLimit, createRateLimitResponse } from '@/lib/rate-limit';
 
 const SYSTEM_PROMPT = `
 You are Charizard, a professional travel AI assistant. 
 The user's screen has a Chat (left) and a Visual Dashboard (right).
 
+**CRITICAL REQUIREMENT - JSON OUTPUT ONLY:**
+You must ALWAYS respond with a valid JSON object matching this structure:
+{
+  "reply": "Your message to the user",
+  "plannerState": { ... }
+}
+Even when asking questions, greeting the user, or seeking clarification, you MUST still return a JSON object, for example:
+{
+  "reply": "Hi! Where would you like to travel and for how many days?",
+  "plannerState": {}
+}
+Never output raw text outside the JSON object.
+
 **Your Core Mission:**
 1. Collect 5 Essentials: Destination, Start Date, End Date, Travellers, Departure City.
 2. Silent Inference: Silently calculate End Date if Start+Duration are given.
 3. Full Plan Generation: Once confirmed, generate a complete plan.
+4. Itinerary Edits & Modifications: When the user already has an itinerary on screen and asks for adjustments (e.g. change an activity, add dining, swap days, change hotel, adjust timing):
+   - Accurately apply requested modifications.
+   - PRESERVE all existing unchanged days, activities, accommodation, transportation, and dates.
+   - Return the updated plan in "plannerState".
+   - In your "reply", explain what edits were made.
 
 **CRITICAL - Date Format Requirements:**
 - ALWAYS return dates in ISO format: "YYYY-MM-DD" (e.g., "2026-01-10", "2026-01-20")
@@ -276,46 +291,169 @@ Each day should have 3-4 well-planned activities. Quality over quantity!
 }
 `;
 
+function formatCompactPlanSummary(plan: any): string {
+  if (!plan) return '';
+  const lines: string[] = [];
+  lines.push(`Trip: ${plan.tripTitle || 'Trip'} to ${plan.destination || 'Destination'}`);
+  if (plan.departureCity) lines.push(`Departure: ${plan.departureCity}`);
+  if (plan.dates) {
+    const duration = plan.dates.durationDays || plan.dayPlans?.length || '';
+    lines.push(`Dates: ${plan.dates.start || ''} to ${plan.dates.end || ''} (${duration} days)`);
+  }
+  if (plan.travellers) lines.push(`Travellers: ${plan.travellers}`);
+
+  if (plan.dayPlans && Array.isArray(plan.dayPlans) && plan.dayPlans.length > 0) {
+    lines.push('\nExisting Days:');
+    for (const d of plan.dayPlans) {
+      const actList = (d.activities || [])
+        .map((a: any) => `${a.time ? a.time + ': ' : ''}${a.title || 'Activity'} (${a.type || 'attraction'})`)
+        .slice(0, 5)
+        .join('; ');
+      lines.push(`- Day ${d.day} (${d.city || plan.destination || ''}): ${d.daySummary || d.title || ''} [${actList}]`);
+    }
+  }
+
+  if (plan.accommodation && Array.isArray(plan.accommodation) && plan.accommodation.length > 0) {
+    lines.push('\nAccommodation:');
+    for (const h of plan.accommodation) {
+      lines.push(`- ${h.name} in ${h.city || ''} (${h.nights || 1} nights, ${h.pricePerNight || ''}/night)`);
+    }
+  }
+
+  if (plan.transportation && Array.isArray(plan.transportation) && plan.transportation.length > 0) {
+    lines.push('\nTransportation:');
+    for (const t of plan.transportation) {
+      lines.push(`- ${t.mode || 'Flight'}: ${t.from} → ${t.to} (${t.date || ''} ${t.time || ''})`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
 export async function POST(request: Request) {
+  // Rate Limit: 5 requests per hour per signed-in user (or visitor IP)
+  const { identifier, isUser } = await getClientIdentifier(request);
+  const rateLimit = await checkRateLimit(aiChatLimiter, identifier);
+  if (!rateLimit.success) {
+    console.warn(`[Chat API] Rate limit reached for ${identifier}`);
+    return createRateLimitResponse(
+      rateLimit,
+      isUser
+        ? 'You have reached your limit of 5 AI chat requests per hour. Please wait a bit before asking more questions.'
+        : 'You have reached the visitor limit of 5 AI chat requests per hour. Please sign in or try again later.'
+    );
+  }
+
   const body = await request.json().catch(() => ({}));
-  const { messages = [], input = '' } = body as { messages?: any[]; input?: string };
+  const { messages = [], input = '', currentPlan = null } = body as {
+    messages?: any[];
+    input?: string;
+    currentPlan?: any;
+  };
 
   try {
-    const messagesToAI = [
+    const messagesToAI: any[] = [
       { role: 'system', content: SYSTEM_PROMPT },
-      ...messages.map((m: any) => ({
+    ];
+
+    if (currentPlan && (currentPlan.tripTitle || currentPlan.destination || (currentPlan.dayPlans && currentPlan.dayPlans.length > 0))) {
+      const compactSummary = formatCompactPlanSummary(currentPlan);
+      messagesToAI.push({
+        role: 'system',
+        content: `CURRENT ITINERARY SUMMARY:
+${compactSummary}
+
+INSTRUCTIONS FOR ITINERARY EDITS:
+The user already has the above itinerary. If their message asks to modify, add, remove, or swap anything:
+- Return ONLY the updated fields or days in "plannerState".
+  For example, if modifying Day 2, you only need to return:
+  "plannerState": {
+    "dayPlans": [
+      {
+        "day": 2,
+        "city": "...",
+        "daySummary": "...",
+        "activities": [ ...updated activities... ]
+      }
+    ]
+  }
+- DO NOT re-generate unchanged days, unchanged hotels, or unchanged flights. Unchanged items are automatically preserved and merged by the system.
+- If the user asks for a brand new trip to a different destination, generate a complete new plan.
+- In your "reply", briefly explain the updates made.
+- Keep the JSON compact and valid.`,
+      });
+    }
+
+    const recentMessages = (messages || []).slice(-6);
+    messagesToAI.push(
+      ...recentMessages.map((m: any) => ({
         role: m.type === 'user' ? 'user' : 'assistant',
         content: m.text,
       })),
-      { role: 'user', content: input },
-    ];
+      { role: 'user', content: input }
+    );
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const response = await createAIChatCompletion({
       messages: messagesToAI as any,
       response_format: { type: 'json_object' },
-      max_tokens: 16000, // Increased for longer itineraries
+      max_tokens: 16000,
       temperature: 0.7,
     });
 
-    // More robust JSON parsing with error handling
-    let content;
-    try {
-      const rawContent = response.choices[0].message.content || '{}';
-      console.log('[Chat API] Raw response length:', rawContent.length);
-      content = JSON.parse(rawContent);
-    } catch (parseError: any) {
-      console.error('[Chat API] JSON Parse Error:', parseError);
-      console.error('[Chat API] Response was:', response.choices[0].message.content?.substring(0, 500));
-      return NextResponse.json(
-        { 
-          reply: "I generated a travel plan, but encountered a formatting issue. Please try asking for a shorter itinerary (e.g., 3-4 days) or simplify your request.",
-          error: parseError.message 
-        },
-        { status: 500 }
-      );
+    const rawContent = response.choices[0]?.message?.content || '{}';
+    console.log('[Chat API] Raw response length:', rawContent.length);
+    const content = extractOrWrapJson(rawContent);
+    let plannerState = content.plannerState || {};
+
+    // If currentPlan was provided, ensure seamless merging and preservation of unchanged sections:
+    if (currentPlan && Object.keys(currentPlan).length > 0) {
+      const isNewDestination =
+        content.plannerState?.destination &&
+        currentPlan.destination &&
+        String(content.plannerState.destination).toLowerCase() !== String(currentPlan.destination).toLowerCase();
+
+      if (!isNewDestination) {
+        // Base plannerState on currentPlan
+        const mergedPlan = {
+          ...currentPlan,
+          ...plannerState,
+        };
+
+        // Merge dayPlans if partial days were returned
+        if (
+          content.plannerState?.dayPlans &&
+          Array.isArray(content.plannerState.dayPlans) &&
+          currentPlan.dayPlans &&
+          Array.isArray(currentPlan.dayPlans)
+        ) {
+          if (content.plannerState.dayPlans.length === currentPlan.dayPlans.length) {
+            mergedPlan.dayPlans = content.plannerState.dayPlans;
+          } else {
+            const mergedDays = [...currentPlan.dayPlans];
+            for (const updatedDay of content.plannerState.dayPlans) {
+              const idx = mergedDays.findIndex((d: any) => d.day === updatedDay.day);
+              if (idx >= 0) {
+                mergedDays[idx] = updatedDay;
+              } else {
+                mergedDays.push(updatedDay);
+              }
+            }
+            mergedPlan.dayPlans = mergedDays;
+          }
+        } else if (!content.plannerState?.dayPlans && currentPlan.dayPlans) {
+          mergedPlan.dayPlans = currentPlan.dayPlans;
+        }
+
+        if (!content.plannerState?.accommodation && currentPlan.accommodation) {
+          mergedPlan.accommodation = currentPlan.accommodation;
+        }
+        if (!content.plannerState?.transportation && currentPlan.transportation) {
+          mergedPlan.transportation = currentPlan.transportation;
+        }
+
+        plannerState = mergedPlan;
+      }
     }
-    const plannerState = content.plannerState || {};
 
     console.log('[Chat API] AI response keys:', Object.keys(content));
     console.log('[Chat API] PlannerState keys:', Object.keys(plannerState));
@@ -353,16 +491,32 @@ export async function POST(request: Request) {
               if (flights && flights.length > 0) {
                 const flight = flights[0];
                 
-                // Format time string
-                const formattedTime = flight.departure.scheduled && flight.arrival.scheduled
-                  ? `${new Date(flight.departure.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} - ${new Date(flight.arrival.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`
+                // Format time string safely
+                const safeTime = (t?: string) => {
+                  if (!t) return '';
+                  if (/^\d{1,2}:\d{2}/.test(t)) return t;
+                  const d = new Date(t);
+                  return !isNaN(d.getTime()) ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : t;
+                };
+
+                const depTimeStr = flight.departure?.time || flight.departure?.scheduled;
+                const arrTimeStr = flight.arrival?.time || flight.arrival?.scheduled;
+                const formattedTime = depTimeStr && arrTimeStr
+                  ? `${safeTime(depTimeStr)} - ${safeTime(arrTimeStr)}`
                   : transport.time || '10:00 - 14:00';
                 
-                // Get departure date
-                const depDate = flight.departure.scheduled ? new Date(flight.departure.scheduled) : null;
-                const flightDate = depDate 
-                  ? depDate.toISOString().split('T')[0]
-                  : (transport.date || plannerState.dates?.start);
+                // Get departure date safely
+                const parseDate = (dStr?: string) => {
+                  if (!dStr) return null;
+                  const d = new Date(dStr);
+                  return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : null;
+                };
+
+                const flightDate =
+                  parseDate(flight.departure?.scheduled) ||
+                  transport.date ||
+                  plannerState.dates?.start ||
+                  new Date().toISOString().split('T')[0];
                 
                 console.log('[Chat API] Enriched with Google Flights:', {
                   airline: flight.airline,
@@ -411,10 +565,17 @@ export async function POST(request: Request) {
       plannerState,
     });
   } catch (error: any) {
-    console.error('OpenAI Error:', error);
-    return NextResponse.json(
-      { reply: "Sorry, I'm having trouble connecting to my brain right now. " + error.message },
-      { status: 500 }
-    );
+    console.error('[Chat API] Error:', error);
+    const isMissingKey = String(error?.message).includes('missing') || String(error?.message).includes('GROQ_API_KEY');
+    const userMessage = isMissingKey
+      ? "To enable AI trip planning, please ensure GROQ_API_KEY is configured in your .env.local file."
+      : currentPlan?.destination || currentPlan?.tripTitle
+        ? "I had a momentary hitch updating that part of the itinerary. Could you please specify which day or activity you'd like to adjust?"
+        : "I'd love to help plan your trip! Could you tell me a little more about your destination, dates, and number of travellers?";
+
+    return NextResponse.json({
+      reply: userMessage,
+      plannerState: {},
+    });
   }
 }

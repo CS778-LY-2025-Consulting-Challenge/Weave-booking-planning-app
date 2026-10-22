@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { createAIChatCompletion } from '@/lib/aiClient';
 
 // Simple in-memory cache
 const cache = new Map<string, { data: any; timestamp: number }>();
@@ -81,10 +77,7 @@ IMPORTANT formatting rules:
 
 Respond ONLY with valid JSON, no markdown formatting.`;
 
-    console.log('[Destination Tips] Calling OpenAI API...');
-
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const completion = await createAIChatCompletion({
       messages: [
         {
           role: 'system',
@@ -95,6 +88,7 @@ Respond ONLY with valid JSON, no markdown formatting.`;
           content: aiPrompt,
         },
       ],
+      response_format: { type: 'json_object' },
       temperature: 0.7,
       max_tokens: 2000,
     });

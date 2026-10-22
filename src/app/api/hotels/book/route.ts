@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAmadeusToken } from '@/lib/amadeus-token-cache';
-import Stripe from 'stripe';
+import { createStripeClient } from '@/lib/stripe-client';
 
 const AMADEUS_BASE_URL = process.env.AMADEUS_ENVIRONMENT === 'production'
   ? 'https://api.amadeus.com'
   : 'https://test.api.amadeus.com';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
-});
 
 interface BookingRequest {
   offerId: string;
@@ -68,6 +64,8 @@ interface AmadeusBookingRequest {
 }
 
 export async function POST(request: NextRequest) {
+  const stripe = createStripeClient();
+  if (!stripe) return NextResponse.json({ error: 'Payments are not configured' }, { status: 503 });
   try {
     const body: BookingRequest = await request.json();
 

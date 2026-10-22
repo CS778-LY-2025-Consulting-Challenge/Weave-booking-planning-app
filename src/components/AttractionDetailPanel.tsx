@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
+import { MAPBOX_ACCESS_TOKEN } from '@/lib/mapboxConfig';
 
 interface AttractionDetails {
   name: string;
@@ -457,7 +458,7 @@ export default function AttractionDetailPanel({
                   <h2 className="text-lg font-bold text-slate-900 mb-4">Location</h2>
                   <div className="rounded-lg overflow-hidden">
                     <img
-                      src={`https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+3b82f6(${attraction.coords.lng},${attraction.coords.lat})/${attraction.coords.lng},${attraction.coords.lat},14,0/600x300@2x?access_token=pk.eyJ1IjoibW9vdmFsIiwiYSI6ImNtazJzYmJ1YzA2aDIzcW9xbWlhMGIxencifQ.HicBjVINhGc-IAZVBnsnwg`}
+                      src={`https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+3b82f6(${attraction.coords.lng},${attraction.coords.lat})/${attraction.coords.lng},${attraction.coords.lat},14,0/600x300@2x?access_token=${MAPBOX_ACCESS_TOKEN}`}
                       alt="Map"
                       className="w-full h-48 object-cover"
                     />

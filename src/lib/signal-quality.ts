@@ -249,7 +249,12 @@ export async function deduplicateWithAI<
 
   try {
     const OpenAI = (await import('openai')).default;
-    const openai = new OpenAI({ apiKey: openaiApiKey });
+    const isGroq = Boolean(process.env.GROQ_API_KEY);
+    const openai = new OpenAI({
+      apiKey: isGroq ? process.env.GROQ_API_KEY : openaiApiKey,
+      baseURL: isGroq ? 'https://api.groq.com/openai/v1' : undefined,
+    });
+    const model = isGroq ? (process.env.GROQ_MODEL || 'llama-3.3-70b-versatile') : 'gpt-4o-mini';
 
     // Prepare signal data for AI
     const signalList = signals.map((s, idx) => ({
@@ -272,7 +277,7 @@ Example: {"groups": [[0,2,5], [1,3], [4]], "reasoning": "Grouped museum timing s
 IMPORTANT: Return your response as a JSON object.`;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model,
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
       temperature: 0.3,

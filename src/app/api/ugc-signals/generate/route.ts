@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
-import OpenAI from 'openai';
+import { createAIChatCompletion } from '@/lib/aiClient';
 import {
   calculateActionabilityScore,
   determineQualityTier,
   deduplicateSignals,
   deduplicateWithAI,
 } from '@/lib/signal-quality';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 // Define signal structure for type safety
 interface Signal {
@@ -139,8 +135,7 @@ ${commentsText}
 
 Extract ONLY actionable, practical signals that will help future travelers:`;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const completion = await createAIChatCompletion({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
