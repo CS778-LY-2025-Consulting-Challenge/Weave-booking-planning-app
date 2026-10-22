@@ -1,10 +1,12 @@
 import { initializeApp, getApps, getApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getDatabase } from 'firebase-admin/database';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
     ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-    : require('@/lib/serviceAccountKey.json');
+    : JSON.parse(readFileSync(join(process.cwd(), 'src', 'lib', 'serviceAccountKey.json'), 'utf8'));
 
 if (!getApps().length) {
     console.log('[FirebaseAdmin] Initializing with project:', serviceAccount.project_id);
